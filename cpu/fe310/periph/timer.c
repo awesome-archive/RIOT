@@ -37,7 +37,7 @@ static timer_cb_t isr_cb;
  */
 static void *isr_arg;
 
-int timer_init(tim_t dev, unsigned long freq, timer_cb_t cb, void *arg)
+int timer_init(tim_t dev, uint32_t freq, timer_cb_t cb, void *arg)
 {
     /* Using RISC-V built in timer (64bit value) */
     if (dev != 0) {
@@ -53,7 +53,11 @@ int timer_init(tim_t dev, unsigned long freq, timer_cb_t cb, void *arg)
     isr_cb = cb;
     isr_arg = arg;
 
-    /* No other configuration */
+
+    /* reset timer counter */
+    volatile uint64_t *mtime = (uint64_t *) (CLINT_CTRL_ADDR + CLINT_MTIME);
+    *mtime = 0;
+
     return 0;
 }
 

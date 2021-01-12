@@ -35,7 +35,7 @@
 #include "cc2420_internal.h"
 #include "cc2420_registers.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 static int _send(netdev_t *netdev, const iolist_t *iolist);
@@ -58,9 +58,7 @@ static void _irq_handler(void *arg)
 {
     netdev_t *dev = (netdev_t *)arg;
 
-    if(dev->event_callback) {
-        dev->event_callback(dev, NETDEV_EVENT_ISR);
-    }
+    netdev_trigger_event_isr(dev);
 }
 
 static inline uint16_t to_u16(const void *buf)
@@ -136,10 +134,6 @@ static int _init(netdev_t *netdev)
         DEBUG("cc2420: init: oscillator did not stabilize\n");
         return -1;
     }
-
-#ifdef MODULE_NETSTATS_L2
-    memset(&netdev->stats, 0, sizeof(netstats_t));
-#endif
 
     return cc2420_init((cc2420_t *)dev);
 }

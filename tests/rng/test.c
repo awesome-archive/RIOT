@@ -61,10 +61,14 @@ static void test_init(char *name)
         puts("Musl C PRNG.\n");
 #elif MODULE_PRNG_SHA1PRNG
         puts("SHA1 PRNG.\n");
+#elif MODULE_PRNG_SHA256PRNG
+        puts("SHA256 PRNG.\n");
 #elif MODULE_PRNG_TINYMT32
         puts("Tiny Mersenne Twister PRNG.\n");
 #elif MODULE_PRNG_XORSHIFT
         puts("XOR Shift PRNG.\n");
+#elif MODULE_PRNG_HWRNG
+        puts("Hardware RNG.\n");
 #else
         puts("unknown PRNG.\n");
 #endif
@@ -154,7 +158,7 @@ void test_distributions(uint32_t samples)
 
         /* count bits */
         for (int i = 0; i < 32; i++) {
-            if (value & (1 << i)) {
+            if (value & (UINT32_C(1) << i)) {
                 distributions[i]++;
             }
         }
@@ -382,7 +386,15 @@ void test_entropy(uint32_t samples)
     }
 
     /* print results */
-    printf("Calculated %02f bits of entropy from %" PRIu32 " samples.\n", (double) entropy, samples);
+    /* Use 'fmt/print_float' to work on all platforms (atmega)
+     * Stdout should be flushed before to prevent garbled output. */
+    printf("Calculated ");
+#if defined(MODULE_NEWLIB) || defined(MODULE_PICOLIBC)
+    /* no fflush on msp430 */
+    fflush(stdout);
+#endif
+    print_float(entropy, 6);
+    printf(" bits of entropy from %" PRIu32 " samples.\n", samples);
 }
 
 void cb_speed_timeout(void *arg)
@@ -404,8 +416,6 @@ void test_speed(uint32_t duration)
     /* collect samples as long as timer has not expired */
     unsigned running = 1;
     xtimer_t xt = {
-        .target = 0,
-        .long_target = 0,
         .callback = cb_speed_timeout,
         .arg = &running,
     };
@@ -436,8 +446,6 @@ void test_speed_range(uint32_t duration, uint32_t low_thresh, uint32_t high_thre
     /* collect samples as long as timer has not expired */
     unsigned running = 1;
     xtimer_t xt = {
-        .target = 0,
-        .long_target = 0,
         .callback = cb_speed_timeout,
         .arg = &running,
     };

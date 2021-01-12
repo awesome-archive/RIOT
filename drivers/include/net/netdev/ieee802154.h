@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Freie Universität Berlin
+ * Copyright (C) 2016-2019 Freie Universität Berlin
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -20,7 +20,11 @@
 #ifndef NET_NETDEV_IEEE802154_H
 #define NET_NETDEV_IEEE802154_H
 
+#include "net/eui_provider.h"
 #include "net/ieee802154.h"
+#if IS_USED(MODULE_IEEE802154_SECURITY)
+#include "net/ieee802154_security.h"
+#endif
 #include "net/gnrc/nettype.h"
 #include "net/netopt.h"
 #include "net/netdev.h"
@@ -42,7 +46,7 @@ extern "C" {
 #define NETDEV_IEEE802154_SEND_MASK         (0x0028)    /**< flags to take for send packets */
 #define NETDEV_IEEE802154_RAW               (0x0002)    /**< pass raw frame to upper layer */
 /**
- * @brief   use long source addres (set) or short source address (unset)
+ * @brief   use long source address (set) or short source address (unset)
  */
 #define NETDEV_IEEE802154_SRC_MODE_LONG     (0x0004)
 /**
@@ -112,7 +116,12 @@ typedef struct {
     uint8_t long_addr[IEEE802154_LONG_ADDRESS_LEN];
     uint8_t seq;                            /**< sequence number */
     uint8_t chan;                           /**< channel */
+    uint8_t page;                           /**< channel page */
     uint16_t flags;                         /**< flags as defined above */
+    int16_t txpower;                        /**< tx power in dBm */
+#if IS_USED(MODULE_IEEE802154_SECURITY) || defined (Doxygen)
+    ieee802154_sec_context_t sec_ctx;       /**< security context */
+#endif
     /** @} */
 } netdev_ieee802154_t;
 
@@ -176,6 +185,40 @@ int netdev_ieee802154_get(netdev_ieee802154_t *dev, netopt_t opt, void *value,
  */
 int netdev_ieee802154_set(netdev_ieee802154_t *dev, netopt_t opt, const void *value,
                           size_t value_len);
+
+/**
+ * @brief  This function compares destination address and pan id with addresses
+ * and pan id of the device
+ *
+ * this function is meant top be used by drivers that do not support address
+ * filtering in hw
+ *
+ * @param[in] dev       network device descriptor
+ * @param[in] mhr       mac header
+ *
+ * @return 0            successful if packet is for the device
+ * @return 1            fails if packet is not for the device or pan
+ */
+int netdev_ieee802154_dst_filter(netdev_ieee802154_t *dev, const uint8_t *mhr);
+
+/**
+ * @brief   Configure the hardware address of a IEEE 802.15.4 devices
+ *
+ * This will obtain a long and short address based on the netdev ID.
+ * The addresses is stored in the netdev's `long_addr` & `short_addr`.
+ * The caller must take care of writing them to the hardware.
+ *
+ * @pre the netdev registered itself with @see netdev_register
+ *
+ * @param[out]  dev     Netdev to configure
+ */
+static inline void netdev_ieee802154_setup(netdev_ieee802154_t *dev)
+{
+    /* generate EUI-64 and short address */
+    netdev_eui64_get(&dev->netdev, (eui64_t *)&dev->long_addr);
+    eui_short_from_eui64((eui64_t *)&dev->long_addr,
+                         (network_uint16_t *)&dev->short_addr);
+}
 
 #ifdef __cplusplus
 }

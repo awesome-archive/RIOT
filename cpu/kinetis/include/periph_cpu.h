@@ -30,6 +30,26 @@
 extern "C" {
 #endif
 
+#ifdef PORT_PCR_MUX
+#  define KINETIS_HAVE_PCR
+#endif
+
+#ifdef SIM_PINSEL_REG
+#  define KINETIS_HAVE_PINSEL
+#endif
+
+#ifdef ADC_CFG1_MODE_MASK
+#  define KINETIS_HAVE_ADC_K
+#endif
+
+#ifdef SPI_CTAR_CPHA_MASK
+#  define KINETIS_HAVE_MK_SPI
+#endif
+
+#ifdef LPTMR_CSR_TEN_MASK
+#  define KINETIS_HAVE_LPTMR
+#endif
+
 /**
  * @name    CPU specific gpio_t type definition
  * @{
@@ -110,9 +130,32 @@ typedef uint16_t gpio_t;
 #define PERIPH_TIMER_PROVIDES_SET
 
 /**
- * @brief   number of usable power modes
+ * @name    Kinetis power mode configuration
+ * @{
  */
-#define PM_NUM_MODES    (1U)
+#define PM_NUM_MODES    (3U)
+enum {
+    KINETIS_PM_LLS  = 0,
+    KINETIS_PM_VLPS = 1,
+    KINETIS_PM_STOP = 2,
+    KINETIS_PM_WAIT = 3,
+};
+#if MODULE_PM_LAYERED
+#include "pm_layered.h"
+/**
+ * @brief   pm_block iff pm_layered is used
+ */
+#define PM_BLOCK(x) pm_block(x)
+/**
+ * @brief   pm_unblock iff pm_layered is used
+ */
+#define PM_UNBLOCK(x) pm_unblock(x)
+#else
+/* ignore these calls when not using pm_layered */
+#define PM_BLOCK(x)
+#define PM_UNBLOCK(x)
+#endif
+/** @} */
 
 #ifdef RTC
 /* All Kinetis CPUs have exactly one RTC hardware module, except for the KL02
@@ -121,8 +164,6 @@ typedef uint16_t gpio_t;
  * @name RTT and RTC configuration
  * @{
  */
-#define RTT_NUMOF                    (1U)
-#define RTC_NUMOF                    (1U)
 #define RTT_FREQUENCY                (1)
 #define RTT_MAX_VALUE                (0xffffffff)
 /** @} */
@@ -145,6 +186,7 @@ typedef enum {
 /** @} */
 #endif /* ndef DOXYGEN */
 
+#ifdef KINETIS_HAVE_PCR
 /**
  * @brief   PORT control register bitmasks
  *
@@ -165,18 +207,21 @@ typedef enum {
     GPIO_PCR_PD    = (PORT_PCR_PE_MASK),    /**< enable pull-down */
     GPIO_PCR_PU    = (PORT_PCR_PE_MASK | PORT_PCR_PS_MASK)  /**< enable PU */
 } gpio_pcr_t;
+#endif /* KINETIS_HAVE_PCR */
 
 #ifndef DOXYGEN
 /**
  * @name    GPIO flank configuration values
  * @{
  */
+#ifdef KINETIS_HAVE_PCR
 #define HAVE_GPIO_FLANK_T
 typedef enum {
     GPIO_RISING  = PORT_PCR_IRQC(0x9),  /**< emit interrupt on rising flank */
     GPIO_FALLING = PORT_PCR_IRQC(0xa),  /**< emit interrupt on falling flank */
     GPIO_BOTH    = PORT_PCR_IRQC(0xb),  /**< emit interrupt on both flanks */
 } gpio_flank_t;
+#endif /* KINETIS_HAVE_PCR */
 /** @} */
 #endif /* ndef DOXYGEN */
 
@@ -202,6 +247,7 @@ enum {
  * @{
  */
 #define HAVE_ADC_RES_T
+#ifdef KINETIS_HAVE_ADC_K
 typedef enum {
     ADC_RES_6BIT  = (0xfe),             /**< not supported */
     ADC_RES_8BIT  = ADC_CFG1_MODE(0),   /**< ADC resolution: 8 bit */
@@ -210,6 +256,7 @@ typedef enum {
     ADC_RES_14BIT = (0xff),             /**< ADC resolution: 14 bit */
     ADC_RES_16BIT = ADC_CFG1_MODE(3)    /**< ADC resolution: 16 bit */
 } adc_res_t;
+#endif /* KINETIS_HAVE_ADC_K */
 /** @} */
 
 #if defined(FTM_CnSC_MSB_MASK)
@@ -260,14 +307,24 @@ typedef enum {
  * @name    SPI mode bitmasks
  * @{
  */
+
+#ifdef KINETIS_HAVE_MK_SPI
 #define HAVE_SPI_MODE_T
 typedef enum {
+#if defined(SPI_CTAR_CPHA_MASK)
     SPI_MODE_0 = 0,                                         /**< CPOL=0, CPHA=0 */
     SPI_MODE_1 = (SPI_CTAR_CPHA_MASK),                      /**< CPOL=0, CPHA=1 */
     SPI_MODE_2 = (SPI_CTAR_CPOL_MASK),                      /**< CPOL=1, CPHA=0 */
     SPI_MODE_3 = (SPI_CTAR_CPOL_MASK | SPI_CTAR_CPHA_MASK)  /**< CPOL=1, CPHA=1 */
+#elif defined(SPI_C1_CPHA_MASK)
+    SPI_MODE_0 = 0,                                         /**< CPOL=0, CPHA=0 */
+    SPI_MODE_1 = (SPI_C1_CPHA_MASK),                        /**< CPOL=0, CPHA=1 */
+    SPI_MODE_2 = (SPI_C1_CPOL_MASK),                        /**< CPOL=1, CPHA=0 */
+    SPI_MODE_3 = (SPI_C1_CPOL_MASK | SPI_C1_CPHA_MASK)      /**< CPOL=1, CPHA=1 */
+#endif
 } spi_mode_t;
 /** @} */
+#endif /* KINETIS_HAVE_MK_SPI */
 #endif /* ndef DOXYGEN */
 
 /**
@@ -329,6 +386,7 @@ typedef struct {
     uint8_t count_ch;
 } pit_conf_t;
 
+#ifdef KINETIS_HAVE_LPTMR
 /**
  * @brief   CPU specific timer LPTMR module configuration
  */
@@ -342,6 +400,7 @@ typedef struct {
     /** IRQn interrupt number */
     uint8_t irqn;
 } lptmr_conf_t;
+#endif /* KINETIS_HAVE_LPTMR */
 
 #ifdef FTM_CnSC_MSB_MASK
 /**
@@ -356,6 +415,11 @@ typedef struct {
     } chan[PWM_CHAN_MAX];   /**< logical channel configuration */
     uint8_t chan_numof;     /**< number of actually configured channels */
     uint8_t ftm_num;        /**< FTM number used */
+#ifdef KINETIS_HAVE_PINSEL
+    volatile uint32_t *pinsel;
+    uint32_t pinsel_mask;
+    uint32_t pinsel_val;
+#endif
 } pwm_conf_t;
 #endif
 
@@ -403,7 +467,14 @@ typedef struct {
     gpio_t pin_mosi;                    /**< MOSI pin used */
     gpio_t pin_clk;                     /**< CLK pin used */
     gpio_t pin_cs[SPI_HWCS_NUMOF];      /**< pins used for HW cs lines */
+#ifdef KINETIS_HAVE_PCR
     gpio_pcr_t pcr;                     /**< alternate pin function values */
+#endif /* KINETIS_HAVE_PCR */
+#ifdef KINETIS_HAVE_PINSEL
+    volatile uint32_t *pinsel;
+    uint32_t pinsel_mask;
+    uint32_t pinsel_val;
+#endif
     uint32_t simmask;                   /**< bit in the SIM register */
 } spi_conf_t;
 
@@ -412,7 +483,9 @@ typedef struct {
  */
 enum {
     TIMER_PIT,              /**< PIT */
+#ifdef KINETIS_HAVE_LPTMR
     TIMER_LPTMR,            /**< LPTMR */
+#endif /* KINETIS_HAVE_LPTMR */
 };
 
 /**
@@ -421,8 +494,10 @@ enum {
  */
 /** @brief  Timers using PIT backend */
 #define TIMER_PIT_DEV(x)   (TIMER_DEV(0 + (x)))
+#ifdef KINETIS_HAVE_LPTMR
 /** @brief  Timers using LPTMR backend */
 #define TIMER_LPTMR_DEV(x) (TIMER_DEV(PIT_NUMOF + (x)))
+#endif /* KINETIS_HAVE_LPTMR */
 /** @} */
 
 /**
@@ -441,8 +516,15 @@ typedef struct {
     uint32_t freq;                /**< Module clock frequency, usually CLOCK_CORECLOCK or CLOCK_BUSCLOCK */
     gpio_t pin_rx;                /**< RX pin, GPIO_UNDEF disables RX */
     gpio_t pin_tx;                /**< TX pin */
+#ifdef KINETIS_HAVE_PCR
     uint32_t pcr_rx;              /**< Pin configuration register bits for RX */
     uint32_t pcr_tx;              /**< Pin configuration register bits for TX */
+#endif
+#ifdef KINETIS_HAVE_PINSEL
+    volatile uint32_t *pinsel;
+    uint32_t pinsel_mask;
+    uint32_t pinsel_val;
+#endif
     IRQn_Type irqn;               /**< IRQ number for this module */
     volatile uint32_t *scgc_addr; /**< Clock enable register, in SIM module */
     uint8_t scgc_bit;             /**< Clock enable bit, within the register */
@@ -450,8 +532,8 @@ typedef struct {
     uart_type_t type;             /**< Hardware module type (KINETIS_UART or KINETIS_LPUART)*/
 } uart_conf_t;
 
-#if !defined(KINETIS_HAVE_PLL)
-#if defined(MCG_C6_PLLS_MASK) || DOXYGEN
+#if !defined(KINETIS_HAVE_PLL) && defined(MODULE_PERIPH_MCG) \
+  && defined(MCG_C6_PLLS_MASK) || DOXYGEN
 /**
  * @brief Defined to 1 if the MCG in this Kinetis CPU has a PLL
  */
@@ -459,8 +541,21 @@ typedef struct {
 #else
 #define KINETIS_HAVE_PLL 0
 #endif
-#endif /* !defined(KINETIS_HAVE_PLL) */
 
+#ifdef MODULE_PERIPH_MCG_LITE
+/**
+ * @brief Kinetis possible MCG modes
+ */
+typedef enum kinetis_mcg_mode {
+    KINETIS_MCG_MODE_LIRC8M = 0, /**< LIRC 8 MHz mode*/
+    KINETIS_MCG_MODE_HIRC   = 1, /**< HIRC 48 MHz mode */
+    KINETIS_MCG_MODE_EXT    = 2, /**< External clocking mode */
+    KINETIS_MCG_MODE_LIRC2M = 3, /**< LIRC 2 MHz mode */
+    KINETIS_MCG_MODE_NUMOF,    /**< Number of possible modes */
+} kinetis_mcg_mode_t;
+#endif /* MODULE_PERIPH_MCG_LITE */
+
+#ifdef MODULE_PERIPH_MCG
 /**
  * @brief Kinetis possible MCG modes
  */
@@ -499,6 +594,9 @@ typedef enum {
     /** FLL multiplier = 2929 */
     KINETIS_MCG_FLL_FACTOR_2929 = (MCG_C4_DRST_DRS(3) | MCG_C4_DMX32_MASK),
 } kinetis_mcg_fll_t;
+
+#endif /* MODULE_PERIPH_MCG */
+#if defined(MODULE_PERIPH_MCG) || defined(MODULE_PERIPH_MCG_LITE)
 
 /**
  * @brief Kinetis FLL external reference clock range settings
@@ -542,6 +640,8 @@ typedef enum {
      * @note This flag affects the clock frequency of the CPU when using the MCG
      * in FBI, or BLPI clocking modes.
      *
+     * @note This flag is ignored on MCG_Lite parts
+     *
      * - If this flag is set, the fast internal reference clock (up to 4 MHz,
      * depends on settings) will be routed to the MCGIRCLK internal clock signal.
      * - If not set, the slow internal reference clock (32 kHz) will be routed to
@@ -569,6 +669,17 @@ typedef enum {
      *   CPU STOP modes.
      */
     KINETIS_CLOCK_MCGIRCLK_STOP_EN  = (1 <<  4),
+    /**
+     * @brief   Enable MCGPCLK (HIRC) internal clock signal
+     *
+     * This flag corresponds to the HIRCEN bit in the MCG_MC register.
+     *
+     * This clock source is only available on MCG_Lite parts
+     *
+     * - If this flag is set, the MCG will provide MCGPCLK for use by other
+     * peripherals.
+     */
+    KINETIS_CLOCK_MCGPCLK_EN        = (1 <<  5),
 } kinetis_clock_flags_t;
 
 /**
@@ -640,6 +751,7 @@ typedef struct {
      * @see CPU reference manual, OSC_CR[SCxP]
      */
     uint8_t osc_clc;
+#ifdef MODULE_PERIPH_MCG
     /**
      * @brief   MCG external reference oscillator selection
      *
@@ -650,8 +762,11 @@ typedef struct {
      * @see CPU reference manual, MCG_C7[OSCSEL]
      */
     uint8_t oscsel;
+#endif /* MODULE_PERIPH_MCG */
     /**
      * @brief   Fast internal reference clock divider
+     *
+     * This field is also known as LIRC_DIV1 on MCG_Lite parts.
      *
      * The bits will be passed directly to the MCG_SC register without any
      * transformation, use the MCG_SC_FCRDIV() macro to ensure the proper bit
@@ -660,6 +775,20 @@ typedef struct {
      * @see CPU reference manual, MCG_SC[FCRDIV]
      */
     uint8_t fcrdiv;
+#ifdef MODULE_PERIPH_MCG_LITE
+    /**
+     * @brief   LIRC second clock divider
+     *
+     * The bits will be passed directly to the MCG_MC register without any
+     * transformation, use the MCG_MC_LIRC_DIV2() macro to ensure the proper bit
+     * shift for the chosen setting.
+     * This divider only affects the MCGIRCLK output, it does not affect the
+     * core frequency when running the MCU in a LIRC clocking mode.
+     *
+     * @see CPU reference manual, MCG_MC[LIRC_DIV2]
+     */
+    uint8_t lirc_div2;
+#else
     /**
      * @brief   FLL ERC divider setting
      *
@@ -706,8 +835,9 @@ typedef struct {
      */
     uint8_t pll_vdiv;
 #endif /* KINETIS_HAVE_PLL */
+#endif /* MODULE_PERIPH_MCG */
 } clock_config_t;
-
+#endif /* MODULE_PERIPH_MCG || MODULE_PERIPH_MCG_LITE */
 /**
  * @brief   CPU internal function for initializing PORTs
  *
