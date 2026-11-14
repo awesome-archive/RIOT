@@ -1,14 +1,10 @@
 /*
- * Copyright (C) 2014 INRIA
- *               2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 INRIA
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-#ifndef BOARD_H
-#define BOARD_H
+#pragma once
 
 /**
  * @ingroup     boards_z1
@@ -51,17 +47,11 @@ extern "C" {
 /** @} */
 
 /**
- * @name    CPU core configuration
+ * @name    ztimer configuration values
  * @{
  */
-/** @todo   Move this to the periph_conf.h */
-#define MSP430_INITIAL_CPU_SPEED    8000000uL
-#ifndef F_CPU
-#define F_CPU                       MSP430_INITIAL_CPU_SPEED
-#endif
-#define F_RC_OSCILLATOR             32768
-#define MSP430_HAS_DCOR             0
-#define MSP430_HAS_EXTERNAL_CRYSTAL 1
+#define CONFIG_ZTIMER_USEC_ADJUST_SET     (99)
+#define CONFIG_ZTIMER_USEC_ADJUST_SLEEP   (100)
 /** @} */
 
 /**
@@ -120,4 +110,3 @@ extern "C" {
 #endif
 
 /** @} */
-#endif /* BOARD_H */

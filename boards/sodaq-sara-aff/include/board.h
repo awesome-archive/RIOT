@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_sodaq-sara-aff
@@ -16,22 +15,13 @@
  * @author      Leandro Lanzieri <leandro.lanzieri@haw-hamburg.de>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include "cpu.h"
-#include "periph_conf.h"
+#include "board_common.h"
+#include "periph/gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @name    xtimer configuration
- * @{
- */
-#define XTIMER_WIDTH        (16)
-/** @} */
 
 /**
  * @name    LED pin definitions and handlers
@@ -155,14 +145,8 @@ extern "C" {
 #define NB_IOT_TOGGLE_OFF       (NB_IOT_TOGGLE_PORT.OUTCLR.reg = NB_IOT_TOGGLE_MASK)
 /** @} */
 
-/**
- * @brief Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

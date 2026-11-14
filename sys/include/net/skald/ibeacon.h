@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup    net_skald_ibeacon Skald about iBeacon
- * @ingroup     net_skald
+ * @defgroup    ble_skald_ibeacon Skald about iBeacon
+ * @ingroup     ble_skald
  * @brief       Skald's simple iBeacon abstraction
  *
  * # About
@@ -25,9 +24,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef NET_SKALD_IBEACON_H
-#define NET_SKALD_IBEACON_H
-
 #include "net/skald.h"
 
 #ifdef __cplusplus
@@ -42,13 +38,14 @@ extern "C" {
  * @param[in] major     the iBeacon's major number
  * @param[in] minor     the iBeacon's minor number
  * @param[in] txpower   calibrated TX power to be advertised by the beacon
+ * @param[in] adv_itvl_ms   advertising interval [ms]
  */
 void skald_ibeacon_advertise(skald_ctx_t *ctx, const skald_uuid_t *uuid,
-                             uint16_t major, uint16_t minor, uint8_t txpower);
+                             uint16_t major, uint16_t minor, uint8_t txpower,
+                             uint32_t adv_itvl_ms);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* NET_SKALD_IBEACON_H */
 /** @} */

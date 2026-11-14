@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2014-2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014-2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
+
 /**
  * @defgroup pkg_tlsf_malloc TLSF-based malloc.
  * @ingroup  pkg
@@ -14,7 +14,7 @@
  *
  * This is a malloc/free implementation built on top of the TLSF allocator.
  * It defines a global tlsf_control block and performs allocations on that
- * block. This implemetation replaces the system malloc
+ * block. This implementation replaces the system malloc
  *
  * Additionally, the calls to TLSF are wrapped in irq_disable()/irq_restore(),
  * to make it thread-safe.
@@ -33,10 +33,8 @@
  *
  */
 
-#ifndef TLSF_MALLOC_H
-#define TLSF_MALLOC_H
-
 #include <stddef.h>
+
 #include "tlsf.h"
 
 #ifdef __cplusplus
@@ -86,14 +84,11 @@ int tlsf_add_global_pool(void *mem, size_t bytes);
  *
  * Use for debugging purposes only.
  */
-tlsf_t *_tlsf_get_global_control(void);
-
+tlsf_t _tlsf_get_global_control(void);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* TLSF_MALLOC_H */
 
 /**
  * @}

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_bmx055 BMX055 9-axis sensor
@@ -23,9 +22,6 @@
  * @author      Semjon Kerner <semjon.kerner@fu-berlin.de>
  */
 
-#ifndef BMX055_H
-#define BMX055_H
-
 #include <stdint.h>
 
 #include "periph/i2c.h"
@@ -36,12 +32,42 @@ extern "C" {
 #endif
 
 /**
- * @name   The sensors default I2C addresses
+ * @defgroup drivers_bmx055_config     BMX055 sensor driver compile configuration
+ * @ingroup config_drivers_sensors
  * @{
  */
-#define BMX055_MAG_ADDR_DEFAULT  (0x10U)
-#define BMX055_ACC_ADDR_DEFAULT  (0x18U)
-#define BMX055_GYRO_ADDR_DEFAULT (0x68U)
+/**
+ * @brief Magnetometer default address
+ *
+ * The address depends on the state of SDO1, SDO2 and CSB3 pins.
+ * For more information refer to the section 'Inter-Integrated
+ * Circuit (I²C)' in the datasheet.
+ */
+#ifndef CONFIG_BMX055_MAG_ADDR_DEFAULT
+#define CONFIG_BMX055_MAG_ADDR_DEFAULT  (0x10U)
+#endif
+
+/**
+ * @brief Accelerometer default address
+ *
+ * The address depends on the state of SDO1, SDO2 and CSB3 pins.
+ * For more information refer to the section 'Inter-Integrated
+ * Circuit (I²C)' in the datasheet.
+ */
+#ifndef CONFIG_BMX055_ACC_ADDR_DEFAULT
+#define CONFIG_BMX055_ACC_ADDR_DEFAULT  (0x18U)
+#endif
+
+/**
+ * @brief Gyroscope default address
+ *
+ * The address depends on the state of SDO1, SDO2 and CSB3 pins.
+ * For more information refer to the section 'Inter-Integrated
+ * Circuit (I²C)' in the datasheet.
+ */
+#ifndef CONFIG_BMX055_GYRO_ADDR_DEFAULT
+#define CONFIG_BMX055_GYRO_ADDR_DEFAULT (0x68U)
+#endif
 /** @} */
 
 /**
@@ -169,5 +195,4 @@ int bmx055_gyro_read(const bmx055_t *dev, int16_t *data);
 }
 #endif
 
-#endif /* BMX055_H */
 /** @} */

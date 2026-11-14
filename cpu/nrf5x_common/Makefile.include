@@ -1,15 +1,17 @@
-# export the CPU family so we can differentiate between them in the code
-FAM = $(shell echo $(CPU_FAM) | tr 'a-z-' 'A-Z_')
-export CFLAGS += -DCPU_FAM_$(FAM)
+CFLAGS += -DCPU_FAM_$(call uppercase_and_underscore,$(CPU_FAM))
 
-# use common periph functions
-USEMODULE += periph_common
+ROM_START_ADDR ?= 0x00000000
+RAM_START_ADDR ?= 0x20000000
 
-# include nrf5x common periph drivers
-USEMODULE += nrf5x_common_periph
+LINKER_SCRIPT ?= cortexm.ld
 
-# link common cpu code
-USEMODULE += cpu_common
+INCLUDES += -I$(RIOTCPU)/nrf5x_common/include
+INCLUDES += -I$(BUILD_DIR)/nrf5x_nrfx_mdk/$(CPU_FAM)
 
-# export the common include directory
-export INCLUDES += -I$(RIOTCPU)/nrf5x_common/include
+# Fetch all nRF52 vendor headers using the package mechanism. This rule is called all
+# the time to ensure it's correctly updated when versions in the packages are
+# updated.
+fetch_nrfx_vendor_headers: FORCE $(CLEAN)
+	$(Q)+$(MAKE) -f $(RIOTBASE)/cpu/nrf5x_common/Makefile.nrfx
+
+BUILDDEPS += fetch_nrfx_vendor_headers

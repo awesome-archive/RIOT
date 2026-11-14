@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2015 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_nvram
@@ -19,9 +18,6 @@
  *
  * @author      Joakim Nohlgård <joakim.nohlgard@eistec.se>
  */
-
-#ifndef NVRAM_SPI_H
-#define NVRAM_SPI_H
 
 #include <stdint.h>
 #include "nvram.h"
@@ -64,5 +60,4 @@ int nvram_spi_init(nvram_t *dev, nvram_spi_params_t *spi_params, size_t size);
 }
 #endif
 
-#endif /* NVRAM_SPI_H */
 /** @} */

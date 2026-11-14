@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #include "embUnit.h"
@@ -11,7 +8,7 @@
 
 #include "analog_util.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 typedef struct {
@@ -44,7 +41,7 @@ static test_values_t test_data[] = {
     {  3972L,  9876,      10000L,          0L, ADC_RES_14BIT},
 };
 
-#define TEST_DATA_NUMOF (sizeof(test_data) / sizeof(test_data[0]))
+#define TEST_DATA_NUMOF ARRAY_SIZE(test_data)
 
 static void test_adc_util_map(void)
 {

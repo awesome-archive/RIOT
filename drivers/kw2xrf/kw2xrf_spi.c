@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 PHYTEC Messtechnik GmbH
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2015 PHYTEC Messtechnik GmbH
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -27,15 +24,15 @@
 #include "cpu_conf.h"
 #include "irq.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG        0
 #include "debug.h"
 
-#define SPIDEV                  (dev->params.spi)
-#define SPICLK                  (dev->params.spi_clk)
-#define CSPIN                   (dev->params.cs_pin)
-#define SPIMODE                 (SPI_MODE_0)
+#define SPIDEV              (dev->params->spi)
+#define SPICLK              (dev->params->spi_clk)
+#define CSPIN               (dev->params->cs_pin)
+#define SPIMODE             (SPI_MODE_0)
 
-#define KW2XRF_IBUF_LENGTH      (9)
+#define KW2XRF_IBUF_LENGTH  (9)
 
 static uint8_t ibuf[KW2XRF_IBUF_LENGTH];
 
@@ -74,21 +71,11 @@ int kw2xrf_spi_init(kw2xrf_t *dev)
                   (unsigned)SPIDEV, res);
         return 1;
     }
-    /* verify SPI params */
-    res = spi_acquire(SPIDEV, CSPIN, SPIMODE, SPICLK);
-    if (res == SPI_NOMODE) {
-        LOG_ERROR("[kw2xrf_spi] given SPI mode is not supported");
-        return 1;
+    /* verify SPI params, if assertions are on */
+    if (!IS_ACTIVE(NDEBUG)) {
+        spi_acquire(SPIDEV, CSPIN, SPIMODE, SPICLK);
+        spi_release(SPIDEV);
     }
-    else if (res == SPI_NOCLK) {
-        LOG_ERROR("[kw2xrf_spi] targeted clock speed is not supported");
-        return 1;
-    }
-    else if (res != SPI_OK) {
-        LOG_ERROR("[kw2xrf_spi] unable to acquire bus with given parameters");
-        return 1;
-    }
-    spi_release(SPIDEV);
 
     DEBUG("[kw2xrf_spi] SPI_DEV(%u) initialized: mode: %u, clk: %u, cs_pin: %u\n",
           (unsigned)SPIDEV, (unsigned)SPIMODE, (unsigned)SPICLK, (unsigned)CSPIN);
@@ -129,7 +116,6 @@ void kw2xrf_read_dregs(kw2xrf_t *dev, uint8_t addr, uint8_t *buf, uint8_t length
     DEBUG("[kw2xrf_spi] kw2xrf_read_dregs, addr %u, length %u\n", addr, length);
     kw2xrf_spi_transfer_tail(dev);
 }
-
 
 void kw2xrf_write_iregs(kw2xrf_t *dev, uint8_t addr, uint8_t *buf, uint8_t length)
 {

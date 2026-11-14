@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017-2018 Bas Stottelaar <basstottelaar@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017-2018 Bas Stottelaar <basstottelaar@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -22,20 +19,30 @@
 
 #include "em_emu.h"
 
+#define ENABLE_DEBUG 0
+#include "debug.h"
+
 void pm_set(unsigned mode)
 {
     switch (mode) {
-        case 0:
+        case EFM32_PM_MODE_EM3:
+            DEBUG_PUTS("[pm] enter EFM32_PM_MODE_EM3");
             /* after exiting EM3, clocks are restored */
             EMU_EnterEM3(true);
             break;
-        case 1:
+        case EFM32_PM_MODE_EM2:
+            DEBUG_PUTS("[pm] enter EFM32_PM_MODE_EM2");
             /* after exiting EM2, clocks are restored */
             EMU_EnterEM2(true);
             break;
-        default:
+        case EFM32_PM_MODE_EM1:
+            DEBUG_PUTS("[pm] enter EFM32_PM_MODE_EM1");
             /* wait for next event or interrupt */
             EMU_EnterEM1();
+            break;
+        default:
+            /* no sleep at all  */
+            break;
     }
 }
 

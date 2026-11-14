@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016-17 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016-2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -23,10 +20,11 @@
 #include "net/gnrc.h"
 #include "gnrc_netif_xbee.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    0
 #include "debug.h"
 
-#define BCAST   (GNRC_NETIF_HDR_FLAGS_BROADCAST | GNRC_NETIF_HDR_FLAGS_MULTICAST)
+#define BCAST           (GNRC_NETIF_HDR_FLAGS_BROADCAST | \
+                         GNRC_NETIF_HDR_FLAGS_MULTICAST)
 
 static gnrc_pktsnip_t *xbee_adpt_recv(gnrc_netif_t *netif)
 {
@@ -86,7 +84,7 @@ static gnrc_pktsnip_t *xbee_adpt_recv(gnrc_netif_t *netif)
         return NULL;
     }
     netif_hdr = (gnrc_netif_hdr_t *)netif_snip->data;
-    netif_hdr->if_pid = netif->pid;
+    gnrc_netif_hdr_set_netif(netif_hdr, netif);
     netif_hdr->rssi = l2hdr.rssi;
     if (l2hdr.bcast) {
         netif_hdr->flags = GNRC_NETIF_HDR_FLAGS_BROADCAST;
@@ -95,9 +93,7 @@ static gnrc_pktsnip_t *xbee_adpt_recv(gnrc_netif_t *netif)
     DEBUG("[xbee-gnrc] recv: successfully parsed packet\n");
 
     /* and append the netif header */
-    LL_APPEND(payload, netif_snip);
-
-    return payload;
+    return gnrc_pkt_append(payload, netif_snip);
 }
 
 static int xbee_adpt_send(gnrc_netif_t *netif, gnrc_pktsnip_t *pkt)
@@ -112,16 +108,16 @@ static int xbee_adpt_send(gnrc_netif_t *netif, gnrc_pktsnip_t *pkt)
 
     /* get the payload size and the dst address details */
     size = gnrc_pkt_len(pkt->next);
-    DEBUG("[xbee-gnrc] send: payload of packet is %i\n", (int)size);
+    DEBUG("[xbee-gnrc] send: payload of packet is %" PRIuSIZE "\n", size);
     hdr = (gnrc_netif_hdr_t *)pkt->data;
     if (hdr->flags & BCAST) {
         uint16_t addr = 0xffff;
-        res = xbee_build_hdr((xbee_t *)netif, xhdr, size, &addr, 2);
+        res = xbee_build_hdr((xbee_t *)netif->dev, xhdr, size, &addr, 2);
         DEBUG("[xbee-gnrc] send: preparing to send broadcast\n");
     }
     else {
         uint8_t *addr = gnrc_netif_hdr_get_dst_addr(hdr);
-        res = xbee_build_hdr((xbee_t *)netif, xhdr, size, addr,
+        res = xbee_build_hdr((xbee_t *)netif->dev, xhdr, size, addr,
                              hdr->dst_l2addr_len);
         if (res < 0) {
             if (res == -EOVERFLOW) {
@@ -151,14 +147,6 @@ static int xbee_adpt_send(gnrc_netif_t *netif, gnrc_pktsnip_t *pkt)
         .iol_len = res
     };
 
-#ifdef MODULE_NETSTATS_L2
-    if (hdr->flags & BCAST) {
-        netif->dev->stats.tx_mcast_count++;
-    }
-    else {
-        netif->dev->stats.tx_unicast_count++;
-    }
-#endif
     DEBUG("[xbee-gnrc] send: triggering the drivers send function\n");
     res = netif->dev->driver->send(netif->dev, &iolist);
 
@@ -168,16 +156,16 @@ static int xbee_adpt_send(gnrc_netif_t *netif, gnrc_pktsnip_t *pkt)
 }
 
 static const gnrc_netif_ops_t _xbee_ops = {
+    .init = gnrc_netif_default_init,
     .send = xbee_adpt_send,
     .recv = xbee_adpt_recv,
     .get = gnrc_netif_get_from_netdev,
     .set = gnrc_netif_set_from_netdev,
 };
 
-gnrc_netif_t *gnrc_netif_xbee_create(char *stack, int stacksize,
-                                     char priority, char *name,
-                                     netdev_t *dev)
+int gnrc_netif_xbee_create(gnrc_netif_t *netif, char *stack, int stacksize,
+                           char priority, char *name, netdev_t *dev)
 {
-    return gnrc_netif_create(stack, stacksize, priority, name,
+    return gnrc_netif_create(netif, stack, stacksize, priority, name,
                              dev, &_xbee_ops);
 }

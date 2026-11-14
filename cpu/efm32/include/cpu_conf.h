@@ -1,15 +1,12 @@
 /*
- * Copyright (C) 2015-2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015-2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup    cpu_efm32 Silicon Labs EFM32/EFR32/EZR32
- * @ingroup     cpu
- * @brief       Support for Silicon Labs EFM32/EFR32/EZR32 CPUs
+ * @ingroup     cpu_efm32
  * @{
  *
  * @file
@@ -18,9 +15,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @author      Bas Stottelaar <basstottelaar@gmail.com>
  */
-
-#ifndef CPU_CONF_H
-#define CPU_CONF_H
 
 #include "cpu_conf_common.h"
 
@@ -45,11 +39,25 @@ extern "C" {
  */
 #define FLASHPAGE_SIZE                  (FLASH_PAGE_SIZE)
 #define FLASHPAGE_NUMOF                 (FLASH_SIZE / FLASH_PAGE_SIZE)
+/* The minimum block size which can be written is 4B. However, the erase
+ * block is always FLASHPAGE_SIZE.
+ */
+#define FLASHPAGE_WRITE_BLOCK_SIZE      (4U)
+/* Writing should be always 4 bytes aligned */
+#define FLASHPAGE_WRITE_BLOCK_ALIGNMENT (4U)
+/** @} */
+
+/**
+ * @brief   Bit-Band configuration
+ * @{
+ */
+#ifdef BITBAND_RAM_BASE
+#define CPU_HAS_BITBAND 1
+#endif
 /** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CPU_CONF_H */
 /** @} */

@@ -1,8 +1,9 @@
 /*
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Sam Kumar
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    core_sync_cond Condition Variable
@@ -134,9 +135,6 @@
  * @author      Sam Kumar <samkumar@berkeley.edu>
  */
 
-#ifndef COND_H
-#define COND_H
-
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -185,7 +183,6 @@ void cond_init(cond_t *cond);
  */
 void cond_wait(cond_t *cond, mutex_t *mutex);
 
-
 /**
  * @brief Wakes up one thread waiting on the condition variable.
  *
@@ -212,5 +209,4 @@ void cond_broadcast(cond_t *cond);
 }
 #endif
 
-#endif /* COND_H */
 /** @} */

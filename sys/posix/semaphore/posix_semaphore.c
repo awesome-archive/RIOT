@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2017 TriaGnoSys GmbH
- *               2013 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 TriaGnoSys GmbH
+ * SPDX-FileCopyrightText: 2013 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -26,9 +23,9 @@
 #include "sema.h"
 #include "timex.h"
 #include "thread.h"
-#include "xtimer.h"
+#include "ztimer64.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #include "semaphore.h"
@@ -37,7 +34,7 @@ int sem_timedwait(sem_t *sem, const struct timespec *abstime)
 {
     uint64_t timeout = (((uint64_t)abstime->tv_sec) * US_PER_SEC) +
                        (abstime->tv_nsec / NS_PER_US);
-    uint64_t now = xtimer_now_usec64();
+    uint64_t now = ztimer64_now(ZTIMER64_USEC);
 
     if (now > timeout) {
         errno = ETIMEDOUT;

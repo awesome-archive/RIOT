@@ -1,5 +1,16 @@
-ifneq (,$(filter can,$(USEMODULE)))
-    USEMODULE += esp_can
+# enables esp_eth as default network device
+ifneq (,$(filter netdev_default,$(USEMODULE)))
+  USEMODULE += esp_eth
 endif
 
-include $(RIOTBOARD)/common/esp32/Makefile.dep
+# default to using fatfs on SD card
+ifneq (,$(filter vfs_default,$(USEMODULE)))
+  USEMODULE += fatfs_vfs
+  USEMODULE += mtd
+endif
+
+ifneq (,$(filter mtd,$(USEMODULE)))
+  USEMODULE += mtd_sdmmc_default
+endif
+
+USEMODULE += boards_common_esp32

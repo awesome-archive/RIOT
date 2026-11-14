@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 UC Berkeley
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 UC Berkeley
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -33,7 +30,7 @@ static int read_pulse_counter(const void *dev, phydat_t *res)
     return 1;
 }
 
-static int write_pulse_counter(const void *dev, phydat_t *data)
+static int write_pulse_counter(const void *dev, const phydat_t *data)
 {
     /* Using non-const dev !! */
     pulse_counter_t *mydev = (pulse_counter_t *)dev;

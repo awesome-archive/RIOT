@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *               2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -28,7 +25,7 @@
 #include "cc2420_registers.h"
 #include "periph/spi.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 /**
@@ -199,14 +196,6 @@ int cc2420_set_option(cc2420_t *dev, uint16_t option, bool state)
                 DEBUG("cc2420: set_opt: CC2420_OPT_PRELOADING\n");
                 break;
 
-            case CC2420_OPT_TELL_TX_START:
-            case CC2420_OPT_TELL_TX_END:
-            case CC2420_OPT_TELL_RX_START:
-            case CC2420_OPT_TELL_RX_END:
-                DEBUG("cc2420: set_opt: TX/RX START/END\n");
-                /* TODO */
-                break;
-
             default:
                 return -ENOTSUP;
         }
@@ -240,14 +229,6 @@ int cc2420_set_option(cc2420_t *dev, uint16_t option, bool state)
 
             case CC2420_OPT_PRELOADING:
                 DEBUG("cc2420: clr_opt: CC2420_OPT_PRELOADING\n");
-                break;
-
-            case CC2420_OPT_TELL_TX_START:
-            case CC2420_OPT_TELL_TX_END:
-            case CC2420_OPT_TELL_RX_START:
-            case CC2420_OPT_TELL_RX_END:
-                DEBUG("cc2420: clr_opt: TX/RX START/END\n");
-                /* TODO */
                 break;
 
             default:

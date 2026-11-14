@@ -1,13 +1,9 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-#ifndef BOARD_COMMON_H
-#define BOARD_COMMON_H
+#pragma once
 
 /**
  * @ingroup     boards_common_esp8266
@@ -16,6 +12,9 @@
  * @author      Gunar Schorcht <gunar@schorcht.net>
  * @{
  */
+
+/* not required when compiling ESP vendor code parts */
+#ifndef ESP_PLATFORM
 
 #include <stdint.h>
 
@@ -54,7 +53,6 @@ extern "C" {
 #endif
 /** @} */
 
-
 /**
  * @name    STDIO configuration
  * @{
@@ -64,14 +62,11 @@ extern "C" {
 #endif
 /** @} */
 
-
 #ifndef DOXYGEN
 /**
  * @name    XTimer configuration
  * @{
  */
-#define XTIMER_OVERHEAD             (0U)
-
 #if defined(MODULE_ESP_SW_TIMER)
 #define XTIMER_BACKOFF              (100U)
 #define XTIMER_ISR_BACKOFF          (100U)
@@ -79,7 +74,6 @@ extern "C" {
 
 /** @} */
 #endif /* DOXYGEN */
-
 
 #if defined(MODULE_MTD) || defined(DOXYGEN)
 /**
@@ -89,17 +83,21 @@ extern "C" {
  * a system MTD device has to be defined.
  * @{
  */
-#include "mtd.h"
 
 /** Default MTD device definition */
-#define MTD_0 mtd0
+#define MTD_0 mtd_dev_get(0)
 
-/** Pointer to the default MTD device structure */
-extern mtd_dev_t *mtd0;
+/**
+ * @brief   MTD offset for SD Card interfaces
+ *
+ * MTD_1 is used for SD Card.
+ */
+#ifndef CONFIG_SDCARD_GENERIC_MTD_OFFSET
+#define CONFIG_SDCARD_GENERIC_MTD_OFFSET    1
+#endif
 
 /** @} */
 #endif /* defined(MODULE_MTD) || defined(DOXYGEN) */
-
 
 #if defined(MODULE_SPIFFS) || defined(DOXYGEN)
 /**
@@ -116,16 +114,6 @@ extern mtd_dev_t *mtd0;
 /** @} */
 #endif /* defined(MODULE_SPIFFS) || defined(DOXYGEN) */
 
-
-/**
- * @brief Initialize board specific hardware
- *
- * Since all features of ESP8266 boards are provided by the MCU, almost all
- * initializations are done during the CPU initialization that is called from
- * boot loader.
- */
-extern void board_init(void);
-
 /**
   * @brief Print the board configuration in a human readable format
   */
@@ -140,4 +128,4 @@ void board_print_config (void);
 
 /** @} */
 
-#endif /* BOARD_COMMON_H */
+#endif /* ESP_PLATFORM */

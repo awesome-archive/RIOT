@@ -1,15 +1,12 @@
 /*
- * Copyright (C) 2018 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #include <stdint.h>
 #include "matstat.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 void matstat_clear(matstat_state_t *state)
@@ -53,8 +50,15 @@ uint64_t matstat_variance(const matstat_state_t *state)
         return 0;
     }
     uint64_t variance = state->sum_sq / (state->count - 1);
+#ifdef PRIu64
     DEBUG("Var: (%" PRIu64 " / (%" PRId32 " - 1)) = %" PRIu64 "\n",
         state->sum_sq, state->count, variance);
+#else
+    DEBUG("Var: (%" PRIu32 "%s / (%" PRId32 " - 1)) = %" PRIu32 "%s\n",
+          (uint32_t)state->sum_sq, (state->sum_sq > UINT32_MAX) ? "!trunc " : "",
+          state->count,
+          (uint32_t)variance, (variance > UINT32_MAX) ? "!trunc " : "");
+#endif
     return variance;
 }
 

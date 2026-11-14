@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -51,12 +48,12 @@ static int read_hum(const void *dev, phydat_t *res)
 
 const saul_driver_t hdc1000_saul_temp_driver = {
     .read = read_temp,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_TEMP,
 };
 
 const saul_driver_t hdc1000_saul_hum_driver = {
     .read = read_hum,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_HUM,
 };

@@ -40,6 +40,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+
 /**
  * @ingroup     drivers_kw2xrf
  * @{
@@ -49,9 +51,6 @@
  *
  * @author      Johann Fischer <j.fischer@phytec.de>
  */
-
-#ifndef KW2XRF_REG_H
-#define KW2XRF_REG_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -559,10 +558,8 @@ enum mkw2xdrf_iregister {
 #define MKW2XDMI_TX_MODE_CTRL_DTS0                      (1 << 0)
 #define MKW2XDMI_TX_MODE_CTRL_DTS_MASK                  7
 
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* KW2XRF_REG_H */
 /** @} */

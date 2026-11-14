@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2022 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -22,22 +19,18 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "periph/cpuid.h"
-#include "soc/efuse_reg.h"
+#include "periph_cpu.h"
+#include "esp_mac.h"
+
+/*
+ * ESP32x SoCs don't have a real chip id. The factory-programmed MAC address
+ * from eFuse is used instead. It always has 6 bytes, also on SoCs with
+ * IEEE 802.15.4 radio where esp_efuse_mac_get_default would return the
+ * 8 byte EUI-64 address.
+ */
 
 void cpuid_get(void *id)
 {
-    /* since ESP32 has two cores, the default MAC address is used as CPU id */
-    uint32_t rdata1 = REG_READ(EFUSE_BLK0_RDATA1_REG);
-    uint32_t rdata2 = REG_READ(EFUSE_BLK0_RDATA2_REG);
-
-    uint8_t *tmp = id;
-
-    tmp[0] = rdata2 >> 16;
-    tmp[1] = rdata2 >> 8;
-    tmp[2] = rdata2;
-    tmp[3] = rdata1 >> 24;
-    tmp[4] = rdata1 >> 16;
-    tmp[5] = rdata1 >> 8;
-    tmp[6] = rdata1;
+    _Static_assert(CPUID_LEN == 6, "CPUID_LEN has to be 6");
+    esp_read_mac(id, ESP_MAC_EFUSE_FACTORY);
 }

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Kaspar Schleiser <kaspar@schleiser.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -33,7 +30,6 @@ void test_netopt2str_unknown(void)
 {
     TEST_ASSERT_EQUAL_INT(0, strcmp(netopt2str(NETOPT_NUMOF), "unknown"));
 }
-
 
 Test *tests_netopt_tests(void)
 {

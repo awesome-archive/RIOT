@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_lobaro_lorabox
@@ -17,25 +16,27 @@
  * @author      Leandro Lanzieri <leandro.lanzieri@haw-hamburg.de>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
+ * @name    xtimer configuration
+ * @{
+ */
+#define XTIMER_WIDTH        (16)
+#define XTIMER_BACKOFF      (50)
+#define XTIMER_ISR_BACKOFF  (40)
+/** @} */
+
+/**
  * @name    LED pin definitions and handlers
  * @{
  */
-#define AUTO_INIT_LED0
-#define LED0_PORT           GPIOA
-#define LED0_PIN            GPIO_PIN(PORT_A, 1)
-#define LED0_MASK           (1 << 1)
-
-#define LED0_ON             (LED0_PORT->BSRR = (LED0_MASK << 16))
-#define LED0_OFF            (LED0_PORT->BSRR = LED0_MASK)
-#define LED0_TOGGLE         (LED0_PORT->ODR  ^= LED0_MASK)
+#define LED0_PIN_NUM        1
+#define LED0_PORT           GPIO_PORT_A /**< GPIO port of LED 0 */
+#define LED0_PORT_NUM       PORT_A
+#define LED0_IS_INVERTED    1
 
 #define EN3V3_PORT          GPIOA
 #define EN3V3_PIN           GPIO_PIN(PORT_A, 11)
@@ -52,41 +53,18 @@ extern "C" {
  * SX127X configuration.
  * @{
  */
-#define SX127X_PARAM_SPI                (SPI_DEV(0))
-
 #define SX127X_PARAM_SPI_NSS            GPIO_PIN(PORT_B, 0)
-
 #define SX127X_PARAM_RESET              GPIO_PIN(PORT_A, 4)
-
 #define SX127X_PARAM_DIO0               GPIO_PIN(PORT_B, 1)
-
 #define SX127X_PARAM_DIO1               GPIO_PIN(PORT_B, 10)
-
 #define SX127X_PARAM_DIO2               GPIO_PIN(PORT_B, 11)
-
 #define SX127X_PARAM_DIO3               GPIO_PIN(PORT_B, 7)
-
-#define SX127X_PARAM_PASELECT           (SX127X_PA_RFO)
-
-#define SX127X_PARAMS                   {   .spi       = SX127X_PARAM_SPI,     \
-                                            .nss_pin   = SX127X_PARAM_SPI_NSS, \
-                                            .reset_pin = SX127X_PARAM_RESET,   \
-                                            .dio0_pin  = SX127X_PARAM_DIO0,    \
-                                            .dio1_pin  = SX127X_PARAM_DIO1,    \
-                                            .dio2_pin  = SX127X_PARAM_DIO2,    \
-                                            .dio3_pin  = SX127X_PARAM_DIO3,    \
-                                            .paselect  = SX127X_PARAM_PASELECT \
-                                        }
 /** @} */
-
-/**
- * @brief Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
+#include "stm32_leds.h"
+
 /** @} */

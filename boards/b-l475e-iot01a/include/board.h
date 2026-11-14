@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_b-l475e-iot01a
@@ -15,9 +14,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef BOARD_H
-#define BOARD_H
 
 #include <stdint.h>
 
@@ -31,25 +27,22 @@ extern "C" {
  * @name    LED pin definitions and handlers
  * @{
  */
-#define LED0_PIN            GPIO_PIN(PORT_A, 5)
-#define LED0_MASK           (1 << 5)
+#define LED0_PIN_NUM        5
+#define LED0_PORT           GPIO_PORT_A /**< GPIO port of LED 0 */
+#define LED0_PORT_NUM       PORT_A
 
-#define LED0_ON             (GPIOA->BSRR = LED0_MASK)
-#define LED0_OFF            (GPIOA->BSRR = (LED0_MASK << 16))
-#define LED0_TOGGLE         (GPIOA->ODR  ^= LED0_MASK)
-
-#define LED1_PIN            GPIO_PIN(PORT_B, 14)
-#define LED1_MASK           (1 << 14)
-
-#define LED1_ON             (GPIOB->BSRR = LED1_MASK)
-#define LED1_OFF            (GPIOB->BSRR = (LED1_MASK << 16))
-#define LED1_TOGGLE         (GPIOB->ODR  ^= LED1_MASK)
+#define LED1_PIN_NUM        14
+#define LED1_PORT           GPIO_PORT_B /**< GPIO port of LED 1 */
+#define LED1_PORT_NUM       PORT_B
 /** @} */
 
 /**
- * @brief   User button
+ * @name    User button pin configuration
+ * @{
  */
-#define BTN_B1_PIN          GPIO_PIN(PORT_C, 13)
+#define BTN0_PIN            GPIO_PIN(PORT_C, 13)    /**< User button pin */
+#define BTN0_MODE           GPIO_IN_PU              /**< User button pin mode */
+/** @} */
 
 /**
  * @name    HTS221 temperature/humidity sensor configuration
@@ -66,21 +59,24 @@ extern "C" {
 /** @} */
 
 /**
- * @name    LSM6DSL accelerometer sensor configuration
+ * @name    LPS22HB pressure/temperature sensor configuration
  * @{
  */
-#define LSM6DSL_PARAM_I2C   I2C_DEV(1)
-#define LSM6DSL_PARAM_ADDR  (0x6A)
+#define LPSXXX_PARAM_I2C    I2C_DEV(1)
 /** @} */
 
 /**
- * @brief   Initialize board specific hardware, including clock, LEDs and std-IO
+ * @name    LSM6DSL accelerometer sensor configuration
+ * @{
  */
-void board_init(void);
+#define LSM6DSXX_PARAM_I2C   I2C_DEV(1)
+#define LSM6DSXX_PARAM_ADDR  (0x6A)
+/** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
+#include "stm32_leds.h"
+
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup         cpu_lpc1768
@@ -17,9 +16,6 @@
  * @author          Bas Stottelaar <basstottelaar@gmail.com>
  */
 
-#ifndef PERIPH_CPU_H
-#define PERIPH_CPU_H
-
 #include <stdint.h>
 
 #include "cpu.h"
@@ -28,6 +24,7 @@
 extern "C" {
 #endif
 
+#ifndef DOXYGEN
 /**
  * @name   Override the default GPIO type
  * @{
@@ -62,6 +59,7 @@ typedef enum {
     GPIO_OD_PU = (PIN_DIR_OUT | PIN_MODE_OD | PIN_MODE_PU)  /**< open-drain output with pull-up */
 } gpio_mode_t;
 /** @} */
+#endif /* ndef DOXYGEN */
 
 /**
  * @brief   CPU provides own pm_off() function
@@ -71,11 +69,32 @@ typedef enum {
 /**
  * @brief   Power management configuration
  */
-#define PM_NUM_MODES    (2U)
+#define PM_NUM_MODES    (3U)
+
+/**
+ * @brief   UART device configuration
+ */
+typedef struct {
+    LPC_UART_TypeDef *dev;  /**< pointer to the UART device */
+    uint8_t irq_rx;         /**< RX IRQ number */
+    uint8_t clk_offset;     /**< The offset of the periph in the clk sel */
+    uint8_t pinsel;         /**< PINSEL# of the RX and TX pin */
+    uint8_t pinsel_shift;   /**< TX/RX bitshift of the PINSEL# register */
+    uint8_t pinsel_af;      /**< Alternate function of the PINSEL# register */
+} uart_conf_t;
+
+/**
+ * @brief   Ethernet peripheral configuration
+ */
+typedef struct {
+    gpio_t phy_en_pin;      /**< PHY / RMII clock enable, @p GPIO_UNDEF if unused */
+    gpio_t phy_rst_pin;     /**< PHY reset, @p GPIO_UNDEF if unused */
+    uint16_t speed;         /**< Link speed selection */
+    uint8_t phy_addr;       /**< MIIM address */
+} eth_conf_t;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERIPH_CPU_H */
 /** @} */

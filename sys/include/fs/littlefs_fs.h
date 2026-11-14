@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_littlefs  littlefs integration
@@ -19,17 +18,16 @@
  * @author      Vincent Dupont <vincent@otakeys.com>
  */
 
-#ifndef FS_LITTLEFS_FS_H
-#define FS_LITTLEFS_FS_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdalign.h>
 
 #include "vfs.h"
 #include "lfs.h"
 #include "mtd.h"
 #include "mutex.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @name    littlefs configuration
@@ -58,6 +56,13 @@ extern "C" {
  * If set, it must be program size */
 #define LITTLEFS_PROG_BUFFER_SIZE   (0)
 #endif
+
+#ifndef LITTLEFS_MIN_BLOCK_SIZE_EXP
+/**
+ * The exponent of the minimum acceptable block size in bytes (2^n).
+ * The desired block size is not guaranteed to be applicable but will be respected. */
+#define LITTLEFS_MIN_BLOCK_SIZE_EXP (-1)
+#endif
 /** @} */
 
 /**
@@ -74,18 +79,19 @@ typedef struct {
     uint32_t base_addr;
 #if LITTLEFS_FILE_BUFFER_SIZE || DOXYGEN
     /** file buffer to use internally if LITTLEFS_FILE_BUFFER_SIZE is set */
-    uint8_t file_buf[LITTLEFS_FILE_BUFFER_SIZE];
+    alignas(uint32_t) uint8_t file_buf[LITTLEFS_FILE_BUFFER_SIZE];
 #endif
 #if LITTLEFS_READ_BUFFER_SIZE || DOXYGEN
     /** read buffer to use internally if LITTLEFS_READ_BUFFER_SIZE is set */
-    uint8_t read_buf[LITTLEFS_READ_BUFFER_SIZE];
+    alignas(uint32_t) uint8_t read_buf[LITTLEFS_READ_BUFFER_SIZE];
 #endif
 #if LITTLEFS_PROG_BUFFER_SIZE || DOXYGEN
     /** prog buffer to use internally if LITTLEFS_PROG_BUFFER_SIZE is set */
-    uint8_t prog_buf[LITTLEFS_PROG_BUFFER_SIZE];
+    alignas(uint32_t) uint8_t prog_buf[LITTLEFS_PROG_BUFFER_SIZE];
 #endif
     /** lookahead buffer to use internally */
-    uint8_t lookahead_buf[LITTLEFS_LOOKAHEAD_SIZE / 8];
+    alignas(uint32_t) uint8_t lookahead_buf[LITTLEFS_LOOKAHEAD_SIZE / 8];
+    uint16_t sectors_per_block; /**< number of sectors per block */
 } littlefs_desc_t;
 
 /** The littlefs vfs driver */
@@ -95,5 +101,4 @@ extern const vfs_file_system_t littlefs_file_system;
 }
 #endif
 
-#endif /* FS_LITTLEFS_FS_H */
 /** @} */

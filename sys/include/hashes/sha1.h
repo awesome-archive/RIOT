@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Oliver Hahm <oliver.hahm@inria.fr>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Oliver Hahm <oliver.hahm@inria.fr>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_hashes_sha1 SHA-1
@@ -22,9 +21,6 @@
 
 /* This code is public-domain - it is based on libcrypt
  * placed in the public domain by Wei Dai and other contributors. */
-
-#ifndef HASHES_SHA1_H
-#define HASHES_SHA1_H
 
 #include <stdint.h>
 
@@ -61,7 +57,6 @@ typedef struct {
     /** temporary buffer for the inner hashing */
     uint8_t inner_hash[SHA1_DIGEST_LENGTH];
 } sha1_context;
-
 
 /**
  * @brief Initialize SHA-1 message digest context
@@ -109,6 +104,8 @@ void sha1_init_hmac(sha1_context *ctx, const void *key, size_t key_length);
 /**
  * @brief Finalizes the SHA-1 message digest with MAC
  *
+ * Internal key material will be wiped after this function is called.
+ *
  * @param[in] ctx     Pointer to the SHA-1 context
  * @param[out] digest Result location, must be 20 byte
  */
@@ -118,5 +115,4 @@ void sha1_final_hmac(sha1_context *ctx, void *digest);
 }
 #endif
 
-#endif /* HASHES_SHA1_H */
 /** @} */

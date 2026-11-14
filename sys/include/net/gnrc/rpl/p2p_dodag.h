@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Cenk Gündoğan <mail@cgundogan.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Cenk Gündoğan <mail@cgundogan.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup net_gnrc_rpl_p2p
@@ -17,9 +16,6 @@
  *
  * @author      Cenk Gündoğan <mail@cgundogan.de>
  */
-
-#ifndef NET_GNRC_RPL_P2P_DODAG_H
-#define NET_GNRC_RPL_P2P_DODAG_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,7 +64,6 @@ gnrc_rpl_p2p_ext_t *gnrc_rpl_p2p_ext_get(gnrc_rpl_dodag_t *dodag);
 }
 #endif
 
-#endif /* NET_GNRC_RPL_P2P_DODAG_H */
 /**
  * @}
  */

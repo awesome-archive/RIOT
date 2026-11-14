@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #include <string.h>
@@ -12,7 +9,7 @@
 
 #include "matstat.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 /* White box testing of matstat library */
@@ -212,7 +209,7 @@ static void test_matstat_merge_variance_regr1(void)
         { .count = 2414, .sum = 4859, .sum_sq = 1074, .min = 1, .max = 3, .mean = 2 },
     };
     matstat_state_t merged = MATSTAT_STATE_INIT;
-    for (unsigned k = 0; k < sizeof(inputs) / sizeof(inputs[0]); ++k) {
+    for (unsigned k = 0; k < ARRAY_SIZE(inputs); ++k) {
         matstat_merge(&merged, &inputs[k]);
     }
     int64_t var = (int64_t)matstat_variance(&merged);

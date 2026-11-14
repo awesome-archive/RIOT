@@ -1,18 +1,17 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc    Generic (GNRC) network stack
  * @ingroup     net
  * @brief       RIOT's modular default IP network stack.
- * @see         [Martine Lenders' master thesis](http://doc.riot-os.org/mlenders_msc.pdf)
+ * @see         [Martine Lenders' master thesis](https://www.riot-os.org/assets/pdfs/mlenders_msc.pdf)
  *              about GNRC's design and evaluation and the slide set of
- *              [its defense](http://doc.riot-os.org/mlenders_msc_def.pdf).
+ *              [its defense](https://www.riot-os.org/assets/pdfs/mlenders_msc_def.pdf).
  *
  * About
  * =====
@@ -69,7 +68,7 @@
  *     msg_init_queue(_msg_q, Q_SZ);
  *     gnrc_netreg_entry me_reg = GNRC_NETREG_ENTRY_INIT_PID(
  *                                      GNRC_NETREG_DEMUX_CTX_ALL,
- *                                      sched_active_pid);
+ *                                      thread_getpid());
  *     gnrc_netreg_register(GNRC_NETTYPE_IPV6, &me_reg);
  *     while (1) {
  *         msg_receive(&msg);
@@ -131,8 +130,8 @@
  *                 pkt = msg.content.ptr;
  *                 _handle_outgoing_pkt(pkt);
  *                 break;
- *              case GNRC_NETAPI_MSG_TYPE_SET:
- *              case GNRC_NETAPI_MSG_TYPE_GET:
+ *             case GNRC_NETAPI_MSG_TYPE_SET:
+ *             case GNRC_NETAPI_MSG_TYPE_GET:
  *                 msg_reply(&msg, &reply);
  *                 break;
  *             default:
@@ -183,7 +182,7 @@
  * First, the data to be sent is added to the @ref net_gnrc_pktbuf "packet buffer".
  * This ensures its intactness during the sending process. After the data to be
  * sent has been added to the packet buffer, its parent data structure can safely
- * be freed or re-used.
+ * be freed or reused.
  *
  * Then, the @ref net_gnrc_pkt "pkt" will be sent to all threads that registered
  * for @ref GNRC_NETTYPE_UDP and the demux context `80`. Every registered thread
@@ -216,7 +215,7 @@
  *
  * - To include the default network device(s) on your board:
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.mk}
- *   USEMODULE += gnrc_netdev_default
+ *   USEMODULE += netdev_default
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * - To auto-initialize these network devices as GNRC network interfaces
@@ -284,11 +283,9 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef NET_GNRC_H
-#define NET_GNRC_H
-
 #include "net/netopt.h"
 #include "net/gnrc/netapi.h"
+#include "net/gnrc/netapi/notify.h"
 #include "net/gnrc/netreg.h"
 #include "net/gnrc/nettype.h"
 #include "net/gnrc/netif.h"
@@ -306,5 +303,4 @@ extern "C" {
 }
 #endif
 
-#endif /* NET_GNRC_H */
 /** @} */

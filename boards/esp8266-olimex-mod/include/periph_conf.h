@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_esp8266_olimex-mod
@@ -14,9 +13,6 @@
  * @author      Gunar Schorcht <gunar@schorcht.net>
  * @{
  */
-
-#ifndef PERIPH_CONF_H
-#define PERIPH_CONF_H
 
 #include <stdint.h>
 
@@ -28,9 +24,6 @@
  * @name   I2C configuration
  * @{
  */
-#ifndef I2C_NUMOF
-#define I2C_NUMOF       (1)             /**< Number of I2C interfaces */
-#endif
 #ifndef I2C0_SPEED
 #define I2C0_SPEED      I2C_SPEED_FAST  /**< I2C bus speed of I2C_DEV(0) */
 #endif
@@ -42,6 +35,24 @@
 #endif
 /** @} */
 
+/**
+ * @name   PWM channel configuration
+ *
+ * @{
+ */
+
+/**
+ * @brief Declaration of the channels for device PWM_DEV(0),
+ *        at maximum 8 channels.
+ *
+ * @note As long as PWM_DEV(0) is not initialized with \ref pwm_init, the GPIOs
+ * declared as PWM channels can be used for other purposes.
+ */
+#ifndef PWM0_GPIOS
+#define PWM0_GPIOS  { GPIO0, GPIO5, GPIO16 }
+#endif
+/** @} */
+
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
@@ -49,5 +60,4 @@
 /* include common peripheral definitions as last step */
 #include "periph_conf_common.h"
 
-#endif /* PERIPH_CONF_H */
 /** @} */

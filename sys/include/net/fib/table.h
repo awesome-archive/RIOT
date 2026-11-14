@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014  Martin Landsmann <Martin.Landsmann@HAW-Hamburg.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Martin Landsmann <Martin.Landsmann@HAW-Hamburg.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     net_fib
@@ -16,12 +15,9 @@
  * @author      Martin Landsmann <martin.landsmann@haw-hamburg.de>
  */
 
-#ifndef NET_FIB_TABLE_H
-#define NET_FIB_TABLE_H
-
 #include <stdint.h>
 
-#include "kernel_types.h"
+#include "sched.h"
 #include "universal_address.h"
 #include "mutex.h"
 
@@ -117,7 +113,7 @@ typedef struct {
     *   This value indicates what is stored in `data` of this table
     */
     uint8_t table_type;
-    /** the maximim number of entries in this FIB table */
+    /** the maximum number of entries in this FIB table */
     size_t size;
     /** table access mutex to grant exclusive operations on calls */
     mutex_t mtx_access;
@@ -139,5 +135,4 @@ typedef struct {
 }
 #endif
 
-#endif /* NET_FIB_TABLE_H */
 /** @} */

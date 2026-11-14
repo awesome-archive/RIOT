@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
- * Copyright (C) 2018 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2018 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_uuid RFC 4122 compliant UUID's
@@ -22,9 +21,6 @@
  *
  * @author      Koen Zandberg <koen@bergzand.net>
  */
-
-#ifndef UUID_H
-#define UUID_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -72,7 +68,6 @@ typedef struct __attribute__((packed)) {
     uint8_t node[UUID_NODE_LEN];    /**< The spatially unique node identifier */
 } uuid_t;
 
-
 /**
  * @name Namespace IDs from RFC4122
  *
@@ -96,7 +91,6 @@ extern const uuid_t uuid_namespace_x500;    /**< X.500 DN namespace UUID */
  * @param[in]   len     Length of the byte array
  */
 void uuid_v3(uuid_t *uuid, const uuid_t *ns, const uint8_t *name, size_t len);
-
 
 /**
  * Generate a version 4(Full random) UUID
@@ -156,12 +150,11 @@ void uuid_to_string(const uuid_t *uuid, char *str);
  * @param[out]  uuid    out UUID
  * @param[in]   str     null-terminated input UUID string, must be UUID_STR_LEN bytes
  *
- * @return 0 on succes, < 0 if @p str is not valid
+ * @return 0 on success, < 0 if @p str is not valid
  */
 int uuid_from_string(uuid_t *uuid, const char *str);
 
 #ifdef __cplusplus
 }
 #endif
-#endif /* UUID_H */
 /** @} */

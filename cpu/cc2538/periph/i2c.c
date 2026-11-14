@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2015 Loci Controls Inc.
- *               2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Loci Controls Inc.
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -31,7 +28,7 @@
 #include "periph/gpio.h"
 #include "periph/i2c.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 /* short cuts macros */
@@ -159,7 +156,7 @@ static void _i2c_master_slave_addr(uint16_t addr, bool receive)
 {
     DEBUG("%s (%" PRIx16 ", %d)\n", __FUNCTION__, addr, (int)receive);
     assert(!(addr & 0x80));
-    I2CM_SA = (addr << 1) | receive;
+    I2CM_SA = (addr << 1) | (receive ? 0x1 : 0x0);
 }
 
 static void _i2c_master_data_put(uint8_t data)
@@ -231,24 +228,20 @@ void i2c_init(i2c_t dev)
     DEBUG(" - I2C master status (0x%x).\n", _i2c_master_stat_get());
 }
 
-int i2c_acquire(i2c_t dev)
+void i2c_acquire(i2c_t dev)
 {
+    (void)dev;
+    assert(dev < I2C_NUMOF);
     DEBUG("%s\n", __FUNCTION__);
-    if (dev < I2C_NUMOF) {
-        mutex_lock(&lock);
-        return 0;
-    }
-    return -1;
+    mutex_lock(&lock);
 }
 
-int i2c_release(i2c_t dev)
+void i2c_release(i2c_t dev)
 {
+    (void)dev;
+    assert(dev < I2C_NUMOF);
     DEBUG("%s\n", __FUNCTION__);
-    if (dev < I2C_NUMOF) {
-        mutex_unlock(&lock);
-        return 0;
-    }
-    return -1;
+    mutex_unlock(&lock);
 }
 
 int i2c_read_bytes(i2c_t dev, uint16_t addr,

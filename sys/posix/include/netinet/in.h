@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2013-15 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2013-2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @addtogroup  posix_sockets
@@ -20,8 +19,6 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NETINET_IN_H
-#define NETINET_IN_H
 
 #include <inttypes.h>
 #include <sys/socket.h>
@@ -271,4 +268,3 @@ extern const struct in6_addr in6addr_loopback;
 /**
  * @}
  */
-#endif /* NETINET_IN_H */

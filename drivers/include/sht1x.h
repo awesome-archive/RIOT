@@ -1,11 +1,10 @@
 /*
- * Copyright 2009 Freie Universitaet Berlin (FUB)
- *           2018 Otto-von-Guericke-Universität Magdeburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2009 Freie Universitaet Berlin (FUB)
+ * SPDX-FileCopyrightText: 2018 Otto-von-Guericke-Universität Magdeburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_sht1x SHT10/SHT11/SHT15 Humidity and Temperature Sensor
@@ -19,9 +18,6 @@
  *
  * @author      Marian Buschsieweke <marian.buschsieweke@ovgu.de>
  */
-
-#ifndef SHT1X_H
-#define SHT1X_H
 
 #include <stdint.h>
 #include <periph/gpio.h>
@@ -125,9 +121,8 @@ int16_t sht1x_humidity(const sht1x_dev_t *dev, uint16_t raw, int16_t temp);
  *
  * @retval  0         Success
  * @retval -EIO       IO failure (`gpio_init()` failed)
- * @retval -EBADMSG   CRC-8 checksum didn't match (--> Retry)
+ * @retval -EBADMSG   CRC-8 checksum didn't match
  * @retval -EINVAL    Passed `NULL` for dev or for both `temp` and `hum`
- * @retval -EBADMSG   CRC checksum didn't match
  * @retval -ECANCELED Measurement timed out
  * @retval -EPROTO    Sensor did not acknowledge command
  *
@@ -184,5 +179,4 @@ int sht1x_reset(sht1x_dev_t *dev);
 }
 #endif
 
-#endif /* SHT1X_H */
 /** @} */

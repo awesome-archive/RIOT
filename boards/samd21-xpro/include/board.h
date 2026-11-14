@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017 Travis Griggs <travisgriggs@gmail.com>
- * Copyright (C) 2017 Dan Evans <photonthunder@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Travis Griggs <travisgriggs@gmail.com>
+ * SPDX-FileCopyrightText: 2017 Dan Evans <photonthunder@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_samd21-xpro
@@ -20,19 +19,17 @@
  * @author      Sebastian Meiling <s@mlng.net>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include "cpu.h"
 #include "periph_conf.h"
 #include "periph_cpu.h"
+#include "periph/gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @name   xtimer configuration
+ * @name    xtimer configuration
  * @{
  */
 #define XTIMER_DEV          TIMER_DEV(1)
@@ -57,19 +54,12 @@ extern "C" {
  * @name SW0 (Button) pin definitions
  * @{
  */
-#define BTN0_PORT           PORT->Group[PA]
 #define BTN0_PIN            GPIO_PIN(PA, 15)
 #define BTN0_MODE           GPIO_IN_PU
 /** @} */
-
-/**
- * @brief Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

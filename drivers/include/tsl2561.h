@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_tsl2561 TSL2561 illuminance sensor
@@ -20,9 +19,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef TSL2561_H
-#define TSL2561_H
 
 #include "saul.h"
 #include "periph/i2c.h"
@@ -109,5 +105,4 @@ uint16_t tsl2561_read_illuminance(const tsl2561_t *dev);
 }
 #endif
 
-#endif /* TSL2561_H */
 /** @} */

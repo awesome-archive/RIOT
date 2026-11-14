@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2014 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #include <limits.h>
@@ -215,7 +212,8 @@ static void test_bitarithm_bits_set_random(void)
 
 static void test_bitarithm_bits_set_u32_random(void)
 {
-    TEST_ASSERT_EQUAL_INT(21, bitarithm_bits_set_u32(4072524027)); /* Source: https://www.random.org/bytes */
+    TEST_ASSERT_EQUAL_INT(21, bitarithm_bits_set_u32(4072524027));
+    /* Source: https://www.random.org/bytes */
 }
 
 Test *tests_core_bitarithm_tests(void)

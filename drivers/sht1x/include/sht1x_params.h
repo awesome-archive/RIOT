@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Otto-von-Guericke-Universität Magdeburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Otto-von-Guericke-Universität Magdeburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_sht1x
@@ -15,9 +14,6 @@
  *
  * @author      Marian Buschsieweke <marian.buschsieweke@ovgu.de>
  */
-
-#ifndef SHT1X_PARAMS_H
-#define SHT1X_PARAMS_H
 
 #include "board.h"
 #include "sht1x.h"
@@ -32,15 +28,29 @@ extern "C" {
  * @{
  */
 #ifndef SHT1X_PARAM_CLK
+/**
+ * @brief   SHT1x the clock pin
+ */
 #define SHT1X_PARAM_CLK               (GPIO_PIN(1, 25))
 #endif
 #ifndef SHT1X_PARAM_DATA
+/**
+ * @brief   SHT1x the data pin
+ */
 #define SHT1X_PARAM_DATA              (GPIO_PIN(1, 26))
 #endif
 #ifndef SHT1X_PARAM_VDD
+/**
+ * @brief   SHT1x the supply voltage
+ *
+ * @see sht1x_vdd_t
+ */
 #define SHT1X_PARAM_VDD               (SHT1X_VDD_3_5V)
 #endif
 #ifndef SHT1X_PARAMS
+/**
+ * @brief   The initialization parameters for the SHT1x driver
+ */
 #define SHT1X_PARAMS                  { .clk = SHT1X_PARAM_CLK,  \
                                         .data = SHT1X_PARAM_DATA, \
                                         .vdd = SHT1X_PARAM_VDD }
@@ -89,5 +99,4 @@ static const saul_reg_info_t sht1x_saul_info[] =
 }
 #endif
 
-#endif /* SHT1X_PARAMS_H */
 /** @} */

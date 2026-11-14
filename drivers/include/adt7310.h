@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_adt7310 ADT7310 SPI temperature sensor
@@ -29,7 +28,7 @@
  *
  * ## Usage
  *
- * See `tests/driver_adt7310` for an example application using this driver.
+ * See `tests/drivers/adt7310` for an example application using this driver.
  *
  * ## Caveats
  *
@@ -46,9 +45,6 @@
  *
  * @author      Joakim Nohlgård <joakim.nohlgard@eistec.se>
  */
-
-#ifndef ADT7310_H
-#define ADT7310_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -177,5 +173,4 @@ float adt7310_read_float(const adt7310_t *dev);
 }
 #endif
 
-#endif /* ADT7310_H */
 /** @} */

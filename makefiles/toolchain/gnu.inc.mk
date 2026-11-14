@@ -1,23 +1,52 @@
-export CC         = $(PREFIX)gcc
-export CXX        = $(PREFIX)g++
-export CCAS      ?= $(CC)
+CC         = $(PREFIX)gcc
+CXX        = $(PREFIX)g++
+CCAS      ?= $(CC)
 ifeq ($(LTO),1)
-export AR         = $(PREFIX)gcc-ar
-export RANLIB     = $(PREFIX)gcc-ranlib
+  AR         = $(PREFIX)gcc-ar
+  RANLIB     = $(PREFIX)gcc-ranlib
 else
-export AR         = $(PREFIX)ar
-export RANLIB     = $(PREFIX)ranlib
+  AR         = $(PREFIX)ar
+  RANLIB     = $(PREFIX)ranlib
 endif
-export AS         = $(PREFIX)as
-export NM         = $(PREFIX)nm
-export LINK       = $(PREFIX)gcc
-export LINKXX     = $(PREFIX)g++
-export SIZE       = $(PREFIX)size
-export OBJCOPY   ?= $(shell command -v $(PREFIX)objcopy gobjcopy objcopy | head -n 1)
+AS         = $(PREFIX)as
+NM         = $(PREFIX)nm
+LINK       = $(PREFIX)gcc
+LINKXX     = $(PREFIX)g++
+SIZE       = $(PREFIX)size
+_OBJCOPY          := $(shell command -v $(PREFIX)objcopy || command -v gobjcopy || command -v objcopy)
+OBJCOPY   ?= $(_OBJCOPY)
 ifeq ($(OBJCOPY),)
-$(warning objcopy not found. Hex file will not be created.)
-export OBJCOPY    = true
+  $(warning objcopy not found. Hex file will not be created.)
+  OBJCOPY    = true
 endif
-export OBJDUMP    = $(PREFIX)objdump
+# Default to the native (g)objdump, helps when using toolchain from docker
+_OBJDUMP         := $(or $(shell command -v $(PREFIX)objdump || command -v gobjdump),objdump)
+OBJDUMP   ?= $(_OBJDUMP)
+
+# Parse only the major version of GCC
+GCC_VERSION := $(firstword $(subst ., ,$(shell command -v $(CC) > /dev/null && $(CC) -dumpversion)))
+
+# -fmacro-prefix-map requires GCC 8
+ifneq (1,$(call version_is_greater_or_equal,$(GCC_VERSION),8))
+  OPTIONAL_CFLAGS_BLACKLIST += -fmacro-prefix-map=$(RIOTBASE)/=
+  OPTIONAL_CFLAGS_BLACKLIST += -fdebug-prefix-map=$(RIOTBASE)/=
+endif
+
+# GCC does not warn about documentation (yet)
+OPTIONAL_CFLAGS_BLACKLIST += -Wdocumentation -Wno-error=documentation -Wno-documentation-deprecated-sync
+
 # We use GDB for debugging
 include $(RIOTMAKE)/tools/gdb.inc.mk
+
+# GCC's static analysis tools can be enabled using -fanalyzer
+CFLAGS_STATIC_ANALYSIS := -fanalyzer
+
+# this needs to be recursively evaluated
+RCFLAGS_WRITE_SARIF = -fdiagnostics-add-output=sarif:file='$$@.sarif'
+
+# Data address spaces starts at zero for all supported architectures. This fixes
+# compilation at least on MSP430 and AVR.
+# See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105523
+ifneq (,$(filter $(GCC_VERSION),12 13))
+  CFLAGS += --param=min-pagesize=0
+endif

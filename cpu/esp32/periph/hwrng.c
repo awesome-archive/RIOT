@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2019 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -12,7 +9,7 @@
  * @{
  *
  * @file
- * @brief       Low-level random number generator driver implementation
+ * @brief       Low-level random number generator driver implementation for ESP32x SoCs
  *
  * @author      Gunar Schorcht <gunar@schorcht.net>
  *
@@ -23,33 +20,45 @@
 #include "periph_conf.h"
 #include "periph/hwrng.h"
 
-static const uint32_t* RNG_DATA_REG = (uint32_t*)0x3ff75144;
+#include "bootloader_random.h"
+#include "esp_random.h"
 
 void hwrng_init(void)
 {
-    /* no need for initialization */
+    /* If the ADC SAR is used, the Bootloader RNG must not be enabled before
+     * the random numbers are actually required. The reason is that the
+     * Bootloader RNG uses the noise of the ADC SAR reference voltage as
+     * a non-RF entropy source. The calibration of the ADC SAR does not
+     * work correctly in this case. Therefore, the Bootloader RNG is only
+     * enabled if random numbers are really required. */
 }
-#include "rom/ets_sys.h"
+
+/**
+ * The RNG implementation of the ESP-IDF also uses the hardware RNG register
+ * RNG_DATA_REG (WDEV_RND_REG) for random number generation, which adds 2 bits
+ * of entropy at each APB clock cycle when WiFi or BT are enabled. However,
+ * it ensures that the random numbers are not read faster than generated
+ * in hardware by including some busy waiting. We therefore use this
+ * implementation here.
+ */
 void hwrng_read(void *buf, unsigned int num)
 {
-    unsigned int count = 0;
-    uint8_t *b = (uint8_t *)buf;
+    if (!IS_USED(MODULE_ESP_WIFI_ANY) && !IS_USED(MODULE_ESP_BLE)) {
+        /* enable the Bootloader RNG if WiFi and BT are not used */
+        bootloader_random_enable();
+    }
 
-    while (count < num) {
-        /* read next 4 bytes of random data */
-        uint32_t tmp = *RNG_DATA_REG;
+    esp_fill_random(buf, num);
 
-        /* copy data into result vector */
-        for (int i = 0; i < 4 && count < num; i++) {
-            b[count++] = (uint8_t)tmp;
-            tmp = tmp >> 8;
-        }
+    if (!IS_USED(MODULE_ESP_WIFI_ANY) && !IS_USED(MODULE_ESP_BLE)) {
+        /* disable the Bootloader RNG to ensure that ADC SAR calibration works */
+        bootloader_random_disable();
     }
 }
 
-uint32_t hwrand (void)
+uint32_t hwrand(void)
 {
-    uint32_t _tmp;
-    hwrng_read(&_tmp, sizeof(uint32_t));
-    return _tmp;
+    uint32_t rand;
+    hwrng_read(&rand, 4);
+    return rand;
 }

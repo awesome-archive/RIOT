@@ -1,16 +1,13 @@
 /*
- * Copyright (C) 2016 Inria
- * Copyright (C) 2017 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-FileCopyrightText: 2017 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup    boards_nucleo-f413zh STM32 Nucleo-F413ZH
- * @ingroup     boards_common_nucleo144
- * @brief       Support for the STM32 Nucleo-F413ZH
+ * @ingroup     boards_nucleo-f413zh
  * @{
  *
  * @file
@@ -20,12 +17,22 @@
  * @author      Vincent Dupont <vincent@otakeys.com>
  */
 
-#ifndef PERIPH_CONF_H
-#define PERIPH_CONF_H
+/* This board provides an LSE */
+#ifndef CONFIG_BOARD_HAS_LSE
+#define CONFIG_BOARD_HAS_LSE    1
+#endif
+
+/* This board provides an HSE */
+#ifndef CONFIG_BOARD_HAS_HSE
+#define CONFIG_BOARD_HAS_HSE    1
+#endif
 
 #include "periph_cpu.h"
-#include "f4/cfg_clock_100_8_1.h"
+#include "clk_conf.h"
 #include "cfg_i2c1_pb8_pb9.h"
+#include "cfg_rtt_default.h"
+#include "cfg_timer_tim5.h"
+#include "cfg_usb_otg_fs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,42 +42,21 @@ extern "C" {
  * @name    DMA streams configuration
  * @{
  */
-#ifdef MODULE_PERIPH_DMA
 static const dma_conf_t dma_config[] = {
-    { .stream = 4  },
-    { .stream = 14 },
-    { .stream = 6  },
-    { .stream = 10 },
-    { .stream = 8  },
+    { .stream = 11 },   /* DMA2 Stream 3 - SPI1_TX */
+    { .stream = 10 },   /* DMA2 Stream 2 - SPI1_RX */
+    { .stream = 3 },    /* DMA1 Stream 3 - UART3_TX */
+    { .stream = 15 },   /* DMA2 Stream 7 - UART6_TX */
+    { .stream = 6 },    /* DMA1 Stream 6 - UART2_TX */
 };
 
-#define DMA_0_ISR  isr_dma1_stream4
-#define DMA_1_ISR  isr_dma2_stream6
-#define DMA_2_ISR  isr_dma1_stream6
-#define DMA_3_ISR  isr_dma2_stream2
-#define DMA_4_ISR  isr_dma2_stream0
+#define DMA_0_ISR           isr_dma2_stream3
+#define DMA_1_ISR           isr_dma2_stream2
+#define DMA_2_ISR           isr_dma1_stream3
+#define DMA_3_ISR           isr_dma2_stream7
+#define DMA_4_ISR           isr_dma1_stream6
 
-#define DMA_NUMOF           (sizeof(dma_config) / sizeof(dma_config[0]))
-#endif
-/** @} */
-
-/**
- * @name    Timer configuration
- * @{
- */
-static const timer_conf_t timer_config[] = {
-    {
-        .dev      = TIM5,
-        .max      = 0xffffffff,
-        .rcc_mask = RCC_APB1ENR_TIM5EN,
-        .bus      = APB1,
-        .irqn     = TIM5_IRQn
-    }
-};
-
-#define TIMER_0_ISR         isr_tim5
-
-#define TIMER_NUMOF         (sizeof(timer_config) / sizeof(timer_config[0]))
+#define DMA_NUMOF           ARRAY_SIZE(dma_config)
 /** @} */
 
 /**
@@ -88,8 +74,8 @@ static const uart_conf_t uart_config[] = {
         .bus        = APB1,
         .irqn       = USART3_IRQn,
 #ifdef MODULE_PERIPH_DMA
-        .dma        = 0,
-        .dma_chan   = 7,
+        .dma        = 2,
+        .dma_chan   = 4,
 #endif
     },
     {
@@ -102,7 +88,7 @@ static const uart_conf_t uart_config[] = {
         .bus        = APB2,
         .irqn       = USART6_IRQn,
 #ifdef MODULE_PERIPH_DMA
-        .dma        = 1,
+        .dma        = 3,
         .dma_chan   = 5,
 #endif
     },
@@ -116,20 +102,17 @@ static const uart_conf_t uart_config[] = {
         .bus        = APB1,
         .irqn       = USART2_IRQn,
 #ifdef MODULE_PERIPH_DMA
-        .dma        = 3,
+        .dma        = 4,
         .dma_chan   = 4,
 #endif
     },
 };
 
 #define UART_0_ISR          (isr_usart3)
-#define UART_0_DMA_ISR      (isr_dma1_stream6)
 #define UART_1_ISR          (isr_usart6)
-#define UART_1_DMA_ISR      (isr_dma1_stream5)
 #define UART_2_ISR          (isr_usart2)
-#define UART_2_DMA_ISR      (isr_dma1_stream4)
 
-#define UART_NUMOF          (sizeof(uart_config) / sizeof(uart_config[0]))
+#define UART_NUMOF          ARRAY_SIZE(uart_config)
 /** @} */
 
 /**
@@ -159,53 +142,36 @@ static const pwm_conf_t pwm_config[] = {
     },
 };
 
-#define PWM_NUMOF           (sizeof(pwm_config) / sizeof(pwm_config[0]))
+#define PWM_NUMOF           ARRAY_SIZE(pwm_config)
 /** @} */
 
 /**
  * @name    SPI configuration
- *
- * @note    The spi_divtable is auto-generated from
- *          `cpu/stm32_common/dist/spi_divtable/spi_divtable.c`
  * @{
  */
-static const uint8_t spi_divtable[2][5] = {
-    {       /* for APB1 @ 50000000Hz */
-        7,  /* -> 195312Hz */
-        6,  /* -> 390625Hz */
-        5,  /* -> 781250Hz */
-        2,  /* -> 6250000Hz */
-        1   /* -> 12500000Hz */
-    },
-    {       /* for APB2 @ 100000000Hz */
-        7,  /* -> 390625Hz */
-        7,  /* -> 390625Hz */
-        6,  /* -> 781250Hz */
-        3,  /* -> 6250000Hz */
-        2   /* -> 12500000Hz */
-    }
-};
-
 static const spi_conf_t spi_config[] = {
     {
-        .dev      = SPI1,
-        .mosi_pin = GPIO_PIN(PORT_A, 7),
-        .miso_pin = GPIO_PIN(PORT_A, 6),
-        .sclk_pin = GPIO_PIN(PORT_A, 5),
-        .cs_pin   = GPIO_PIN(PORT_A, 4),
-        .af       = GPIO_AF5,
-        .rccmask  = RCC_APB2ENR_SPI1EN,
-        .apbbus   = APB2,
+        .dev            = SPI1,
+        .mosi_pin       = GPIO_PIN(PORT_A, 7),
+        .miso_pin       = GPIO_PIN(PORT_A, 6),
+        .sclk_pin       = GPIO_PIN(PORT_A, 5),
+        .cs_pin         = GPIO_PIN(PORT_A, 4),
+        .mosi_af        = GPIO_AF5,
+        .miso_af        = GPIO_AF5,
+        .sclk_af        = GPIO_AF5,
+        .cs_af          = GPIO_AF5,
+        .rccmask        = RCC_APB2ENR_SPI1EN,
+        .apbbus         = APB2,
 #ifdef MODULE_PERIPH_DMA
-        .tx_dma   = 3,
-        .tx_dma_chan = 2,
-        .rx_dma   = 4,
-        .rx_dma_chan = 3,
+        .tx_dma         = 0,
+        .tx_dma_chan    = 3,
+        .rx_dma         = 1,
+        .rx_dma_chan    = 3,
 #endif
     }
 };
 
-#define SPI_NUMOF           (sizeof(spi_config) / sizeof(spi_config[0]))
+#define SPI_NUMOF           ARRAY_SIZE(spi_config)
 /** @} */
 
 /**
@@ -214,40 +180,35 @@ static const spi_conf_t spi_config[] = {
  * Note that we do not configure all ADC channels,
  * and not in the STM32F413zh order. Instead, we
  * just define 6 ADC channels, for the Nucleo
- * Arduino header pins A0-A5
+ * Arduino header pins A0-A5 and the internal VBAT channel.
  *
  * @{
  */
-#define ADC_NUMOF          (6U)
-#define ADC_CONFIG {              \
-    {GPIO_PIN(PORT_A, 3), 0, 3},  \
-    {GPIO_PIN(PORT_C, 0), 0, 10}, \
-    {GPIO_PIN(PORT_C, 3), 0, 13}, \
-    {GPIO_PIN(PORT_C, 1), 0, 11}, \
-    {GPIO_PIN(PORT_C, 4), 0, 14}, \
-    {GPIO_PIN(PORT_C, 5), 0, 15}, \
-}
-/** @} */
+static const adc_conf_t adc_config[] = {
+    {GPIO_PIN(PORT_A, 3), 0, 3},
+    {GPIO_PIN(PORT_C, 0), 0, 10},
+    {GPIO_PIN(PORT_C, 3), 0, 13},
+    {GPIO_PIN(PORT_C, 1), 0, 11},
+    {GPIO_PIN(PORT_C, 4), 0, 14},
+    {GPIO_PIN(PORT_C, 5), 0, 15},
+    {GPIO_UNDEF, 0, 18}, /* VBAT */
+};
 
-/**
- * @name    RTC configuration
- * @{
- */
-#define RTC_NUMOF           (1)
+#define VBAT_ADC            ADC_LINE(6) /**< VBAT ADC line */
+#define ADC_NUMOF           ARRAY_SIZE(adc_config)
 /** @} */
 
 /**
  * @name    RTT configuration
  * @{
  */
-#define RTT_NUMOF           (1)
+#ifndef RTT_FREQUENCY
 #define RTT_FREQUENCY       (4096)
-#define RTT_MAX_VALUE       (0xffff)
+#endif
 /** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERIPH_CONF_H */
 /** @} */

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -25,9 +22,9 @@
 #include "bmp180_internals.h"
 #include "bmp180_params.h"
 #include "periph/i2c.h"
-#include "xtimer.h"
+#include "ztimer.h"
 
-#define ENABLE_DEBUG        (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #define DEV_I2C      (dev->params.i2c_dev)
@@ -57,7 +54,11 @@ int bmp180_init(bmp180_t *dev, const bmp180_params_t *params)
 
     /* Check sensor ID */
     uint8_t checkid;
-    i2c_read_reg(DEV_I2C, DEV_ADDR, BMP180_REGISTER_ID, &checkid, 0);
+    if (i2c_read_reg(DEV_I2C, DEV_ADDR, BMP180_REGISTER_ID, &checkid, 0) < 0) {
+        DEBUG("[Error] Cannot read device ID\n");
+        i2c_release(DEV_I2C);
+        return -BMP180_ERR_NODEV;
+    }
     if (checkid != 0x55) {
         DEBUG("[Error] Wrong device ID\n");
         i2c_release(DEV_I2C);
@@ -65,7 +66,7 @@ int bmp180_init(bmp180_t *dev, const bmp180_params_t *params)
     }
 
     /* adding delay before reading calibration values to avoid timing issues */
-    xtimer_usleep(BMP180_ULTRALOWPOWER_DELAY);
+    ztimer_sleep(ZTIMER_MSEC, BMP180_ULTRALOWPOWER_DELAY_MS);
 
     uint8_t buffer[22] = {0};
     /* Read calibration values, using contiguous register addresses */
@@ -106,7 +107,7 @@ int bmp180_init(bmp180_t *dev, const bmp180_params_t *params)
 
 int16_t bmp180_read_temperature(const bmp180_t *dev)
 {
-    int32_t ut, b5;
+    int32_t ut = 0, b5;
     /* Acquire exclusive access */
     i2c_acquire(DEV_I2C);
 
@@ -147,8 +148,8 @@ uint32_t bmp180_read_pressure(const bmp180_t *dev)
     x1 = ((int32_t)dev->calibration.ac3 * b6) >> 13;
     x2 = ((int32_t)dev->calibration.b1 * (b6 * b6) >> 12) >> 16;
     x3 = ((x1 + x2) + 2) >> 2;
-    b4 = (int32_t)dev->calibration.ac4 * (uint32_t)(x3+32768) >> 15;
-    b7 = ((uint32_t)up - b3) * (uint32_t)(50000UL >> OVERSAMPLING);
+    b4 = ((uint32_t)dev->calibration.ac4 * (uint32_t)(x3 + 32768)) >> 15;
+    b7 = (uint32_t)(up - b3) * (uint32_t)(50000UL >> OVERSAMPLING);
     if (b7 < 0x80000000) {
         p = (b7 * 2) / b4;
     }
@@ -187,7 +188,7 @@ static int _read_ut(const bmp180_t *dev, int32_t *output)
     uint8_t ut[2] = {0};
     uint8_t control[2] = { BMP180_REGISTER_CONTROL, BMP180_TEMPERATURE_COMMAND };
     i2c_write_bytes(DEV_I2C, DEV_ADDR, control, 2, 0);
-    xtimer_usleep(BMP180_ULTRALOWPOWER_DELAY);
+    ztimer_sleep(ZTIMER_MSEC, BMP180_ULTRALOWPOWER_DELAY_MS);
     if (i2c_read_regs(DEV_I2C, DEV_ADDR, BMP180_REGISTER_DATA, ut, 2, 0) < 0) {
         DEBUG("[Error] Cannot read uncompensated temperature.\n");
         i2c_release(DEV_I2C);
@@ -209,19 +210,19 @@ static int _read_up(const bmp180_t *dev, int32_t *output)
     i2c_write_bytes(DEV_I2C, DEV_ADDR, control, 2, 0);
     switch (OVERSAMPLING) {
     case BMP180_ULTRALOWPOWER:
-        xtimer_usleep(BMP180_ULTRALOWPOWER_DELAY);
+        ztimer_sleep(ZTIMER_MSEC, BMP180_ULTRALOWPOWER_DELAY_MS);
         break;
     case BMP180_STANDARD:
-        xtimer_usleep(BMP180_STANDARD_DELAY);
+        ztimer_sleep(ZTIMER_MSEC, BMP180_STANDARD_DELAY_MS);
         break;
     case BMP180_HIGHRES:
-        xtimer_usleep(BMP180_HIGHRES_DELAY);
+        ztimer_sleep(ZTIMER_MSEC, BMP180_HIGHRES_DELAY_MS);
         break;
     case BMP180_ULTRAHIGHRES:
-        xtimer_usleep(BMP180_ULTRAHIGHRES_DELAY);
+        ztimer_sleep(ZTIMER_MSEC, BMP180_ULTRAHIGHRES_DELAY_MS);
         break;
     default:
-        xtimer_usleep(BMP180_ULTRALOWPOWER_DELAY);
+        ztimer_sleep(ZTIMER_MSEC, BMP180_ULTRALOWPOWER_DELAY_MS);
         break;
     }
     if (i2c_read_regs(DEV_I2C, DEV_ADDR, BMP180_REGISTER_DATA, up, 3, 0) < 0) {
@@ -240,9 +241,9 @@ static int _read_up(const bmp180_t *dev, int32_t *output)
 
 static int _compute_b5(const bmp180_t *dev, int32_t ut, int32_t *output)
 {
-    int32_t x1, x2;
-    x1 = (ut - dev->calibration.ac6) * dev->calibration.ac5 >> 15;
-    x2 = (dev->calibration.mc << 11) / (x1 + dev->calibration.md);
+    int32_t x1 = 0, x2 = 0;
+    x1 = (((int32_t)ut - (int32_t)dev->calibration.ac6) * (int32_t)dev->calibration.ac5) >> 15;
+    x2 = ((int32_t)dev->calibration.mc << 11) / (x1 + dev->calibration.md);
 
     *output = x1 + x2;
 

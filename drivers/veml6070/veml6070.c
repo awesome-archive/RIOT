@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -24,13 +21,12 @@
 #include "veml6070.h"
 #include "veml6070_params.h"
 #include "periph/i2c.h"
-#include "xtimer.h"
 
-#define ENABLE_DEBUG        (0)
+#define ENABLE_DEBUG        0
 #include "debug.h"
 
-#define VEML6070_ADDRH                (0x39)
-#define VEML6070_ADDRL                (0x38)
+#define VEML6070_ADDRH      (0x39)
+#define VEML6070_ADDRL      (0x38)
 
 /*---------------------------------------------------------------------------*
  *                          VEML6070 Core API                                *

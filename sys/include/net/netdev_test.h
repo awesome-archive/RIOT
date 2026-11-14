@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_netdev_test    netdev dummy test driver
@@ -46,7 +45,7 @@
  *     ipv6_addr_t dst = IPV6_ADDR_UNSPECIFIED;
  *
  *     netdev_test_setup(&dev, NULL);
- *     dev->driver->init((netdev_t *)&dev)
+ *     dev->driver->init(&dev->netdev->netdev)
  *     // initialize stack and connect `dev` to it
  *     // ...
  *     mutex_lock(&wait);
@@ -75,15 +74,10 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_NETDEV_TEST_H
-#define NET_NETDEV_TEST_H
 
 #include "mutex.h"
 
-#ifdef MODULE_NETDEV_IEEE802154
 #include "net/netdev/ieee802154.h"
-#endif
-
 #include "net/netdev.h"
 
 #ifdef __cplusplus
@@ -164,18 +158,14 @@ typedef int (*netdev_test_set_cb_t)(netdev_t *dev, const void *value,
 /**
  * @brief   Device descriptor for @ref sys_netdev_test devices
  *
- * @extends netdev_t
+ * @extends netdev_ieee802154_t
  */
 typedef struct {
     /**
      * @brief   netdev fields
      * @{
      */
-#ifdef  MODULE_NETDEV_IEEE802154
     netdev_ieee802154_t netdev;     /**< superclass */
-#else                               /* MODULE_NETDEV_IEEE802154 */
-    netdev_t netdev;                /**< superclass */
-#endif  /* MODULE_NETDEV_IEEE802154 */
     /** @} */
 
     /**
@@ -298,5 +288,4 @@ void netdev_test_reset(netdev_test_t *dev);
 }
 #endif
 
-#endif /* NET_NETDEV_TEST_H */
 /** @} */

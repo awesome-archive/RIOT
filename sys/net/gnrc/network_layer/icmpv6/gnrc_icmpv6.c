@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for
- * more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -15,6 +12,7 @@
  * @author      Martine Lenders <mlenders@inf.fu-berlin.de>
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdlib.h>
@@ -30,7 +28,7 @@
 #include "net/gnrc/icmpv6.h"
 #include "net/gnrc/icmpv6/echo.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 static inline uint16_t _calc_csum(gnrc_pktsnip_t *hdr,

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @addtogroup  net_gnrc_ipv6_nib
@@ -16,8 +15,6 @@
  *
  * @author      Martine Lenders <m.lenders@fu-berlin.de>
  */
-#ifndef PRIV_NIB_INTERNAL_H
-#define PRIV_NIB_INTERNAL_H
 
 #include <assert.h>
 #include <stdbool.h>
@@ -26,9 +23,10 @@
 
 #include "bitfield.h"
 #include "evtimer_msg.h"
-#include "kernel_types.h"
+#include "sched.h"
 #include "mutex.h"
 #include "net/eui64.h"
+#include "kernel_defines.h"
 #include "net/ipv6/addr.h"
 #ifdef MODULE_GNRC_IPV6
 #include "net/gnrc/ipv6.h"
@@ -40,6 +38,7 @@
 #include "net/gnrc/sixlowpan/ctx.h"
 #include "net/ndp.h"
 #include "random.h"
+#include "timex.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,11 +90,11 @@ extern "C" {
  */
 typedef struct _nib_onl_entry {
     struct _nib_onl_entry *next;        /**< next removable entry */
-#if GNRC_IPV6_NIB_CONF_QUEUE_PKT || defined(DOXYGEN)
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_QUEUE_PKT) || defined(DOXYGEN)
     /**
      * @brief   queue for packets currently in address resolution
      *
-     * @note    Only available if @ref GNRC_IPV6_NIB_CONF_QUEUE_PKT != 0.
+     * @note    Only available if @ref CONFIG_GNRC_IPV6_NIB_QUEUE_PKT != 0.
      */
     gnrc_pktqueue_t *pktqueue;
 #endif
@@ -103,21 +102,21 @@ typedef struct _nib_onl_entry {
      * @brief Neighbors IPv6 address
      */
     ipv6_addr_t ipv6;
-#if GNRC_IPV6_NIB_CONF_6LR || defined(DOXYGEN)
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_6LR) || defined(DOXYGEN)
     /**
      * @brief   The neighbors EUI-64 (used for DAD)
      *
-     * @note    Only available if @ref GNRC_IPV6_NIB_CONF_6LR != 0.
+     * @note    Only available if @ref CONFIG_GNRC_IPV6_NIB_6LR != 0.
      */
     eui64_t eui64;
 #endif
-#if GNRC_IPV6_NIB_CONF_ARSM || defined(DOXYGEN)
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_ARSM) || defined(DOXYGEN)
     /**
      * @brief   Link-layer address of _nib_onl_entry_t::next_hop
      *
-     * @note    Only available if @ref GNRC_IPV6_NIB_CONF_ARSM != 0.
+     * @note    Only available if @ref CONFIG_GNRC_IPV6_NIB_ARSM != 0.
      */
-    uint8_t l2addr[GNRC_IPV6_NIB_L2ADDR_MAX_LEN];
+    uint8_t l2addr[CONFIG_GNRC_IPV6_NIB_L2ADDR_MAX_LEN];
 #endif
     /**
      * @brief Event for @ref GNRC_IPV6_NIB_SND_UC_NS,
@@ -132,7 +131,7 @@ typedef struct _nib_onl_entry {
      *             one of these states). Because of this we can use one event
      *             for all of them (but need the different types, since the
      *             events are handled differently).
-     * @note    This is also available with @ref GNRC_IPV6_NIB_CONF_ARSM == 0,
+     * @note    This is also available with @ref CONFIG_GNRC_IPV6_NIB_ARSM == 0,
      *          since 6Lo address registration uses it to time the sending of
      *          neighbor solicitations.
      */
@@ -141,10 +140,10 @@ typedef struct _nib_onl_entry {
      * @brief Event for @ref GNRC_IPV6_NIB_SND_NA
      */
     evtimer_msg_event_t snd_na;
-#if GNRC_IPV6_NIB_CONF_ROUTER || defined(DOXYGEN)
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_ROUTER) || defined(DOXYGEN)
     evtimer_msg_event_t reply_rs;           /**< Event for @ref GNRC_IPV6_NIB_REPLY_RS */
 #endif
-#if GNRC_IPV6_NIB_CONF_6LR || defined(DOXYGEN)
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_6LR) || defined(DOXYGEN)
     evtimer_msg_event_t addr_reg_timeout;   /**< Event for @ref GNRC_IPV6_NIB_ADDR_REG_TIMEOUT */
 #endif
 
@@ -163,20 +162,23 @@ typedef struct _nib_onl_entry {
      * @see [Mode flags for entries](@ref net_gnrc_ipv6_nib_mode).
      */
     uint8_t mode;
-#if GNRC_IPV6_NIB_CONF_ARSM || defined(DOXYGEN)
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_ARSM) || defined(DOXYGEN)
     /**
      * @brief   Neighbor solicitations sent for probing
      *
-     * @note    Only available if @ref GNRC_IPV6_NIB_CONF_ARSM != 0.
+     * @note    Only available if @ref CONFIG_GNRC_IPV6_NIB_ARSM != 0.
      */
     uint8_t ns_sent;
 
     /**
      * @brief   length in bytes of _nib_onl_entry_t::l2addr
      *
-     * @note    Only available if @ref GNRC_IPV6_NIB_CONF_ARSM != 0.
+     * @note    Only available if @ref CONFIG_GNRC_IPV6_NIB_ARSM != 0.
      */
     uint8_t l2addr_len;
+#endif
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_QUEUE_PKT) || defined(DOXYGEN)
+    uint8_t pktqueue_len; /**< Number of queued packets (in pktqueue) */
 #endif
 } _nib_onl_entry_t;
 
@@ -201,7 +203,7 @@ typedef struct {
      * @brief   Event for @ref GNRC_IPV6_NIB_PFX_TIMEOUT
      */
     evtimer_msg_event_t pfx_timeout;
-#ifdef GNRC_IPV6_NIB_CONF_ROUTER
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_ROUTER)
     /**
      * @brief   Event for @ref GNRC_IPV6_NIB_ROUTE_TIMEOUT
      */
@@ -226,25 +228,20 @@ typedef struct {
     ipv6_addr_t addr;               /**< The address of the border router */
     uint32_t version;               /**< last received version of the info of
                                      *   the _nib_abr_entry_t::addr */
-    uint32_t valid_until;           /**< timestamp (in minutes) until which
-                                     *   information is valid */
+    uint32_t valid_until_ms;        /**< timestamp (in ms) until which information is valid
+                                     *   (needs resolution in minutes an 16 bits of them)*/
     evtimer_msg_event_t timeout;    /**< timeout of the information */
     /**
      * @brief   Bitfield marking the prefixes in the NIB's off-link entries
      *          disseminated by _nib_abr_entry_t::addr
      */
-    BITFIELD(pfxs, GNRC_IPV6_NIB_OFFL_NUMOF);
+    BITFIELD(pfxs, CONFIG_GNRC_IPV6_NIB_OFFL_NUMOF);
     /**
      * @brief   Bitfield marking the contexts disseminated by
      *          _nib_abr_entry_t::addr
      */
     BITFIELD(ctxs, GNRC_SIXLOWPAN_CTX_SIZE);
 } _nib_abr_entry_t;
-
-/**
- * @brief   Mutex for locking the NIB
- */
-extern mutex_t _nib_mutex;
 
 /**
  * @brief   Event timer for the NIB.
@@ -256,15 +253,70 @@ extern evtimer_msg_t _nib_evtimer;
  *
  * This value is returned by @ref @_nib_drl_get_dr() when it is not NULL and it
  * is reachable. Otherwise it is selected with the [default router selection
- * algoritm](https://tools.ietf.org/html/rfc4861#section-6.3.6) by that function.
+ * algorithm](https://tools.ietf.org/html/rfc4861#section-6.3.6) by that function.
  * Exposed to be settable by @ref net_gnrc_ipv6_nib_ft.
  */
 extern _nib_dr_entry_t *_prime_def_router;
 
 /**
+ * @brief   Looks up if an event is queued in the event timer
+ *
+ * @param[in] ctx   Context of the event. May be NULL for any event context.
+ * @param[in] type  [Type of the event](@ref net_gnrc_ipv6_nib_msg).
+ *
+ * @return  Milliseconds to the event, if event in queue.
+ * @return  UINT32_MAX, event is not in queue.
+ */
+uint32_t _evtimer_lookup(const void *ctx, uint16_t type);
+
+/**
+ * @brief   Removes an event from the event timer
+ *
+ * @param[in] event Representation of the event.
+ */
+static inline void _evtimer_del(evtimer_msg_event_t *event)
+{
+    evtimer_del(&_nib_evtimer, &event->event);
+}
+
+/**
+ * @brief   Adds an event to the event timer
+ *
+ * @param[in] ctx       The context of the event
+ * @param[in] type      [Type of the event](@ref net_gnrc_ipv6_nib_msg).
+ * @param[in,out] event Representation of the event.
+ * @param[in] offset    Offset in milliseconds to the event.
+ */
+static inline void _evtimer_add(void *ctx, int16_t type,
+                                evtimer_msg_event_t *event, uint32_t offset)
+{
+#ifdef MODULE_GNRC_IPV6
+    kernel_pid_t target_pid = gnrc_ipv6_pid;
+#else
+    kernel_pid_t target_pid = KERNEL_PID_LAST;  /* just for testing */
+#endif
+    _evtimer_del(event);
+    event->event.next = NULL;
+    event->event.offset = offset;
+    event->msg.type = type;
+    event->msg.content.ptr = ctx;
+    evtimer_add_msg(&_nib_evtimer, event, target_pid);
+}
+
+/**
  * @brief   Initializes NIB internally
  */
 void _nib_init(void);
+
+/**
+ * @brief   Acquire exclusive access to the NIB
+ */
+void _nib_acquire(void);
+
+/**
+ * @brief   Release exclusive access to the NIB
+ */
+void _nib_release(void);
 
 /**
  * @brief   Gets interface identifier from a NIB entry
@@ -342,6 +394,26 @@ _nib_onl_entry_t *_nib_onl_iter(const _nib_onl_entry_t *last);
  * @return  NULL, if there is no such entry.
  */
 _nib_onl_entry_t *_nib_onl_get(const ipv6_addr_t *addr, unsigned iface);
+
+/**
+ * @brief   Gets a node by IPv6 address and interface from the neighbor cache
+ *
+ * @pre     `(addr != NULL)`
+ *
+ * @param[in] addr  The address of a node. Must not be NULL.
+ * @param[in] iface The interface to the node. May be 0 for any interface.
+ *
+ * @return  The Neighbor Cache entry for node with @p addr and @p iface on success.
+ * @return  NULL, if there is no such entry.
+ */
+static inline _nib_onl_entry_t *_nib_onl_nc_get(const ipv6_addr_t *addr, unsigned iface)
+{
+    _nib_onl_entry_t *nce = _nib_onl_get(addr, iface);
+    if (nce && (nce->mode & _NC)) {
+        return nce;
+    }
+    return NULL;
+}
 
 /**
  * @brief   Creates or gets an existing node from the neighbor cache by address
@@ -459,11 +531,12 @@ _nib_dr_entry_t *_nib_drl_iter(const _nib_dr_entry_t *last);
 /**
  * @brief   Gets a default router by IPv6 address and interface
  *
- * @pre     `(router_addr != NULL)`
+ * @pre     `(router_addr != NULL) || (iface != 0)`
  *
- * @param[in] router_addr   The address of a default router. Must not be NULL.
+ * @param[in] router_addr   The address of a default router. May be NULL for
+ *                          any address, but then @p iface must not be NULL.
  * @param[in] iface         The interface to the node. May be 0 for any
- *                          interface.
+ *                          interface, but then @p router_addr must not be NULL.
  *
  * @return  The NIB entry for node with @p router_addr and @p iface onsuccess.
  * @return  NULL, if there is no such entry.
@@ -579,7 +652,7 @@ static inline void _nib_offl_remove(_nib_offl_entry_t *nib_offl, uint8_t mode)
     _nib_offl_clear(nib_offl);
 }
 
-#if GNRC_IPV6_NIB_CONF_DC || DOXYGEN
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_DC) || DOXYGEN
 /**
  * @brief   Creates or gets an existing destination cache entry by its addresses
  *
@@ -590,7 +663,7 @@ static inline void _nib_offl_remove(_nib_offl_entry_t *nib_offl, uint8_t mode)
  *                      *May also be a global address!*
  * @param[in] iface     The interface to the destination.
  *
- * @note    Only available if @ref GNRC_IPV6_NIB_CONF_DC.
+ * @note    Only available if @ref CONFIG_GNRC_IPV6_NIB_DC.
  *
  * @return  A new or existing off-link entry with _nib_offl_entry_t::pfx set to
  *          @p pfx.
@@ -607,17 +680,17 @@ static inline _nib_offl_entry_t *_nib_dc_add(const ipv6_addr_t *next_hop,
 /**
  * @brief   Removes a destination cache entry
  *
- * @param[in,out] nib_dr    An entry.
+ * @param[in,out] nib_offl  Destination entry to remove.
  *
  * Corresponding on-link entry is removed, too.
  *
- * @note    Only available if @ref GNRC_IPV6_NIB_CONF_DC.
+ * @note    Only available if @ref CONFIG_GNRC_IPV6_NIB_DC.
  */
 static inline void _nib_dc_remove(_nib_offl_entry_t *nib_offl)
 {
     _nib_offl_remove(nib_offl, _DC);
 }
-#endif /* GNRC_IPV6_NIB_CONF_DC */
+#endif /* CONFIG_GNRC_IPV6_NIB_DC */
 
 /**
  * @brief   Creates or gets an existing prefix list entry by its prefix
@@ -655,7 +728,17 @@ _nib_offl_entry_t *_nib_pl_add(unsigned iface,
  */
 void _nib_pl_remove(_nib_offl_entry_t *nib_offl);
 
-#if GNRC_IPV6_NIB_CONF_ROUTER || DOXYGEN
+/**
+ * @brief   Removes a prefix from the prefix list as well as the addresses
+ *          associated with the prefix.
+ *
+ * @param[in,out] pfx       The prefix to remove.
+ *
+ * Corresponding on-link entry is removed, too.
+ */
+void _nib_offl_remove_prefix(_nib_offl_entry_t *pfx);
+
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_ROUTER) || DOXYGEN
 /**
  * @brief   Creates or gets an existing forwarding table entry by its prefix
  *
@@ -670,7 +753,7 @@ void _nib_pl_remove(_nib_offl_entry_t *nib_offl);
  *                      @ref _nib_drl_add() for default route destinations.
  * @param[in] pfx_len   The length in bits of @p pfx in bits.
  *
- * @note    Only available if @ref GNRC_IPV6_NIB_CONF_ROUTER.
+ * @note    Only available if @ref CONFIG_GNRC_IPV6_NIB_ROUTER.
  *
  * @return  A new or existing off-link entry with _nib_offl_entry_t::pfx set to
  *          @p pfx.
@@ -691,15 +774,16 @@ static inline _nib_offl_entry_t *_nib_ft_add(const ipv6_addr_t *next_hop,
  *
  * Corresponding on-link entry is removed, too.
  *
- * @note    Only available if @ref GNRC_IPV6_NIB_CONF_ROUTER.
+ * @note    Only available if @ref CONFIG_GNRC_IPV6_NIB_ROUTER.
  */
 static inline void _nib_ft_remove(_nib_offl_entry_t *nib_offl)
 {
+    _evtimer_del(&nib_offl->route_timeout);
     _nib_offl_remove(nib_offl, _FT);
 }
-#endif  /* GNRC_IPV6_NIB_CONF_ROUTER */
+#endif  /* CONFIG_GNRC_IPV6_NIB_ROUTER */
 
-#if GNRC_IPV6_NIB_CONF_MULTIHOP_P6C || defined(DOXYGEN)
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C) || defined(DOXYGEN)
 /**
  * @brief   Creates or gets an existing authoritative border router.
  *
@@ -756,6 +840,9 @@ _nib_offl_entry_t *_nib_abr_iter_pfx(const _nib_abr_entry_t *abr,
  * @return  NULL, if @p last is the last ABR in the NIB.
  */
 _nib_abr_entry_t *_nib_abr_iter(const _nib_abr_entry_t *last);
+#else
+#define _nib_abr_iter(abr) NULL
+#define _nib_abr_add_pfx(abr, pfx) (void)abr
 #endif
 
 /**
@@ -783,47 +870,47 @@ void _nib_ft_get(const _nib_offl_entry_t *dst, gnrc_ipv6_nib_ft_t *fte);
  * @return  0, on success.
  * @return  -ENETUNREACH, when no route was found.
  */
-int _nib_get_route(const ipv6_addr_t *dst, gnrc_pktsnip_t *ctx,
-                   gnrc_ipv6_nib_ft_t *entry);
+int _nib_get_route(const ipv6_addr_t *dst, gnrc_pktsnip_t *pkt,
+                   gnrc_ipv6_nib_ft_t *fte);
+
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_QUEUE_PKT) || DOXYGEN
+/**
+ * @brief Flush the packet queue of a on-link neighbor.
+ *
+ * @param node neighbor entry to be flushed
+ */
+void _nbr_flush_pktqueue(_nib_onl_entry_t *node);
 
 /**
- * @brief   Looks up if an event is queued in the event timer
+ * @brief Remove oldest packet from a on-link neighbor's packet queue.
  *
- * @param[in] ctx   Context of the event. May be NULL for any event context.
- * @param[in] type  [Type of the event](@ref net_gnrc_ipv6_nib_msg).
+ * @param node neighbor entry
  *
- * @return  Milliseconds to the event, if event in queue.
- * @return  UINT32_MAX, event is not in queue.
+ * @retval pointer to the packet entry or NULL if the queue is empty
  */
-uint32_t _evtimer_lookup(const void *ctx, uint16_t type);
+gnrc_pktqueue_t *_nbr_pop_pkt(_nib_onl_entry_t *node);
 
 /**
- * @brief   Adds an event to the event timer
+ * @brief Push packet to a on-link neighbor's packet queue.
  *
- * @param[in] ctx       The context of the event
- * @param[in] type      [Type of the event](@ref net_gnrc_ipv6_nib_msg).
- * @param[in,out] event Representation of the event.
- * @param[in] offset    Offset in milliseconds to the event.
+ * If there are already @ref CONFIG_GNRC_IPV6_NIB_NBR_QUEUE_CAP packets queued,
+ * the oldest will be dropped silently.
+ *
+ * @pre Neighbor is INCOMPLETE.
+ *
+ * @param node neighbor entry
+ * @param pkt packet to be pushed
  */
-static inline void _evtimer_add(void *ctx, int16_t type,
-                                evtimer_msg_event_t *event, uint32_t offset)
-{
-#ifdef MODULE_GNRC_IPV6
-    kernel_pid_t target_pid = gnrc_ipv6_pid;
+void _nbr_push_pkt(_nib_onl_entry_t *node, gnrc_pktqueue_t *pkt);
 #else
-    kernel_pid_t target_pid = KERNEL_PID_LAST;  /* just for testing */
+#define _nbr_flush_pktqueue(node) ((void)node)
+#define _nbr_pop_pkt(node) ((void)node, NULL)
+#define _nbr_push_pkt(node, pkt) ((void)node, (void)pkt)
 #endif
-    evtimer_del((evtimer_t *)(&_nib_evtimer), (evtimer_event_t *)event);
-    event->event.next = NULL;
-    event->event.offset = offset;
-    event->msg.type = type;
-    event->msg.content.ptr = ctx;
-    evtimer_add_msg(&_nib_evtimer, event, target_pid);
-}
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PRIV_NIB_INTERNAL_H */
-/** @} */
+/** @internal
+ * @} */

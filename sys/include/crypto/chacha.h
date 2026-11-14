@@ -1,25 +1,10 @@
 /*
- * Copyright (C) 2008  D. J. Bernstein  (dedicated to the public domain)
- * Copyright (C) 2015  René Kijewski  <rene.kijewski@fu-berlin.de>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * SPDX-FileCopyrightText: 2008 D. J. Bernstein (dedicated to the public domain)
+ * SPDX-FileCopyrightText: 2015 René Kijewski <rene.kijewski@fu-berlin.de>
+ * SPDX-License-Identifier: MIT
  */
+
+#pragma once
 
 /**
  * @ingroup     sys_crypto
@@ -31,11 +16,10 @@
  * @author      René Kijewski <rene.kijewski@fu-berlin.de>
  */
 
-#ifndef CRYPTO_CHACHA_H
-#define CRYPTO_CHACHA_H
-
 #include <stdint.h>
 #include <stddef.h>
+
+#include "compiler_hints.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,9 +43,10 @@ typedef struct {
  * @param[in]  keylen  Length (in bytes) of @p key. Must be 16 or 32.
  * @param[in]  nonce   IV / nonce to use.
  *
- * @return     `== 0` on success.
- * @return     `< 0` if an illegal value for @p rounds or @p keylen was suppplied.
+ * @retval     0       success
+ * @retval     <0      value of @p rounds or @p keylen is illegal
  */
+ACCESS(read_only, 3, 4)
 int chacha_init(chacha_ctx *ctx,
                 unsigned rounds,
                 const uint8_t *key, uint32_t keylen,
@@ -99,7 +84,8 @@ void chacha_encrypt_bytes(chacha_ctx *ctx, const uint8_t *m, uint8_t *c);
 /**
  * @copydoc chacha_encrypt_bytes()
  */
-static inline void chacha_decrypt_bytes(chacha_ctx *ctx, const uint8_t *m, uint8_t *c)
+static inline void chacha_decrypt_bytes(chacha_ctx *ctx, const uint8_t *m,
+                                        uint8_t *c)
 {
     chacha_encrypt_bytes(ctx, m, c);
 }
@@ -122,6 +108,7 @@ static inline void chacha_decrypt_bytes(chacha_ctx *ctx, const uint8_t *m, uint8
  * @param[in] data  Some random data.
  * @param[in] bytes Length of @p data in bytes where `0 < bytes <= 64`.
  */
+ACCESS(read_only, 1, 2)
 void chacha_prng_seed(const void *data, size_t bytes);
 
 /**
@@ -138,8 +125,4 @@ uint32_t chacha_prng_next(void);
 }
 #endif
 
-#endif /* CRYPTO_CHACHA_H */
-
-/**
- * @}
- */
+/** @} */

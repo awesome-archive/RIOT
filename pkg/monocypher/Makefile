@@ -1,11 +1,15 @@
 PKG_NAME=monocypher
 PKG_URL=https://github.com/LoupVaillant/Monocypher
-PKG_VERSION=6c2edbb48a61f43452c48c5f1e3ddabb19af3111
-PKG_LICENSE=CC-0
-
-.PHONY: all
-
-all: git-download
-	$(Q)"$(MAKE)" -C $(PKG_BUILDDIR)/src
+# v4.0.2
+PKG_VERSION=0d85f98c9d9b0227e42cf795cb527dff372b40a4
+PKG_LICENSE=BSD-2-Clause OR CC0-1.0
 
 include $(RIOTBASE)/pkg/pkg.mk
+
+CFLAGS += -DBLAKE2_NO_UNROLLING
+
+all: $(filter monocypher_optional,$(USEMODULE))
+	$(QQ)"$(MAKE)" -C $(PKG_SOURCE_DIR)/src -f $(RIOTBASE)/Makefile.base MODULE=$(PKG_NAME)
+
+monocypher_optional:
+	$(QQ)"$(MAKE)" -C $(PKG_SOURCE_DIR)/src/optional -f $(RIOTBASE)/Makefile.base MODULE=$@

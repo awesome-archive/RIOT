@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016-2017 Bas Stottelaar <basstottelaar@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016-2017 Bas Stottelaar <basstottelaar@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -70,6 +67,8 @@ void rtc_init(void)
 
 int rtc_set_time(struct tm *time)
 {
+    rtc_tm_normalize(time);
+
     RTCC_DateSet(
         RTCC_Year2BCD(time->tm_year - RTC_YEAR_OFFSET) |
         RTCC_Month2BCD(time->tm_mon) |
@@ -101,6 +100,8 @@ int rtc_get_time(struct tm *time)
 
 int rtc_set_alarm(struct tm *time, rtc_alarm_cb_t cb, void *arg)
 {
+    rtc_tm_normalize(time);
+
     rtc_state.alarm_cb = cb;
     rtc_state.alarm_arg = arg;
     rtc_state.alarm_year = time->tm_year;

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) Baptiste Clenet
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017-2021 Baptiste Clenet
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @{
@@ -15,9 +14,6 @@
  * @author      Baptiste Clenet <bapclenet@gmail.com>
  * @}
  */
-
-#ifndef PLATFORM_CONFIG_H
-#define PLATFORM_CONFIG_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +30,6 @@ extern "C" {
 #define OPENTHREAD_CONFIG_NUM_MESSAGE_BUFFERS       (10U)
 #endif
 
-
 /**
  * @def OPENTHREAD_CONFIG_LOG_LEVEL
  *
@@ -47,5 +42,3 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* PLATFORM_CONFIG_H */

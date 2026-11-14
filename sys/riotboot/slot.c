@@ -1,10 +1,8 @@
 /*
- * Copyright (C) 2017 Kaspar Schleiser <kaspar@schleiser.de>
- *                    Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -19,8 +17,13 @@
  *
  * @}
  */
-#include <string.h>
 
+#include <assert.h>
+#include <string.h>
+#include <inttypes.h>
+#include <stdio.h>
+
+#include "container.h"
 #include "cpu.h"
 #include "riotboot/slot.h"
 #include "riotboot/hdr.h"
@@ -31,15 +34,15 @@
  * address of the bootloader, thus the header is located after the
  * space reserved to the bootloader.
  */
-const riotboot_hdr_t * const riotboot_slots[] = {
-    (riotboot_hdr_t*)(CPU_FLASH_BASE + SLOT0_OFFSET),   /* First slot address -> firmware image */
+const riotboot_hdr_t *const riotboot_slots[] = {
+    (riotboot_hdr_t *)(CPU_FLASH_BASE + SLOT0_OFFSET),      /* First slot address -> firmware image */
 #if NUM_SLOTS == 2
-    (riotboot_hdr_t*)(CPU_FLASH_BASE + SLOT1_OFFSET),   /* Second slot address -> firmware image */
+    (riotboot_hdr_t *)(CPU_FLASH_BASE + SLOT1_OFFSET),      /* Second slot address -> firmware image */
 #endif
 };
 
 /* Calculate the number of slots */
-const unsigned riotboot_slot_numof = sizeof(riotboot_slots) / sizeof(riotboot_hdr_t*);
+const unsigned riotboot_slot_numof = ARRAY_SIZE(riotboot_slots);
 
 static void _riotboot_slot_jump_to_image(const riotboot_hdr_t *hdr)
 {
@@ -58,6 +61,11 @@ int riotboot_slot_current(void)
     }
 
     return -1;
+}
+
+int riotboot_slot_other(void)
+{
+    return riotboot_slot_current() ? 0 : 1;
 }
 
 void riotboot_slot_jump(unsigned slot)
@@ -86,4 +94,9 @@ const riotboot_hdr_t *riotboot_slot_get_hdr(unsigned slot)
     assert(slot < riotboot_slot_numof);
 
     return riotboot_slots[slot];
+}
+
+size_t riotboot_slot_offset(unsigned slot)
+{
+    return (size_t)riotboot_slot_get_hdr(slot) - CPU_FLASH_BASE;
 }

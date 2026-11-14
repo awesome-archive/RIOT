@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2019 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -18,27 +15,27 @@
  * @}
  */
 
-#define ENABLE_DEBUG    (0)
-#include "debug.h"
-
 #include <stdbool.h>
 
 #include "log.h"
 #include "periph/gpio.h"    /* RIOT gpio.h */
 
-#include "c_types.h"
-#include "eagle_soc.h"
-#include "ets_sys.h"
+#include "esp8266/eagle_soc.h"
+#include "esp8266/gpio_register.h"
+#include "rom/ets_sys.h"
 
 #include "sdk/ets.h"
 #include "esp/gpio_regs.h"
 #include "esp/iomux_regs.h"
 #include "esp/rtc_regs.h"
 
-#include "common.h"
-#include "gpio_common.h"
+#include "esp_common.h"
+#include "gpio_arch.h"
 #include "irq_arch.h"
 #include "syscalls.h"
+
+#define ENABLE_DEBUG 0
+#include "debug.h"
 
 /*
  * IOMUX to GPIO mapping
@@ -48,19 +45,21 @@
 const uint8_t _gpio_to_iomux[]   = { 12, 5, 13, 4, 14, 15, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3 };
 const uint8_t _iomux_to_gpio[]   = { 12, 13, 14, 15, 3, 1, 6, 7, 8, 9, 10, 11, 0, 2, 4, 5 };
 
-_gpio_pin_usage_t _gpio_pin_usage [GPIO_PIN_NUMOF] =
+gpio_pin_usage_t _gpio_pin_usage [GPIO_PIN_NUMOF] =
 {
    _GPIO,   /* gpio0 */
 
-   _UART,   /* gpio1  UART0 RxD */
-   _GPIO,   /* gpio2 */
-   _UART,   /* gpio3  UART0 TxD */
+   /* UART0 is initialized by the boot ROM, this only reflects our selection so
+    * other devices don't step on it. */
+   UART0_TXD == GPIO1 ? _UART : _GPIO,   /* gpio1 */
+   UART0_TXD == GPIO2 ? _UART : _GPIO,   /* gpio2 */
+   UART0_RXD == GPIO3 ? _UART : _GPIO,   /* gpio3 */
    _GPIO,   /* gpio4 */
    _GPIO,   /* gpio5 */
    _SPIF,   /* gpio6  SPI flash CLK */
    _SPIF,   /* gpio7  SPI flash MISO */
    _SPIF,   /* gpio8  SPI flash MOSI */
-   #if defined(FLASH_MODE_QIO) || defined(FLASH_MODE_QOUT)
+   #if defined(CONFIG_FLASHMODE_QIO) || defined(CONFIG_FLASHMODE_QOUT)
    _SPIF,   /* gpio9  SPI flash HD (qio/qout flash mode) */
    _SPIF,   /* gpio10 SPI flash WP (qio/qout flash mode) */
    #else
@@ -73,6 +72,12 @@ _gpio_pin_usage_t _gpio_pin_usage [GPIO_PIN_NUMOF] =
    _GPIO,   /* gpio14 */
    _GPIO,   /* gpio15 */
    _GPIO    /* gpio16 */
+};
+
+/* String representation of usage types */
+const char* _gpio_pin_usage_str[] =
+{
+    "GPIO", "I2C", "PWM", "SPI", "SPI Flash", "UART", "N/A"
 };
 
 int gpio_init(gpio_t pin, gpio_mode_t mode)
@@ -142,6 +147,7 @@ int gpio_init(gpio_t pin, gpio_mode_t mode)
 
         case GPIO_OD_PU: iomux_conf |= IOMUX_PIN_PULLUP;
                          iomux_conf |= IOMUX_PIN_PULLUP_SLEEP;
+                         /* fallthrough */
         case GPIO_OD:    iomux_conf |= IOMUX_PIN_OUTPUT_ENABLE;
                          iomux_conf |= IOMUX_PIN_OUTPUT_ENABLE_SLEEP;
                          GPIO.CONF[pin] |= GPIO_CONF_OPEN_DRAIN;
@@ -150,6 +156,7 @@ int gpio_init(gpio_t pin, gpio_mode_t mode)
 
         case GPIO_IN_PU: iomux_conf |= IOMUX_PIN_PULLUP;
                          iomux_conf |= IOMUX_PIN_PULLUP_SLEEP;
+                         /* fallthrough */
         case GPIO_IN:    GPIO.CONF[pin] |= GPIO_CONF_OPEN_DRAIN;
                          GPIO.ENABLE_OUT_CLEAR = BIT(pin);
                          break;
@@ -229,7 +236,7 @@ void gpio_irq_disable (gpio_t pin)
 }
 #endif /* MODULE_PERIPH_GPIO_IRQ */
 
-int gpio_read (gpio_t pin)
+bool gpio_read (gpio_t pin)
 {
     CHECK_PARAM_RET(pin < GPIO_PIN_NUMOF, -1);
 
@@ -241,7 +248,7 @@ int gpio_read (gpio_t pin)
     return (GPIO.IN & BIT(pin)) ? 1 : 0;
 }
 
-void gpio_write (gpio_t pin, int value)
+void gpio_write (gpio_t pin, bool value)
 {
     DEBUG("%s: %d %d\n", __func__, pin, value);
 
@@ -284,4 +291,21 @@ void gpio_toggle (gpio_t pin)
     }
 
     GPIO.OUT ^= BIT(pin);
+}
+
+int gpio_set_pin_usage(gpio_t pin, gpio_pin_usage_t usage)
+{
+    CHECK_PARAM_RET(pin < GPIO_PIN_NUMOF, -1);
+    _gpio_pin_usage [pin] = usage;
+    return 0;
+}
+
+gpio_pin_usage_t gpio_get_pin_usage (gpio_t pin)
+{
+    return (pin < GPIO_PIN_NUMOF) ? _gpio_pin_usage[pin] : _NOT_EXIST;
+}
+
+const char* gpio_get_pin_usage_str(gpio_t pin)
+{
+    return _gpio_pin_usage_str[_gpio_pin_usage[((pin < GPIO_PIN_NUMOF) ? pin : _NOT_EXIST)]];
 }

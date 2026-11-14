@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
+ * @experimental
  * @defgroup    net_l2filter Link layer address filter
  * @ingroup     net
  * @brief       Module for filtering (black- or white-listing) link layer
@@ -28,9 +28,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef NET_L2FILTER_H
-#define NET_L2FILTER_H
-
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -41,18 +38,24 @@ extern "C" {
 #endif
 
 /**
+ * @defgroup net_l2filter_conf Link layer address filter compile configurations
+ * @ingroup config
+ * @{
+ */
+/**
  * @brief   Maximal length of addresses that can be stored in the filter list
  */
-#ifndef L2FILTER_ADDR_MAXLEN
-#define L2FILTER_ADDR_MAXLEN            (8U)
+#ifndef CONFIG_L2FILTER_ADDR_MAXLEN
+#define CONFIG_L2FILTER_ADDR_MAXLEN            (8U)
 #endif
 
 /**
  * @brief   Number of slots in each filter list (filter entries per device)
  */
-#ifndef L2FILTER_LISTSIZE
-#define L2FILTER_LISTSIZE               (8U)
+#ifndef CONFIG_L2FILTER_LISTSIZE
+#define CONFIG_L2FILTER_LISTSIZE               (8U)
 #endif
+/** @} */
 
 /**
  * @brief   Filter list entries
@@ -62,8 +65,8 @@ extern "C" {
  * addresses at the same time.
  */
 typedef struct {
-    uint8_t addr[L2FILTER_ADDR_MAXLEN];     /**< link layer address */
-    size_t addr_len;                        /**< address length in byte */
+    uint8_t addr[CONFIG_L2FILTER_ADDR_MAXLEN];     /**< link layer address */
+    size_t addr_len;                               /**< address length in byte */
 } l2filter_t;
 
 /**
@@ -75,10 +78,12 @@ typedef struct {
  *
  * @pre     @p list != NULL
  * @pre     @p addr != NULL
- * @pre     @p addr_maxlen <= @ref L2FILTER_ADDR_MAXLEN
+ * @pre     @p addr_maxlen <= @ref CONFIG_L2FILTER_ADDR_MAXLEN
  *
- * @return  0 on success
- * @return  -ENOMEM if no empty slot left in list
+ * @retval  0 on success
+ * @retval  -ENOMEM if no empty slot left in list
+ * @retval  -EINVAL if `addr_len > CONFIG_L2FILTER_ADDR_MAXLEN` **AND** `NDEBUG` is enabled.
+ *          Otherwise this condition will trip an `assert()`.
  */
 int l2filter_add(l2filter_t *list, const void *addr, size_t addr_len);
 
@@ -91,7 +96,7 @@ int l2filter_add(l2filter_t *list, const void *addr, size_t addr_len);
  *
  * @pre     @p list != NULL
  * @pre     @p addr != NULL
- * @pre     @p addr_maxlen <= @ref L2FILTER_ADDR_MAXLEN
+ * @pre     @p addr_maxlen <= @ref CONFIG_L2FILTER_ADDR_MAXLEN
  *
  * @return  0 on success
  * @return  -ENOENT if @p addr was not found in @p list
@@ -112,7 +117,7 @@ int l2filter_rm(l2filter_t *list, const void *addr, size_t addr_len);
  *
  * @pre     @p list != NULL
  * @pre     @p addr != NULL
- * @pre     @p addr_maxlen <= @ref L2FILTER_ADDR_MAXLEN
+ * @pre     @p addr_maxlen <= @ref CONFIG_L2FILTER_ADDR_MAXLEN
  *
  * @return  in whitelist mode: true if @p addr is in @p list
  * @return  in whitelist mode: false if @p addr is not in @p list
@@ -125,5 +130,4 @@ bool l2filter_pass(const l2filter_t *list, const void *addr, size_t addr_len);
 }
 #endif
 
-#endif /* NET_L2FILTER_H */
 /** @} */

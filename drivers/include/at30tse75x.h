@@ -6,6 +6,8 @@
  * directory for more details.
  */
 
+#pragma once
+
 /**
  * @defgroup    drivers_at30tse75x AT30TSE75x temperature sensor with EEPROM
  * @ingroup     drivers_sensors
@@ -21,9 +23,6 @@
  *
  * @author      Daniel Krebs <github@daniel-krebs.net>
  */
-
-#ifndef AT30TSE75X_H
-#define AT30TSE75X_H
 
 #include <stdint.h>
 #include "periph/i2c.h"
@@ -63,7 +62,6 @@ extern "C" {
 #define AT30TSE75X_FRACTIONAL_SHIFT     (12)
 #define AT30TSE75X_FRACTIONAL_BASE      (0.0625f)
 /** @} */
-
 
 /**
  * @name    AT30TSE75x configuration register
@@ -118,9 +116,9 @@ typedef enum {
 /**
   * @brief   Operation mode
   *
-  * The device can run in continous or one-shot mode. While in one-shot mode it
+  * The device can run in continuous or one-shot mode. While in one-shot mode it
   * is effectively shutdown and only wakes up to perform a single measurement.
-  * When in comparator or interrupt mode, the device samples contiously the
+  * When in comparator or interrupt mode, the device samples continuously the
   * temperature and sets the ALERT pin according to the chosen mode.
   */
 typedef enum {
@@ -301,5 +299,4 @@ int at30tse75x_get_temperature(const at30tse75x_t* dev, float* temperature);
 }
 #endif
 
-#endif /* AT30TSE75X_H */
 /** @} */

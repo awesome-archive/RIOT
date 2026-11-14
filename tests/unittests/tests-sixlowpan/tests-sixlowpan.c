@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Oliver Hahm <oliver.hahm@inria.fr>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Oliver Hahm <oliver.hahm@inria.fr>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -44,7 +41,6 @@
 #define MESH_DISP       (0xB3)  /* 10 11 00 11 */
 #define FRAG1_DISP      (0xC5)  /* 11 00 01 01 */
 #define FRAGN_DISP      (0xE5)  /* 11 10 01 01 */
-
 
 /* Test with 6LoWPAN dispatch byte indicating a none-LoWPAN frame (NALP = Not a
  * LoWPAN frame)

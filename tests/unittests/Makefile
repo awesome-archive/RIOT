@@ -1,260 +1,81 @@
 DEVELHELP ?= 0
-include ../Makefile.tests_common
 
-BOARD_INSUFFICIENT_MEMORY := airfy-beacon \
-                             arduino-duemilanove \
-                             arduino-mega2560 \
-                             arduino-mkr1000 \
-                             arduino-mkrfox1200 \
-                             arduino-mkrzero \
-                             arduino-uno \
-                             arduino-zero \
-                             avsextrem \
-                             b-l072z-lrwan1 \
-                             blackpill \
-                             bluepill \
-                             calliope-mini \
-                             cc2538dk \
-                             cc2650-launchpad \
-                             cc2650stk \
-                             chronos \
-                             ek-lm4f120xl \
-                             feather-m0 \
-                             firefly \
-                             ikea-tradfri \
-                             limifrog-v1 maple-mini \
-                             lobaro-lorabox \
-                             mbed_lpc1768 \
-                             mega-xplained \
-                             microbit \
-                             msb-430 \
-                             msb-430h \
-                             msba2 \
-                             nrf51dk \
-                             nrf51dongle \
-                             nrf6310 \
-                             nucleo-f031k6 \
-                             nucleo-f042k6 \
-                             nucleo-f303k8 \
-                             nucleo-l031k6 \
-                             nucleo-l432kc \
-                             nucleo-f030r8 \
-                             nucleo-f070rb \
-                             nucleo-f072rb \
-                             nucleo-f091rc \
-                             nucleo-f103rb \
-                             nucleo-f302r8 \
-                             nucleo-f334r8 \
-                             nucleo-f410rb \
-                             nucleo-l053r8 \
-                             nucleo-l073rz \
-                             nucleo-l433rc \
-                             nz32-sc151 \
-                             opencm904 \
-                             openmote \
-                             openmote-cc2538 \
-                             openmote-b \
-                             pba-d-01-kw2x \
-                             remote-pa \
-                             remote-reva \
-                             remote-revb \
-                             saml10-xpro \
-                             saml11-xpro \
-                             saml21-xpro \
-                             samd21-xpro \
-                             samr21-xpro \
-                             samr30-xpro \
-                             seeeduino_arch-pro \
-                             sensebox_samd21 \
-                             slstk3401a \
-                             sltb001a \
-                             slwstk6220a \
-                             sodaq-autonomo \
-                             sodaq-explorer \
-                             sodaq-one \
-                             sodaq-sara-aff \
-                             spark-core \
-                             stk3600 \
-                             stm32f0discovery \
-                             stm32f3discovery \
-                             teensy31 \
-                             telosb \
-                             waspmote-pro \
-                             wsn430-v1_3b \
-                             wsn430-v1_4 \
-                             yunjia-nrf51822 z1
+# Allow including this Makefile from other apps, as done by
+# tests/build_system/external_unittests
+UNIT_TESTS_DIR ?= $(CURDIR)
+include $(UNIT_TESTS_DIR)/../Makefile.tests_common
 
 USEMODULE += embunit
 
-ifeq (, $(filter tests-%, $(MAKECMDGOALS)))
-  # the $(dir) Makefile function leaves a trailing slash after the directory
-  # name, therefore we use patsubst instead.
-  UNIT_TESTS := $(patsubst %/Makefile,%,$(wildcard tests-*/Makefile))
+# Search for unit tests both in-tree and, if configured, out-of-tree
+UNIT_TEST_SEARCH_DIRS := $(CURDIR) $(EXTERNAL_UNITTEST_DIRS)
+# Canonicalize test search dirs: Add a single solidus at the end:
+UNIT_TEST_SEARCH_DIRS := $(addsuffix /,$(abspath $(UNIT_TEST_SEARCH_DIRS)))
+
+ifeq (,$(UNIT_TESTS))
+  ifeq (, $(filter tests-%, $(MAKECMDGOALS)))
+    # collect all unit test makefiles in all unit test search dirs
+    UNIT_TESTS_MAKEFILES := $(wildcard $(addsuffix tests-*/Makefile,$(UNIT_TEST_SEARCH_DIRS)))
+    # $(dir) would leave a solidus at the end, using patsub instead
+    UNIT_TESTS := $(patsubst %/Makefile,%,$(UNIT_TESTS_MAKEFILES))
+    # $(notdir) gives the last component in path, despite its name
+    UNIT_TESTS := $(notdir $(UNIT_TESTS))
+  else
+    UNIT_TESTS := $(filter tests-%, $(MAKECMDGOALS))
+  endif
+endif
+
+# in case unit tests were provided by name, we need to locate them
+ifeq (,$(UNIT_TESTS_MAKEFILES))
+  # generate "$searchdir/$testname/Makefile" for every possible combination of
+  # $searchdir and $testname
+  UNIT_TESTS_MAKEFILES := $(addsuffix /Makefile,$(UNIT_TESTS))
+  UNIT_TESTS_MAKEFILES := $(foreach testdir,$(UNIT_TEST_SEARCH_DIRS),$(addprefix $(testdir),$(UNIT_TESTS_MAKEFILES)))
+  # reduce that list to files that actually exist
+  UNIT_TESTS_MAKEFILES := $(wildcard $(UNIT_TESTS_MAKEFILES))
+endif
+
+ifeq (llvm,$(TOOLCHAIN))
+  # the floating point exception bug is more likely to trigger when build
+  # with LLVM, so we just disable LLVM on native as a work around
+  TEST_ON_CI_BLACKLIST += native32 native64
 else
-  UNIT_TESTS := $(filter tests-%, $(MAKECMDGOALS))
+  ifeq (native32,$(BOARD))
+    # ASAN produces a false positive for timer initialization on native32 since it assumes
+    # 32-bit values but then writes 64 bits. These CFLAGS set the width of the timer values
+    # to 64 bits. See also https://github.com/RIOT-OS/RIOT/issues/22822
+    CFLAGS += -D_TIME_BITS=64 -D_FILE_OFFSET_BITS=64
+  endif
 endif
 
-ARM7_BOARDS := avsextrem \
-               msba2 \
-               #
-DISABLE_TEST_FOR_ARM7 := tests-cpp_%
+DISABLE_MODULE += auto_init auto_init_%
 
-ARM_CORTEX_M_BOARDS := airfy-beacon \
-                       arduino-due \
-                       arduino-mkr1000 \
-                       arduino-mkrfox1200 \
-                       arduino-mkrzero \
-                       arduino-zero \
-                       b-l072z-lrwan1 \
-                       bluepill \
-                       calliope-mini \
-                       cc2538dk \
-                       cc2650-launchpad \
-                       cc2650stk \
-                       ek-lm4f120xl \
-                       f4vi1 \
-                       feather-m0 \
-                       firefly \
-                       fox \
-                       frdm-k22f \
-                       frdm-k64f \
-                       frdm-kw41z \
-                       ikea-tradfri \
-                       iotlab-a8-m3 \
-                       iotlab-m3 \
-                       limifrog-v1 \
-                       maple-mini \
-                       mbed_lpc1768 \
-                       microbit \
-                       msbiot \
-                       mulle \
-                       nrf51dk \
-                       nrf51dongle \
-                       nrf52840dk \
-                       nrf52dk \
-                       nrf6310 \
-                       nucleo-f207zg \
-                       nucleo-f303ze \
-                       nucleo-f412zg \
-                       nucleo-f413zh \
-                       nucleo-f429zi \
-                       nucleo-f446ze \
-                       nucleo-f722ze \
-                       nucleo-f746zg \
-                       nucleo-f767zi \
-                       nucleo-f031k6 \
-                       nucleo-f042k6 \
-                       nucleo-f303k8 \
-                       nucleo-l031k6 \
-                       nucleo-l432kc \
-                       nucleo-f030r8 \
-                       nucleo-f070rb \
-                       nucleo-f072rb \
-                       nucleo-f091rc \
-                       nucleo-f103rb \
-                       nucleo-f302r8 \
-                       nucleo-f303re \
-                       nucleo-f334r8 \
-                       nucleo-f401re \
-                       nucleo-f410rb \
-                       nucleo-f411re \
-                       nucleo-f446re \
-                       nucleo-l053r8 \
-                       nucleo-l073rz \
-                       nucleo-l152re \
-                       nucleo-l433rc \
-                       nucleo-l476rg \
-                       nucleo-l496zg \
-                       nz32-sc151 \
-                       opencm904 \
-                       openmote-cc2538 \
-                       pba-d-01-kw2x \
-                       remote-pa \
-                       remote-reva \
-                       remote-revb \
-                       saml10-xpro \
-                       saml11-xpro \
-                       samd21-xpro \
-                       saml21-xpro \
-                       samr21-xpro \
-                       samr30-xpro \
-                       seeeduino_arch-pro \
-                       slstk3401a \
-                       slstk3402a \
-                       sltb001a \
-                       slwstk6000b \
-                       slwstk6220a \
-                       sodaq-autonomo \
-                       sodaq-explorer \
-                       sodaq-one \
-                       spark-core \
-                       stk3600 \
-                       stk3700 \
-                       stm32f0discovery \
-                       stm32f3discovery \
-                       stm32f4discovery \
-                       stm32f769i-disco \
-                       udoo \
-                       usb-kw41z \
-                       yunjia-nrf51822 \
-                       #
-DISABLE_TEST_FOR_ARM_CORTEX_M :=
+# boards using stdio via CDC ACM require auto_init to automatically
+# initialize stdio over USB.
+FEATURES_BLACKLIST += highlevel_stdio
 
-AVR_BOARDS := arduino-duemilanove \
-              arduino-mega2560 \
-              arduino-uno \
-              waspmote-pro \
-              #
-DISABLE_TEST_FOR_AVR := tests-cpp_%
+# extract the test dirs from the unit test makefiles
+UNIT_TEST_DIRS := $(dir $(UNIT_TESTS_MAKEFILES))
 
-MSP430_BOARDS := chronos \
-                 msb-430 \
-                 msb-430h \
-                 telosb \
-                 wsn430-v1_3b \
-                 wsn430-v1_4 \
-                 z1 \
-                 #
-DISABLE_TEST_FOR_MSP430 := tests-spiffs tests-cpp_%
-
-ifneq (, $(filter $(ARM7_BOARDS), $(BOARD)))
-  UNIT_TESTS := $(filter-out $(DISABLE_TEST_FOR_ARM7), $(UNIT_TESTS))
-endif
-
-ifneq (, $(filter $(ARM_CORTEX_M_BOARDS), $(BOARD)))
-  UNIT_TESTS := $(filter-out $(DISABLE_TEST_FOR_ARM_CORTEX_M), $(UNIT_TESTS))
-endif
-
-ifneq (, $(filter $(AVR_BOARDS), $(BOARD)))
-  UNIT_TESTS := $(filter-out $(DISABLE_TEST_FOR_AVR), $(UNIT_TESTS))
-endif
-
-ifneq (, $(filter $(MSP430_BOARDS), $(BOARD)))
-  UNIT_TESTS := $(filter-out $(DISABLE_TEST_FOR_MSP430), $(UNIT_TESTS))
-endif
-
-ifneq (,$(filter tests-cpp_%, $(UNIT_TESTS)))
-  # We need to tell the build system to use the C++ compiler for linking
-  export FEATURES_REQUIRED += cpp
-  export CPPMIX := 1
-endif
-
-ifneq (,$(filter $(LARGE_STACK_TESTS), $(UNIT_TESTS)))
-  CFLAGS += -DTHREAD_STACKSIZE_MAIN=\(4*THREAD_STACKSIZE_DEFAULT+THREAD_EXTRA_STACKSIZE_PRINTF\)
-endif
-
-DISABLE_MODULE += auto_init
+# each unit test dir needs to be build as module
+DIRS += $(UNIT_TEST_DIRS)
 
 # Pull in `Makefile.include`s from the test suites:
--include $(UNIT_TESTS:%=$(RIOTBASE)/tests/unittests/%/Makefile.include)
-
-DIRS += $(UNIT_TESTS)
-BASELIBS += $(UNIT_TESTS:%=$(BINDIR)/%.a)
+-include $(addsuffix Makefile.include,$(UNIT_TEST_DIRS))
+BASELIBS += $(UNIT_TESTS:%=%.module)
 
 INCLUDES += -I$(RIOTBASE)/tests/unittests/common
 
-# list of boards to run CI tests on
-TEST_ON_CI_WHITELIST += all
+# some tests need more stack
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=THREAD_STACKSIZE_LARGE
+CFLAGS += -DCONFIG_CORE_EXIT_WITH_MAIN=1
+
+# for these boards, enable asan (Address Sanitizer)
+ASAN_BOARDS ?= native32 native64
+ifneq (, $(filter $(ASAN_BOARDS), $(BOARD)))
+  CFLAGS += $(CFLAGS_ASAN)
+  LINKFLAGS += $(LINKFLAGS_ASAN)
+endif
 
 include $(RIOTBASE)/Makefile.include
 
@@ -267,11 +88,22 @@ info-unittests:
 
 $(UNIT_TESTS): all
 
-charCOMMA := ,
-
 ifeq (, $(UNIT_TESTS))
   CFLAGS += -DNO_TEST_SUITES
   $(warning There was no test suite specified!)
 else
-  CFLAGS += -DTEST_SUITES='$(subst $() $(),$(charCOMMA),$(UNIT_TESTS:tests-%=%))'
+  CFLAGS += -DTEST_SUITES='$(subst $() $(),$(comma),$(UNIT_TESTS:tests-%=%))'
+endif
+
+# Hack: If GNRC is not used, still provide access to sock_types.h to allow
+# building nanocoap
+ifeq (,$(filter gnrc_sock,$(USEMODULE)))
+  CFLAGS +=-I$(RIOTBASE)/sys/net/gnrc/sock/include
+endif
+
+# Don't require write access to the current folder just for the MTD test on
+# native
+ifneq (,$(filter native%,$(BOARD)))
+  MTD_NATIVE_FILENAME ?= $(BINDIR)/MEMORY.bin
+  CFLAGS += -DMTD_NATIVE_FILENAME=\"$(MTD_NATIVE_FILENAME)\"
 endif

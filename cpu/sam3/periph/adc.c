@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -18,8 +15,8 @@
  * @}
  */
 
+#include <assert.h>
 #include <stdio.h>
-
 
 #include "mutex.h"
 #include "periph/adc.h"
@@ -33,7 +30,6 @@
 #define ADC_CLOCK_TARGET    (5000000)
 #endif
 #define PRESCALER           ((CLOCK_CORECLOCK / (2 * ADC_CLOCK_TARGET)) - 1)
-
 
 static mutex_t lock = MUTEX_INIT;
 
@@ -68,7 +64,7 @@ int adc_init(adc_t line)
     return 0;
 }
 
-int adc_sample(adc_t line, adc_res_t res)
+int32_t adc_sample(adc_t line, adc_res_t res)
 {
     assert(line < ADC_NUMOF);
 

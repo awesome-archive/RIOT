@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_can_conn Connection
@@ -22,13 +21,11 @@
  *
  */
 
-#ifndef CAN_CONN_RAW_H
-#define CAN_CONN_RAW_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include "compiler_hints.h"
 #include "can/can.h"
 #include "can/raw.h"
 #include "mbox.h"
@@ -52,11 +49,11 @@ extern "C" {
  * @brief   RAW CAN connection
  */
 typedef struct conn_can_raw {
-    int ifnum;                 /**< Interface number of the can device */
-    int flags;                 /**< Config flags for that conn object */
-    size_t count;              /**< number of filters set */
-    struct can_filter *filter; /**< list of filter */
-    mbox_t mbox;               /**< mbox */
+    int ifnum;                          /**< Interface number of the can device */
+    int flags;                          /**< Config flags for that conn object */
+    size_t count;                       /**< number of filters set */
+    const struct can_filter *filter;    /**< list of filter */
+    mbox_t mbox;                        /**< mbox */
     /**
      * message queue
      */
@@ -66,18 +63,19 @@ typedef struct conn_can_raw {
 /**
  * @brief  Create can connection socket
  *
- * @param[inout] conn       CAN connection
- * @param[in] filter        list of filters to set
- * @param[in] count         number of filters in @p filter
- * @param[in] ifnum         can device Interface
- * @param[in] flags         conn flags to set (CONN_CAN_RECVONLY)
+ * @param[in,out]   conn    CAN connection
+ * @param[in]       filter  list of filters to set
+ * @param[in]       count   number of filters in @p filter
+ * @param[in]       ifnum   can device Interface
+ * @param[in]       flags   conn flags to set (CONN_CAN_RECVONLY)
  *
  * @post   @p filter must remain allocated until @p conn is closed
  *
  * @return 0 if socket was successfully connected
  * @return any other negative number in case of an error
  */
-int conn_can_raw_create(conn_can_raw_t *conn, struct can_filter *filter, size_t count,
+ACCESS(read_only, 2, 3)
+int conn_can_raw_create(conn_can_raw_t *conn, const struct can_filter *filter, size_t count,
                         int ifnum, int flags);
 
 /**
@@ -100,7 +98,7 @@ int conn_can_raw_close(conn_can_raw_t *conn);
  * @return the number of bytes received
  * @return any other negative number in case of an error
  */
-int conn_can_raw_recv(conn_can_raw_t *conn, struct can_frame *frame, uint32_t timeout);
+int conn_can_raw_recv(conn_can_raw_t *conn, can_frame_t *frame, uint32_t timeout);
 
 /**
  * @brief  Generic can send
@@ -113,7 +111,7 @@ int conn_can_raw_recv(conn_can_raw_t *conn, struct can_frame *frame, uint32_t ti
  * @return the number of bytes sent
  * @return any other negative number in case of an error
  */
-int conn_can_raw_send(conn_can_raw_t *conn, const struct can_frame *frame, int flags);
+int conn_can_raw_send(conn_can_raw_t *conn, const can_frame_t *frame, int flags);
 
 /**
  * @brief  Set raw CAN filters
@@ -132,12 +130,11 @@ int conn_can_raw_send(conn_can_raw_t *conn, const struct can_frame *frame, int f
  * @return 0 if can filters were successfully set
  * @return any other negative number in case of an error
  */
-int conn_can_raw_set_filter(conn_can_raw_t *conn, struct can_filter *filter, size_t count);
-
+ACCESS(read_only, 2, 3)
+int conn_can_raw_set_filter(conn_can_raw_t *conn, const struct can_filter *filter, size_t count);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CAN_CONN_RAW_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_tsl4531x TSL4531x Illuminance sensor
@@ -24,7 +23,7 @@
  * synchronous or asynchronous manner. For synchronous operation, the application
  * can call tsl4531x_simple_read, and the driver will block for the integration
  * time defined in the initialization parameters (plus a small margin, to encompass
- * the max times indicated in the datasheet). For asyncronous operation, the
+ * the max times indicated in the datasheet). For asynchronous operation, the
  * application needs to use the functions tsl4531x_start_sample,
  * tsl4531x_time_until_sample_ready and tsl4531x_get_sample, as described in those
  * functions' descriptions.
@@ -37,9 +36,6 @@
  * @author      Juan I Carrano <j.carrano@fu-berlin.de>
  * @author      Daniel Petry <daniel.petry@fu-berlin.de>
  */
-
-#ifndef TSL4531X_H
-#define TSL4531X_H
 
 #include <stdint.h>
 
@@ -191,5 +187,4 @@ int tsl4531x_simple_read(tsl4531x_t *dev);
 }
 #endif
 
-#endif /* TSL4531X_H */
 /** @} */

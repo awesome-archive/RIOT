@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_w5100 W5100 ethernet driver
@@ -30,9 +29,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef W5100_H
-#define W5100_H
 
 #include <stdint.h>
 
@@ -74,12 +70,16 @@ typedef struct {
  *
  * This function pre-initializes the netdev structure, saves the configuration
  * parameters and finally initializes the SPI bus and the used GPIO pins.
+ *
+ * @param [out] dev     the handle of the device to initialize
+ * @param [in]  params  parameters for device initialization
+ * @param [in]  index   Index of @p params in a global parameter struct array.
+ *                      If initialized manually, pass a unique identifier instead.
  */
-void w5100_setup(w5100_t *dev, const w5100_params_t *params);
+void w5100_setup(w5100_t *dev, const w5100_params_t *params, uint8_t index);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* W5100_H */
-/* @} */
+/** @} */

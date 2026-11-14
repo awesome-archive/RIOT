@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014-2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014-2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_periph_pwm PWM
@@ -29,7 +28,7 @@
  * all channels.
  *
  * The mapping/configuration of PWM devices (timers) and the used pins has to be
- * done in the board configuration (the board's `periph_conf.h).
+ * done in the board configuration (the board's `periph_conf.h`).
  *
  * When using the PWM interface, first thing you have to do is initialize the
  * PWM device with the targeted mode, frequency, and resolution settings. Once
@@ -58,9 +57,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef PERIPH_PWM_H
-#define PERIPH_PWM_H
-
 #include <stdint.h>
 #include <limits.h>
 
@@ -82,14 +78,14 @@ extern "C" {
  * @brief  Default PWM undefined value
  */
 #ifndef PWM_UNDEF
-#define PWM_UNDEF           (UINT_MAX)
+#define PWM_UNDEF           (UINT_FAST8_MAX)
 #endif
 
 /**
  * @brief   Default PWM type definition
  */
 #ifndef HAVE_PWM_T
-typedef unsigned int pwm_t;
+typedef uint_fast8_t pwm_t;
 #endif
 
 /**
@@ -97,10 +93,22 @@ typedef unsigned int pwm_t;
  */
 #ifndef HAVE_PWM_MODE_T
 typedef enum {
-    PWM_LEFT,           /*< use left aligned PWM */
-    PWM_RIGHT,          /*< use right aligned PWM */
-    PWM_CENTER          /*< use center aligned PWM */
+    PWM_LEFT,           /**< use left aligned PWM */
+    PWM_RIGHT,          /**< use right aligned PWM */
+    PWM_CENTER          /**< use center aligned PWM */
 } pwm_mode_t;
+#endif
+
+#ifdef MODULE_ARDUINO
+/**
+ * @brief   Mapping of an Arduino digital pin to the corresponding PWM dev and
+ *          channel pair
+ */
+typedef struct {
+    pwm_t dev;          /**< PWM device connected to the pin */
+    uint8_t chan;       /**< PWM channel index */
+    uint8_t pin;        /**< Arduino pin number */
+} arduino_pwm_t;
 #endif
 
 /**
@@ -174,5 +182,4 @@ void pwm_poweroff(pwm_t dev);
 }
 #endif
 
-#endif /* PERIPH_PWM_H */
 /** @} */

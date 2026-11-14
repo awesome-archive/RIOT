@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_hd44780 HD44780 LCD driver
- * @ingroup     drivers_actuators
+ * @ingroup     drivers_display
  * @brief       Driver for the Hitachi HD44780 LCD driver
  *
- * @note        The driver currently supports direct addressing, no I2C
+ * @note        The driver currently supports both direct addressing
+ *              and I2C if the [PCF857X module](@ref drivers_pcf857x) is used
  *
  * @{
  *
@@ -20,8 +20,6 @@
  *
  * @author      Sebastian Meiling <s@mlng.net>
  */
-#ifndef HD44780_H
-#define HD44780_H
 
 #include <stdint.h>
 
@@ -47,11 +45,6 @@ extern "C" {
 #define HD44780_MAX_PINS        (8U)
 
 /**
- * @brief Specific value to turn rw pin off, if unused.
- */
-#define HD44780_RW_OFF          (255U)
-
-/**
  * @brief   Size of RAM for custom chars
  *
  * Generally the driver could support 8 chars of size 5x8 or 4 of size 5x10.
@@ -68,7 +61,7 @@ typedef struct {
     gpio_t rs;                      /**< rs gpio pin */
     gpio_t rw;                      /**< rw gpio pin */
     gpio_t enable;                  /**< enable gpio pin */
-    gpio_t data[8];                 /**< data gpio pins */
+    gpio_t data[HD44780_MAX_PINS];  /**< data gpio pins */
 } hd44780_params_t;
 
 /**
@@ -214,5 +207,4 @@ void hd44780_print(const hd44780_t *dev, const char *data);
 }
 #endif
 
-#endif /* HD44780_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 Hamburg University of Applied Sciences
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2014 Hamburg University of Applied Sciences
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_nrf24l01p
@@ -17,9 +16,6 @@
  * @author      Peter Kietzmann <peter.kietzmann@haw-hamburg.de>
  *
  */
-
-#ifndef NRF24L01P_SETTINGS_H
-#define NRF24L01P_SETTINGS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,7 +65,7 @@ extern "C" {
 #define CMD_R_RX_PL_WID         0x60
 #define CMD_W_ACK_PAYLOAD       0xa8
 #define CMD_W_TX_PAYLOAD_NOACK  0xb0
-#define CMD_NOP                 0xff
+#define CMD_NOOP                0xff
 
 #define REGISTER_MASK           0x1F
 /** @} */
@@ -120,6 +116,7 @@ extern "C" {
 
 /**
  * @name    CONFIG register bitmaps
+ * @{
  */
 #define MASK_RX_DR              0x40
 #define MASK_TX_DS              0x20
@@ -183,5 +180,4 @@ extern "C" {
 }
 #endif
 
-#endif /* NRF24L01P_SETTINGS_H */
 /** @} */

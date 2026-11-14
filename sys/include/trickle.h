@@ -1,13 +1,10 @@
 /*
- * Trickle constants and prototypes
- *
- * Copyright (C) 2013, 2014  INRIA.
- *               2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2013-2014 INRIA
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup sys_trickle Trickle Timer
@@ -25,15 +22,12 @@
  * @author  Cenk Gündoğan <cenk.guendogan@haw-hamburg.de>
  */
 
-#ifndef TRICKLE_H
-#define TRICKLE_H
-
 #ifdef __cplusplus
  extern "C" {
 #endif
 
-#include "xtimer.h"
 #include "thread.h"
+#include "ztimer.h"
 
 /**
  * @brief Trickle callback function with arguments
@@ -59,7 +53,7 @@ typedef struct {
     trickle_callback_t callback;    /**< callback function and parameter that
                                          trickle calls after each interval */
     msg_t msg;                      /**< the msg_t to use for intervals */
-    xtimer_t msg_timer;             /**< xtimer to send a msg_t to the target
+    ztimer_t msg_timer;             /**< timer to send a msg_t to the target
                                          thread for a new interval */
 } trickle_t;
 
@@ -123,5 +117,4 @@ void trickle_callback(trickle_t *trickle);
 }
 #endif
 
-#endif /* TRICKLE_H */
 /** @} */

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Koen Zandberg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Koen Zandberg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -18,14 +15,13 @@
  * @}
  */
 
-
 #include "periph/i2c.h"
 #include "byteorder.h"
 
 #include "jc42.h"
 #include "jc42_internal.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 static int jc42_get_register(const jc42_t* dev, uint8_t reg, uint16_t* data)

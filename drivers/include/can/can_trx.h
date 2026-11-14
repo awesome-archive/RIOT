@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016  OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_can_trx CAN transceiver interface
@@ -18,8 +17,6 @@
  * @author      Aurelien Gonce <aurelien.gonce@altran.com>
  * @author      Vincent Dupont <vincent@otakeys.com>
  */
-#ifndef CAN_CAN_TRX_H
-#define CAN_CAN_TRX_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -97,10 +94,8 @@ int can_trx_init(can_trx_t *dev);
  */
 int can_trx_set_mode(can_trx_t *dev, can_trx_mode_t mode);
 
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CAN_CAN_TRX_H */
 /** @} */

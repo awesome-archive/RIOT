@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -25,12 +22,12 @@
 #include "pcd8544.h"
 #include "pcd8544_internal.h"
 
-#define ENABLE_DEBUG        (0)
+#define ENABLE_DEBUG        0
 #include "debug.h"
 
 #define ASCII_MIN           0x20    /**< start of ASCII table */
 #define ASCII_MAX           0x7e    /**< end of ASCII table */
-#define CHAR_WIDTH          (6U)    /**< pixel width of a single character */
+#define CHAR_PIXEL_WIDTH          (6U)    /**< pixel width of a single character */
 
 #define SPI_CLK             (SPI_CLK_1MHZ)
 #define SPI_MODE            (SPI_MODE_0)
@@ -133,7 +130,7 @@ static const uint8_t _ascii[][5] = {
     {0x10, 0x08, 0x08, 0x10, 0x08},/* 7e ~ */
 };
 
-static const char _riot[] = {
+static const uint8_t _riot[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -209,12 +206,12 @@ static inline void done(const pcd8544_t *dev)
     spi_release(dev->spi);
 }
 
-static void _write(const pcd8544_t *dev, uint8_t is_data, char data)
+static void _write(const pcd8544_t *dev, uint8_t is_data, uint8_t data)
 {
     /* set command or data mode */
     gpio_write(dev->mode, is_data);
     /* write byte to LCD */
-    spi_transfer_bytes(dev->spi, dev->cs, false, (uint8_t *)&data, NULL, 1);
+    spi_transfer_bytes(dev->spi, dev->cs, false, &data, NULL, 1);
 }
 
 static inline void _set_x(const pcd8544_t *dev, uint8_t x)
@@ -238,7 +235,7 @@ int pcd8544_init(pcd8544_t *dev, spi_t spi, gpio_t cs, gpio_t reset, gpio_t mode
 
     DEBUG("done setting dev members\n");
 
-    /* initialze pins */
+    /* initialize pins */
     gpio_init(reset, GPIO_OUT);
     gpio_init(mode, GPIO_OUT);
     DEBUG("done with gpios\n");
@@ -307,7 +304,7 @@ void pcd8544_riot(const pcd8544_t *dev)
     pcd8544_write_img(dev, _riot);
 }
 
-void pcd8544_write_img(const pcd8544_t *dev, const char img[])
+void pcd8544_write_img(const pcd8544_t *dev, const uint8_t img[])
 {
     /* set initial position */
     lock(dev);
@@ -328,10 +325,10 @@ void pcd8544_write_c(const pcd8544_t *dev, uint8_t x, uint8_t y, char c)
     }
     /* set position */
     lock(dev);
-    _set_x(dev, x * CHAR_WIDTH);
+    _set_x(dev, x * CHAR_PIXEL_WIDTH);
     _set_y(dev, y);
     /* write char */
-    for (unsigned i = 0; i < CHAR_WIDTH - 1; i++) {
+    for (unsigned i = 0; i < CHAR_PIXEL_WIDTH - 1; i++) {
         _write(dev, MODE_DTA, _ascii[c - ASCII_MIN][i]);
     }
     _write(dev, MODE_DTA, 0x00);

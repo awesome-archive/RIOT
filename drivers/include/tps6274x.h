@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 RWTH Aachen
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 RWTH Aachen
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_tps6274x TPS6274x
@@ -18,9 +17,6 @@
  * @author      Steffen Robertz <steffen.robertz@rwth-aachen.de>
  * @author      Josua Arndt <jarndt@ias.rwth-aachen.de>
  */
-
-#ifndef TPS6274X_H
-#define TPS6274X_H
 
 #ifdef __cplusplus
 extern "C"
@@ -83,5 +79,4 @@ void tps6274x_load_ctrl(tps6274x_t *dev, int status);
 #ifdef __cplusplus
 }
 #endif
-#endif /* TPS6274X_H */
 /** @} */

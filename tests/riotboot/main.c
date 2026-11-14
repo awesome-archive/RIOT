@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2018 Inria
- *                    Federico Pellegrin <fede@evolware.org>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Inria
+ * SPDX-FileCopyrightText: 2018 Federico Pellegrin <fede@evolware.org>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -80,7 +77,7 @@ int main(void)
     puts("Hello riotboot!");
 
     printf("You are running RIOT on a(n) %s board.\n", RIOT_BOARD);
-    printf("This board features a(n) %s MCU.\n", RIOT_MCU);
+    printf("This board features a(n) %s CPU.\n", RIOT_CPU);
 
     /* print some information about the running image */
     current_slot = riotboot_slot_current();

@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2016 Alexander Aring <aar@pengutronix.de>
- *                    Freie Universität Berlin
- *                    HAW Hamburg
- *                    Kaspar Schleiser <kaspar@schleiser.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Alexander Aring <aar@pengutronix.de>
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2016 HAW Hamburg
+ * SPDX-FileCopyrightText: 2016 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_sock_tcp    TCP sock API
@@ -16,7 +15,7 @@
  *
  * How To Use
  * ----------
- * First you need to @ref including-modules "include" a module that implements
+ * First you need to [include][include-link] a module that implements
  * this API in your application's Makefile. For example the implementation for
  * @ref net_gnrc "GNRC" is called `gnrc_sock_tcp`.
  *
@@ -45,7 +44,7 @@
  *     while (1) {
  *         sock_tcp_t *sock;
  *
- *         if (sock_tcp_accept(&queue, &sock) < 0) {
+ *         if (sock_tcp_accept(&queue, &sock, SOCK_NO_TIMEOUT) < 0) {
  *             puts("Error accepting new sock");
  *         }
  *         else {
@@ -55,7 +54,7 @@
  *             while (read_res >= 0) {
  *                 read_res = sock_tcp_read(sock, &buf, sizeof(buf),
  *                                          SOCK_NO_TIMEOUT);
- *                 if (read_res < 0) {
+ *                 if (read_res <= 0) {
  *                     puts("Disconnected");
  *                     break;
  *                 }
@@ -76,13 +75,13 @@
  *             sock_tcp_disconnect(sock);
  *         }
  *     }
- *     sock_tcp_stop_listen(queue);
+ *     sock_tcp_stop_listen(&queue);
  *     return 0;
  * }
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * Above you see a simple TCP echo server. Don't forget to also
- * @ref including-modules "include" the IPv6 module of your networking
+ * [include][include-link] the IPv6 module of your networking
  * implementation (e.g. `gnrc_ipv6_default` for @ref net_gnrc GNRC) and at least
  * one network device.
  *
@@ -153,7 +152,7 @@
  *             while (read_res >= 0) {
  *                 read_res = sock_tcp_read(sock, &buf, sizeof(buf),
  *                                          SOCK_NO_TIMEOUT);
- *                 if (read_res < 0) {
+ *                 if (read_res <= 0) {
  *                     puts("Disconnected");
  *                     break;
  *                 }
@@ -216,7 +215,7 @@
  *     }
  *     else {
  *         if ((res = sock_tcp_read(&sock, &buf, sizeof(buf),
- *                                  SOCK_NO_TIMEOUT)) < 0) {
+ *                                  SOCK_NO_TIMEOUT)) <= 0) {
  *             puts("Disconnected");
  *         }
  *         printf("Read: \"");
@@ -231,7 +230,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * Above you see a simple TCP echo client. Again: Don't forget to also
- * @ref including-modules "include" the IPv6 module of your networking
+ * [include][include-link] the IPv6 module of your networking
  * implementation (e.g. `gnrc_ipv6_default` for @ref net_gnrc "GNRC") and at
  * least one network device. Ad0)ditionally, for the IPv6 address parsing you need
  * the @ref net_ipv6_addr "IPv6 address module".
@@ -271,7 +270,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.c}
  *     else {
  *         if ((res = sock_tcp_read(&sock, &buf, sizeof(buf),
- *                                  SOCK_NO_TIMEOUT)) < 0) {
+ *                                  SOCK_NO_TIMEOUT)) <= 0) {
  *             puts("Disconnected");
  *         }
  *         printf("Read: \"");
@@ -283,6 +282,8 @@
  *     sock_tcp_disconnect(&sock);
  *     return res;
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
+ * [include-link]: https://guide.riot-os.org/advanced_tutorials/creating_application/#including-modules
  *
  * @{
  *
@@ -296,12 +297,18 @@
  * @author  Martine Lenders <m.lenders@fu-berlin.de>
  * @author  Kaspar Schleiser <kaspar@schleiser.de>
  */
-#ifndef NET_SOCK_TCP_H
-#define NET_SOCK_TCP_H
 
+#include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/types.h>
+
+/* net/sock/async/types.h included by net/sock.h needs to re-typedef the
+ * `sock_tcp_t` and `sock_tcp_queue_t` to prevent cyclic includes */
+#if defined (__clang__)
+# pragma clang diagnostic push
+# pragma clang diagnostic ignored "-Wtypedef-redefinition"
+#endif
 
 #include "net/sock.h"
 
@@ -314,7 +321,7 @@ typedef struct _sock_tl_ep sock_tcp_ep_t;   /**< An end point for a TCP sock obj
 /**
  * @brief   Type for a TCP sock object
  *
- * @note API implementors: `struct sock_tcp` needs to be defined by
+ * @note API implementers: `struct sock_tcp` needs to be defined by
  *       implementation-specific `sock_types.h`.
  */
 typedef struct sock_tcp sock_tcp_t;
@@ -322,10 +329,14 @@ typedef struct sock_tcp sock_tcp_t;
 /**
  * @brief   Type for a TCP listening queue
  *
- * @note API implementors: `struct sock_tcp_queue` needs to be defined by
+ * @note API implementers: `struct sock_tcp_queue` needs to be defined by
  *                          implementation-specific `sock_types.h`.
  */
 typedef struct sock_tcp_queue sock_tcp_queue_t;
+
+#if defined (__clang__)
+# pragma clang diagnostic pop
+#endif
 
 /**
  * @brief   Establishes a new TCP sock connection
@@ -494,7 +505,8 @@ int sock_tcp_accept(sock_tcp_queue_t *queue, sock_tcp_t **sock,
  * @note    Function may block.
  *
  * @return  The number of bytes read on success.
- * @return  0, if no read data is available, but everything is in order.
+ * @return  0, if no read data is available or the connection was orderly closed
+ *          by the remote host.
  * @return  -EAGAIN, if @p timeout is `0` and no data is available.
  * @return  -ECONNABORTED, if the connection is aborted while waiting for the
  *          next data.
@@ -528,11 +540,10 @@ ssize_t sock_tcp_read(sock_tcp_t *sock, void *data, size_t max_len,
  */
 ssize_t sock_tcp_write(sock_tcp_t *sock, const void *data, size_t len);
 
-#include "sock_types.h"
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* NET_SOCK_TCP_H */
+#include "sock_types.h"
+
 /** @} */

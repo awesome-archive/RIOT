@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017 TriaGnoSys GmbH
- *               2013 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 TriaGnoSys GmbH
+ * SPDX-FileCopyrightText: 2013 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    posix_semaphore POSIX semaphores
@@ -22,9 +21,6 @@
  * @author  Víctor Ariño <victor.arino@zii.aero>
  */
 
-#ifndef SEMAPHORE_H
-#define SEMAPHORE_H
-
 #include <errno.h>
 #include <time.h>
 
@@ -40,7 +36,7 @@ extern "C" {
 typedef sema_t sem_t;
 
 /**
- * @brief Value returned if `sem_open' failed.
+ * @brief Value returned if `sem_open` failed.
  */
 #define SEM_FAILED      ((sem_t *) 0)
 
@@ -223,7 +219,7 @@ static inline int sem_unlink(const char *name)
 }
 
 /**
- * @brief Similar to `sem_wait' but wait only until @p abstime.
+ * @brief Similar to `sem_wait` but wait only until @p abstime.
  *
  * @see <a href="http://pubs.opengroup.org/onlinepubs/9699919799/functions/sem_timedwait.html">
  *          The Open Group Base Specifications Issue 7, sem_timedwait()
@@ -283,7 +279,7 @@ static inline int sem_trywait(sem_t *sem)
 static inline int sem_getvalue(sem_t *sem, int *sval)
 {
     if (sem != NULL) {
-        *sval = (int)sem->value;
+        *sval = (int)sema_get_value((sema_t *)sem);
         return 0;
     }
     errno = EINVAL;
@@ -294,5 +290,4 @@ static inline int sem_getvalue(sem_t *sem, int *sval)
 }
 #endif
 
-#endif /* SEMAPHORE_H */
 /** @} */

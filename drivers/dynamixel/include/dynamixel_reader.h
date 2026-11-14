@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_dynamixel
@@ -16,9 +15,6 @@
  *
  * @author      Loïc Dauphin <loic.dauphin@inria.fr>
  */
-
-#ifndef DYNAMIXEL_READER_H
-#define DYNAMIXEL_READER_H
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -54,7 +50,6 @@ static inline void dynamixel_reader_init(dynamixel_reader_t *reader, const uint8
     reader->buffer = buffer;
     reader->size = size;
 }
-
 
 /**
  * @brief Check if the packet is valid
@@ -123,7 +118,7 @@ static inline uint16_t dynamixel_reader_get_crc(const dynamixel_reader_t *reader
  *
  * @param[in] reader      the packet reader
  *
- * @return the addess of the begining of the payload
+ * @return the address of the beginning of the payload
  */
 static inline const uint8_t *dynamixel_reader_status_get_payload(const dynamixel_reader_t *reader)
 {
@@ -146,5 +141,4 @@ static inline size_t dynamixel_reader_status_get_payload_size(const dynamixel_re
 }
 #endif
 
-#endif /* DYNAMIXEL_READER_H */
 /** @} */

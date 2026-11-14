@@ -1,15 +1,12 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup        cpu_nrf51 Nordic nRF51 MCU
- * @ingroup         cpu
- * @brief           Nordic nRF51 family of CPUs
+ * @ingroup         cpu_nrf51
  * @{
  *
  * @file
@@ -18,12 +15,10 @@
  * @author          Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef CPU_CONF_H
-#define CPU_CONF_H
-
 #include "cpu_conf_common.h"
 #include "vendor/nrf51.h"
 #include "vendor/nrf51_bitfields.h"
+#include "vendor/nrf51822_peripherals.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,6 +44,12 @@ extern "C" {
 #elif defined(CPU_MODEL_NRF51X22XXAB)
 #define FLASHPAGE_NUMOF         (128U)
 #endif
+/* The minimum block size which can be written is 4B. However, the erase
+ * block is always FLASHPAGE_SIZE.
+ */
+#define FLASHPAGE_WRITE_BLOCK_SIZE      (4U)
+/* Writing should be always 4 bytes aligned */
+#define FLASHPAGE_WRITE_BLOCK_ALIGNMENT (4U)
 /** @} */
 
 /**
@@ -56,8 +57,8 @@ extern "C" {
  *          buffer size on these CPUs
  * @{
  */
-#ifndef GNRC_PKTBUF_SIZE
-#define GNRC_PKTBUF_SIZE                (2048)
+#ifndef CONFIG_GNRC_PKTBUF_SIZE
+#define CONFIG_GNRC_PKTBUF_SIZE                (2048)
 #endif
 /** @} */
 
@@ -74,5 +75,4 @@ extern "C" {
 }
 #endif
 
-#endif /* CPU_CONF_H */
 /** @} */

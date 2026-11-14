@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2014-2016 Freie Universität Berlin
- *               2015 Jan Wagner <mail@jwagner.eu>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014-2016 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2015 Jan Wagner <mail@jwagner.eu>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -24,10 +21,12 @@
 
 #include "cpu.h"
 #include "periph/hwrng.h"
+#include "assert.h"
 
 void hwrng_init(void)
 {
-    /* nothing to do here */
+    /* enable bias correction */
+    NRF_RNG->CONFIG = 1;
 }
 
 void hwrng_read(void *buf, unsigned int num)

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2014 INRIA
- * Copyright (C) 2015-2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 INRIA
+ * SPDX-FileCopyrightText: 2015-2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_xbee XBee driver
@@ -20,13 +19,9 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef XBEE_H
-#define XBEE_H
-
 #include <stdint.h>
 
 #include "mutex.h"
-#include "xtimer.h"
 #include "periph/uart.h"
 #include "periph/gpio.h"
 #include "net/netdev.h"
@@ -73,12 +68,12 @@ extern "C" {
 /**
  * @brief   Default PAN ID used after initialization
  */
-#define XBEE_DEFAULT_PANID          (IEEE802154_DEFAULT_PANID)
+#define XBEE_DEFAULT_PANID          (CONFIG_IEEE802154_DEFAULT_PANID)
 
 /**
  * @brief   Default channel used after initialization
  */
-#define XBEE_DEFAULT_CHANNEL        (IEEE802154_DEFAULT_CHANNEL)
+#define XBEE_DEFAULT_CHANNEL        (CONFIG_IEEE802154_DEFAULT_CHANNEL)
 
 /**
  * @name    Address flags
@@ -131,14 +126,11 @@ typedef struct {
     const struct netdev_driver *driver;     /**< ptr to that driver's interface. */
     netdev_event_cb_t event_callback;       /**< callback for device events */
     void* context;                          /**< ptr to network stack context */
-#ifdef MODULE_NETSTATS_L2
-    netstats_t stats;                       /**< transceiver's statistics */
-#endif
     /* device driver specific fields */
     xbee_params_t p;                    /**< configuration parameters */
     uint8_t options;                    /**< options field */
     uint8_t addr_flags;                 /**< address flags as defined above */
-    uint8_t addr_short[2];              /**< onw 802.15.4 short address */
+    uint8_t addr_short[2];              /**< own 802.15.4 short address */
     eui64_t addr_long;                  /**< own 802.15.4 long address */
     /* general variables for the UART RX state machine */
     xbee_rx_state_t int_state;          /**< current state if the UART RX FSM */
@@ -182,10 +174,6 @@ extern const netdev_driver_t xbee_driver;
  *
  * @param[out] dev          Xbee device to initialize
  * @param[in]  params       parameters for device initialization
- *
- * @return                  0 on success
- * @return                  -ENODEV on invalid device descriptor
- * @return                  -ENXIO on invalid UART or GPIO pins
  */
 void xbee_setup(xbee_t *dev, const xbee_params_t *params);
 
@@ -222,5 +210,4 @@ int xbee_parse_hdr(xbee_t *dev, const uint8_t *xhdr, xbee_l2hdr_t *l2hdr);
 }
 #endif
 
-#endif /* XBEE_H */
 /** @} */

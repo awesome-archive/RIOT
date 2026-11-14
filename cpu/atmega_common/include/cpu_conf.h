@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin, Hinnerk van Bruinehsen
- *               2017 RWTH Aachen, Josua Arndt
- *               2018 Matthew Blue
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin, Hinnerk van Bruinehsen
+ * SPDX-FileCopyrightText: 2017 RWTH Aachen, Josua Arndt
+ * SPDX-FileCopyrightText: 2018 Matthew Blue
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup         cpu_atmega_common
@@ -22,16 +21,15 @@
  * @author          Matthew Blue <matthew.blue.neuro@gmail.com>
  */
 
-#ifndef CPU_CONF_H
-#define CPU_CONF_H
-
 #include "atmega_regs_common.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define THREAD_EXTRA_STACKSIZE_PRINTF    (128)
+#ifndef THREAD_EXTRA_STACKSIZE_PRINTF
+#define THREAD_EXTRA_STACKSIZE_PRINTF    (132)
+#endif
 
 /**
  * @name           Kernel configuration
@@ -48,7 +46,18 @@ extern "C" {
 /* keep THREAD_STACKSIZE_IDLE > THREAD_EXTRA_STACKSIZE_PRINTF
  * to avoid not printing of debug in interrupts
  */
+#ifndef THREAD_STACKSIZE_IDLE
+#if MODULE_XTIMER || MODULE_ZTIMER || MODULE_ZTIMER64
+/* For AVR no ISR stack is used, hence an IRQ will victimize the stack of
+ * whatever thread happens to be running with the IRQ kicks in. If more than
+ * trivial stuff is needed to be done in ISRs (e.g. when soft timers are used),
+ * the idle stack will overflow.
+ */
+#define THREAD_STACKSIZE_IDLE      (192)
+#else
 #define THREAD_STACKSIZE_IDLE      (128)
+#endif
+#endif
 /** @} */
 
 /**
@@ -56,10 +65,22 @@ extern "C" {
  */
 #define PUF_SRAM_ATTRIBUTES __attribute__((used, section(".noinit")))
 
+/**
+ * @brief   Declare the heap_stats function as available
+ */
+#define HAVE_HEAP_STATS
+
+/**
+ * @brief   This arch uses the inlined IRQ API.
+ */
+#define IRQ_API_INLINED     (1)
+
+#ifndef DOXYGEN
+#define HAS_FLASH_UTILS_ARCH    1
+#endif
+
 #ifdef __cplusplus
 }
 #endif
 
-
-#endif /* CPU_CONF_H */
 /** @} */

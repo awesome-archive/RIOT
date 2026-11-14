@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup net_gnrc_sixlowpan
@@ -15,8 +14,6 @@
  *
  * @author  Martine Lenders <m.lenders@fu-berlin.de>
  */
-#ifndef NET_GNRC_SIXLOWPAN_INTERNAL_H
-#define NET_GNRC_SIXLOWPAN_INTERNAL_H
 
 #include <stddef.h>
 
@@ -26,6 +23,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @brief   Returns the PID of the 6Lo thread
+ *
+ * @return  The PID of the 6Lo thread on success
+ * @return  KERNEL_PID_UNDEF, when 6Lo thread was not started.
+ */
+kernel_pid_t gnrc_sixlowpan_get_pid(void);
 
 /**
  * @brief   Delegates a packet to the network layer
@@ -47,7 +52,6 @@ void gnrc_sixlowpan_dispatch_recv(gnrc_pktsnip_t *pkt, void *context,
 void gnrc_sixlowpan_dispatch_send(gnrc_pktsnip_t *pkt, void *context,
                                   unsigned page);
 
-
 /**
  * @brief   Checks if packet fits over interface (and fragments if @ref
  *          net_gnrc_sixlowpan_frag is available and required)
@@ -66,5 +70,4 @@ void gnrc_sixlowpan_multiplex_by_size(gnrc_pktsnip_t *pkt,
 }
 #endif
 
-#endif /* NET_GNRC_SIXLOWPAN_INTERNAL_H */
 /** @} */

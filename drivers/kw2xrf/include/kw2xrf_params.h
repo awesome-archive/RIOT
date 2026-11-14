@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Hamburg University of Applied Sciences
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Hamburg University of Applied Sciences
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_kw2xrf
@@ -16,10 +15,8 @@
  * @author      Peter Kietzmann <peter.kietzmann@haw-hamburg.de>
  */
 
-#ifndef KW2XRF_PARAMS_H
-#define KW2XRF_PARAMS_H
-
 #include "board.h"
+#include "kw2xrf.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,7 +49,8 @@ extern "C" {
 #define KW2XRF_PARAMS            { .spi = KW2XRF_PARAM_SPI,         \
                                    .spi_clk = KW2XRF_PARAM_SPI_CLK, \
                                    .cs_pin = KW2XRF_PARAM_CS,       \
-                                   .int_pin = KW2XRF_PARAM_INT }
+                                   .int_pin = KW2XRF_PARAM_INT, \
+                                   .rst_pin = KW2XRF_PARAM_RESET }
 #endif
 /**@}*/
 
@@ -68,5 +66,4 @@ static const kw2xrf_params_t kw2xrf_params[] =
 }
 #endif
 
-#endif /* KW2XRF_PARAMS_H */
 /** @} */

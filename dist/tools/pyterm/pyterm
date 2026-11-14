@@ -1,23 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
-# Copyright (C) 2014  Oliver Hahm <oliver.hahm@inria.fr>
-#
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
-#
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301 USA
-
+# SPDX-FileCopyrightText: 2014 Oliver Hahm <oliver.hahm@inria.fr>
+# SPDX-License-Identifier: LGPL-2.1-or-later
 
 try:
     import configparser
@@ -25,6 +9,7 @@ except ImportError:
     import ConfigParser as configparser
 
 import cmd
+import errno
 import serial
 import socket
 import sys
@@ -37,6 +22,10 @@ import argparse
 import re
 import codecs
 import platform
+import psutil
+
+from subprocess import Popen, PIPE
+from signal import SIGINT
 
 try:
     serial.Serial
@@ -86,7 +75,7 @@ defaultfile = "pyterm-" + defaulthostname + ".conf"
 defaultrunname = "default-run"
 
 # default logging prefix format string
-default_fmt_str = '%(asctime)s - %(levelname)s # %(message)s'
+default_fmt_str = '%(asctime)s # %(message)s'
 
 # default newline setting
 defaultnewline = "LF"
@@ -94,31 +83,39 @@ defaultnewline = "LF"
 # default prompt character
 defaultprompt = '>'
 
+# repeat command on empty line instead of sending the line
+defaultrepeat_cmd_empty_line = True
+defaultreconnect = True
+
 
 class SerCmd(cmd.Cmd):
-    """Main class for pyterm based on Python's Cmd class.
+    """
+    Main class for Pyterm based on Python's Cmd class.
 
-    Runs an interactive terminal that transfer between stdio and serial
-    port.
+    Runs an interactive terminal that transfers between stdio and serial port.
     """
 
-    def __init__(self, port=None, baudrate=None, toggle=None, tcp_serial=None,
+    def __init__(self, port=None, baudrate=None, toggle=None,
+                 tcp_serial=None, process=None, process_args=None,
                  confdir=None, conffile=None, host=None, run_name=None,
-                 log_dir_name=None, newline=None, formatter=None,
-                 set_rts=None, set_dtr=None, serprompt=None):
-        """Constructor.
+                 log_dir_name=None, newline=None, formatter=None, set_rts=None,
+                 set_dtr=None, serprompt=None,
+                 repeat_command_on_empty_line=defaultrepeat_cmd_empty_line,
+                 reconnect=defaultreconnect):
+        """
+        Initialize the Pyterm instance.
 
         Args:
             port (str):         serial port
             baudrate (int):     serial baudrate
-            tcp_serial (iht):   TCP port to connect to (alternatively)
+            tcp_serial (iht):   TCP port to connect to (alterprocessly)
+            process (str):      Program to run as subprocess and connect to its I/O
+            process_args (str): Optional arguments for the subprocess
             confdir (str):      configuration directory
             conffile (str):     configuration file name
             host (str):         local host name
             run_name (str):     identifier for log files subdirectory
-
         """
-
         # initialize class members
         cmd.Cmd.__init__(self)
         self.port = port
@@ -127,6 +124,14 @@ class SerCmd(cmd.Cmd):
         self.set_rts = set_rts
         self.set_dtr = set_dtr
         self.tcp_serial = tcp_serial
+        self.process = process
+        self.process_args = []
+        if process_args:
+            for arg in process_args:
+                for elem in arg:
+                    for substr in elem.split(' '):
+                        substr = substr.replace('\\-\\-', '--')
+                        self.process_args.append(substr)
         self.configdir = confdir
         self.configfile = conffile
         self.host = host
@@ -134,6 +139,8 @@ class SerCmd(cmd.Cmd):
         self.log_dir_name = log_dir_name
         self.newline = newline
         self.serprompt = serprompt
+        self.repeat_command_on_empty_line = repeat_command_on_empty_line
+        self.reconnect = reconnect
         if formatter is not None:
             self.fmt_str = formatter
 
@@ -144,7 +151,7 @@ class SerCmd(cmd.Cmd):
             self.run_name = defaultrunname
 
         if not self.log_dir_name:
-            self.log_dir_name = self.host
+            self.log_dir_name = self.configdir + os.path.sep + self.host
 
         if not os.path.exists(self.configdir):
             os.makedirs(self.configdir)
@@ -174,7 +181,7 @@ class SerCmd(cmd.Cmd):
         # create formatter
         formatter = logging.Formatter(self.fmt_str)
 
-        directory = self.configdir + os.path.sep + self.log_dir_name
+        directory = self.log_dir_name
         if not os.path.exists(directory):
             os.makedirs(directory)
         logging.basicConfig(filename=directory + os.path.sep + self.run_name +
@@ -192,9 +199,12 @@ class SerCmd(cmd.Cmd):
         self.logger.addHandler(ch)
 
     def preloop(self):
-        """Executed bat program start.
-        """
-
+        """Execute at program start."""
+        if self.process and (self.port != defaultport or self.tcp_serial):
+            self.logger.error("Specified a process instance AND a serial "
+                              "port or TCP connection. You probably want "
+                              "to specify only the one or the other.")
+            sys.exit(1)
         # if no serial or TCP is specified use default serial port
         if not self.port and not self.tcp_serial:
             sys.stderr.write("No port specified, using default (%s)!\n"
@@ -202,14 +212,20 @@ class SerCmd(cmd.Cmd):
             self.port = defaultport
         # if a TCP port is specified try to connect
         if self.tcp_serial:
-            if self.tcp_serial.find(':') >= 0:
-                host = self.tcp_serial.split(':')[0]
-                port = self.tcp_serial.split(':')[1]
+            # if this is an ipv6 address
+            if self.tcp_serial.find(']:') >= 0:
+                host = self.tcp_serial.split(']:')[0]
+                host = host.split('[')[1]
+                port = self.tcp_serial.split(']:')[1]
             else:
-                self.logger.warning("Host name for TCP connection is "
-                                    "missing, defaulting to \"localhost\"")
-                host = "localhost"
-                port = self.tcp_serial
+                if self.tcp_serial.find(':') >= 0:
+                    host = self.tcp_serial.split(':')[0]
+                    port = self.tcp_serial.split(':')[1]
+                else:
+                    self.logger.warning("Host name for TCP connection is "
+                                        "missing, defaulting to \"localhost\"")
+                    host = "localhost"
+                    port = self.tcp_serial
             self.logger.info("Connect to %s:%s"
                              % (host, port))
             try:
@@ -219,12 +235,12 @@ class SerCmd(cmd.Cmd):
                     af, socktype, proto, canonname, sa = res
                     try:
                         s = fdsocket(af, socktype, proto)
-                    except socket.error as msg:
+                    except socket.error:
                         s = None
                         continue
                     try:
                         s.connect(sa)
-                    except socket.error as msg:
+                    except socket.error:
                         s.close()
                         s = None
                         continue
@@ -238,58 +254,90 @@ class SerCmd(cmd.Cmd):
                 self.logger.error("Something went wrong connecting to "
                                   "localhost:%s" % self.tcp_serial)
                 sys.exit(1)
+        elif self.process:
+            process_call = [self.process] + self.process_args
+            self.logger.debug("Executing process as %s", str(process_call))
+            self.ser = Popen(process_call, stdout=PIPE, stdin=PIPE, stderr=PIPE)
         # otherwise go for the serial port
         elif self.port:
+            connected = False
             self.logger.info("Connect to serial port %s" % self.port)
-            try:
-                self.serial_connect()
-            except OSError as e:
-                self.logger.error("Cannot connect to serial port {}: {}"
-                                  .format(self.port, e.strerror))
-                sys.exit(1)
-            except serial.SerialException as e:
-                self.logger.error("%s", e.strerror)
-                sys.exit(1)
+            while not connected:
+                try:
+                    self.serial_connect()
+                except serial.SerialException as e:
+                    self.logger.error("%s", e.strerror)
+                    if (not self.reconnect) or (e.errno == errno.ENOENT):
+                        sys.exit(e.errno)
+                    self.logger.info("Trying to reconnect to {} in 10 sec"
+                                     .format(self.port))
+                    time.sleep(10)
+                except OSError as e:
+                    self.logger.error("Cannot connect to serial port {}: {}"
+                                      .format(self.port, e.strerror))
+                    sys.exit(e.errno)
+                except Exception as e:
+                    self.logger.error("Unexpected exception {}".format(e))
+                    sys.exit(1)
+                else:
+                    connected = True
 
         # wait until connection is established and fire startup
         # commands to the node
         time.sleep(1)
         for command in self.init_cmd:
-            self.logger.debug("WRITE ----->>>>>> '" + command + "'\n")
             self.onecmd(self.precmd(command))
 
         # start serial->console thread
-        receiver_thread = threading.Thread(target=self.reader)
-        receiver_thread.setDaemon(1)
+        receiver_thread = threading.Thread(target=self.reader, daemon=True)
         receiver_thread.start()
 
     def precmd(self, line):
-        """Check for command prefixes to distinguish between Pyterm
-        interal commands and commands that should be send to the node.
+        """
+        Check for command prefixes.
+
+        This distinguishes between Pyterm internal commands and commands that
+        should be sent to the node.
         """
         self.logger.debug("processing line #%s#" % line)
         if (line.startswith("/")):
-                return "PYTERM_" + line[1:]
+            return "PYTERM_" + line[1:]
         return line
 
+    def emptyline(self):
+        """
+        Either send empty line or repeat previous command.
+
+        Behavior can be configured with `repeat_command_on_empty_line`.
+        """
+        if self.repeat_command_on_empty_line:
+            super().emptyline()
+        else:
+            self.default('')
+
     def default(self, line):
-        """In case of no Pyterm specific prefix is detected, split
-        string by colons and send it to the node.
+        """
+        Send a line without a Pyterm specific prefix to the node.
+
+        In case no Pyterm specific prefix is detected, split the string by
+        semicolons and send it to the node.
         """
         self.logger.debug("%s is no pyterm command, sending to default "
                           "out" % line)
         for tok in line.split(';'):
             tok = self.get_alias(tok)
             if sys.version_info[0] == 2:
-                self.ser.write((tok.strip() + "\n").decode("utf-8").encode("utf-8"))
+                self._write_char((tok.strip() + "\n").decode("utf-8").encode("utf-8"))
             else:
-                self.ser.write((tok.strip() + "\n").encode("utf-8"))
+                self._write_char((tok.strip() + "\n").encode("utf-8"))
 
     def do_help(self, line):
-        """Do not use Cmd's internal help function, but redirect to the
-        node.
         """
-        self.ser.write("help\n".encode("utf-8"))
+        Redirect help to the node.
+
+        Do not use `Cmd`'s internal help function, but redirect to the node.
+        """
+        self._write_char("help\n".encode("utf-8"))
 
     def do_EOF(self, line):
         """Handle EOF (Ctrl+D) nicely."""
@@ -298,20 +346,24 @@ class SerCmd(cmd.Cmd):
         sys.exit(0)
 
     def complete_date(self, text, line, begidx, endidm):
-        """Auto completion for date string.
-        """
+        """Auto completion for date string."""
         date = time.strftime("%Y-%m-%d %H:%M:%S")
         return ["%s" % (date)]
 
+    def do_PYTERM_sleep(self, line):
+        """Pyterm command: Sleep for n seconds."""
+        if line:
+            time.sleep(float(line))
+        else:
+            self.logger.error("sleep: missing operand")
+
     def do_PYTERM_reset(self, line):
-        """Pyterm command: Send a reset to the node.
-        """
+        """Pyterm command: Send a reset to the node."""
         self.ser.setDTR(1)
         self.ser.setDTR(0)
 
     def do_PYTERM_exit(self, line, unused=None):
-        """Pyterm command: Exit Pyterm.
-        """
+        """Pyterm command: Exit Pyterm."""
         self.logger.info("Exiting Pyterm")
         # save history file
         readline.write_history_file()
@@ -324,11 +376,18 @@ class SerCmd(cmd.Cmd):
 
         if self.tcp_serial:
             self.ser.close()
+        # When a subprocess has been spawned, we want to send a SIGINT to all
+        # child processes
+        if self.process:
+            parent = psutil.Process(self.ser.pid)
+            children = parent.children(recursive=True)
+            for child in children:
+                os.kill(child.pid, SIGINT)
+            self.ser.send_signal(SIGINT)
         return True
 
     def do_PYTERM_save(self, line):
-        """Pyterm command: Save Pyterm configuration to file.
-        """
+        """Pyterm command: Save Pyterm configuration to file."""
         if not self.config.has_section("general"):
             self.config.add_section("general")
         self.config.set("general", "port", self.port)
@@ -377,14 +436,15 @@ class SerCmd(cmd.Cmd):
             self.logger.info("Config saved")
 
     def do_PYTERM_show_config(self, line):
-        """Pyterm command: Show current configuration.
-        """
+        """Pyterm command: Show current configuration."""
         for key in self.__dict__:
             print(str(key) + ": " + str(self.__dict__[key]))
 
     def do_PYTERM_alias(self, line):
-        """Pyterm command: Register an alias or show an list of all
-        registered aliases.
+        """
+        Pyterm command: register an alias or show a list of all aliases.
+
+        When called with `list`, all registered aliases are shown.
         """
         if line.endswith("list"):
             for alias in self.aliases:
@@ -400,22 +460,19 @@ class SerCmd(cmd.Cmd):
         self.aliases[alias] = command
 
     def do_PYTERM_rmalias(self, line):
-        """Pyterm command: Unregister an alias.
-        """
+        """Pyterm command: Unregister an alias."""
         if not self.aliases.pop(line, None):
             sys.stderr.write("Alias not found")
 
     def get_alias(self, tok):
-        """Internal function to check for aliases.
-        """
+        """Check for aliases."""
         for alias in self.aliases:
             if tok.split()[0] == alias:
                 return self.aliases[alias] + tok[len(alias):]
         return tok
 
     def do_PYTERM_trigger(self, line):
-        """Pyterm command: Register an trigger Regex.
-        """
+        """Pyterm command: Register a trigger Regex."""
         if not line.count("="):
             sys.stderr.write("Usage: /trigger <regex> = <CMD>\n")
             return
@@ -426,19 +483,16 @@ class SerCmd(cmd.Cmd):
         self.triggers[re.compile(trigger)] = action
 
     def do_PYTERM_rmtrigger(self, line):
-        """Pyterm command: Unregister an trigger.
-        """
+        """Pyterm command: Unregister a trigger."""
         if not self.triggers.pop(line, None):
             sys.stderr.write("Trigger not found")
 
     def do_PYTERM_ignore(self, line):
-        """Pyterm command: Ignore lines with these Regexes matching.
-        """
+        """Pyterm command: Ignore lines with these Regexes matching."""
         self.ignores.append(re.compile(line.strip()))
 
     def do_PYTERM_unignore(self, line):
-        """Pyterm command: Remote an ignore Regex.
-        """
+        """Pyterm command: Remove an ignore Regex."""
         for r in self.ignores:
             if (r.pattern == line.strip()):
                 self.logger.info("Remove ignore for %s" % r.pattern)
@@ -447,13 +501,11 @@ class SerCmd(cmd.Cmd):
         sys.stderr.write("Ignore for %s not found\n" % line.strip())
 
     def do_PYTERM_filter(self, line):
-        """Pyterm command: Show only lines matching this Regex.
-        """
+        """Pyterm command: Show only lines matching this Regex."""
         self.filters.append(re.compile(line.strip()))
 
     def do_PYTERM_unfilter(self, line):
-        """Pyterm command: Remove a filter.
-        """
+        """Pyterm command: Remove a filter."""
         for r in self.filters:
             if (r.pattern == line.strip()):
                 self.logger.info("Remove filter for %s" % r.pattern)
@@ -462,26 +514,25 @@ class SerCmd(cmd.Cmd):
         sys.stderr.write("Filter for %s not found\n" % line.strip())
 
     def do_PYTERM_json(self, line):
-        """Pyterm command: Transfer lines matching this Regex as JSON
-        object.
-        """
+        """Pyterm command: Transfer lines matching this Regex as JSON object."""
         self.json_regs[line.split(' ')[0].strip()] =\
             re.compile(line.partition(' ')[2].strip())
 
     def do_PYTERM_unjson(self, line):
-        """Pyterm command: Remove a JSON filter.
-        """
+        """Pyterm command: Remove a JSON filter."""
         if not self.aliases.pop(line, None):
             sys.stderr.write("JSON regex with ID %s not found" % line)
 
     def do_PYTERM_init(self, line):
-        """Pyterm command: Add a startup command. (Only useful in
-        addition with /save).
+        """
+        Pyterm command: add a startup command.
+
+        This is only useful in addition with `/save`.
         """
         self.init_cmd.append(line.strip())
 
     def do_PYTERM_timer(self, line):
-        """Pyterm command: Scheduler a timer."""
+        """Pyterm command: schedule a timer."""
         line = line.strip()
         argv = line.partition(' ')
         if (len(argv[2]) == 0):
@@ -496,8 +547,7 @@ class SerCmd(cmd.Cmd):
         t.start()
 
     def load_config(self):
-        """Internal function to laod configuration from file.
-        """
+        """Load the configuration from file."""
         self.config = configparser.ConfigParser()
         cf = os.path.join(self.configdir, self.configfile)
         self.config.read(cf)
@@ -533,7 +583,8 @@ class SerCmd(cmd.Cmd):
                         setattr(self, opt, self.config.get(sec, opt))
 
     def timer_handler(self, line):
-        """Handles a scheduled timer event.
+        """
+        Handle a scheduled timer event.
 
         Args:
             line (str): the command line to be executed, when the timer
@@ -543,8 +594,10 @@ class SerCmd(cmd.Cmd):
         self.onecmd(self.precmd(line + '\n'))
 
     def process_line(self, line):
-        """Processes a valid line from node that should be printed and
-        possibly forwarded.
+        """
+        Process a valid line from node.
+
+        The line should be printed and possibly forwarded.
 
         Args:
             line (str): input from node.
@@ -586,8 +639,10 @@ class SerCmd(cmd.Cmd):
                     self.factory.myproto.sendMessage(json_obj)
 
     def handle_line(self, line):
-        """Handle line from node and check for further processing
-        requirements.
+        """
+        Handle line from node.
+
+        Check for further processing requirements.
 
         Args:
             line (str): input line from node.
@@ -611,7 +666,7 @@ class SerCmd(cmd.Cmd):
                 self.process_line(line)
 
     def serial_connect(self):
-        self.ser = serial.Serial(port=self.port, dsrdtr=0, rtscts=0)
+        self.ser = serial.Serial(port=self.port, dsrdtr=0, rtscts=0, exclusive=1)
         self.ser.baudrate = self.baudrate
 
         if self.toggle:
@@ -624,33 +679,53 @@ class SerCmd(cmd.Cmd):
         if self.set_dtr == 1 or self.set_dtr == 0:
             self.ser.setDTR(self.set_dtr)
 
+    def _read_char(self):
+        output_stream = self.ser
+        if self.process:
+            output_stream = self.ser.stdout
+        # check if serial port can be accessed.
+        sr = codecs.getreader("UTF-8")(output_stream,
+                                       errors='replace')
+        return sr.read(1)
+
+    def _write_char(self, output):
+        input_stream = self.ser
+        if self.process:
+            input_stream = self.ser.stdin
+        input_stream.write(output)
+        if self.process:
+            input_stream.flush()
+
+    def _handle_serial_exception(self):
+        self.logger.warning("Serial port disconnected, waiting to "
+                            "get reconnected...")
+        self.ser.close()
+        time.sleep(1)
+        if os.path.exists(self.port):
+            self.logger.warning("Try to reconnect to %s again..."
+                                % (self.port))
+            try:
+                self.serial_connect()
+                self.logger.info("Reconnected to serial port %s" % self.port)
+            except serial.SerialException:
+                pass
+
     def reader(self):
-        """Serial or TCP reader.
-        """
+        """Read from the serial or TCP connection."""
         output = ""
         crreceived = False
         nlreceived = False
+        c_already_read = False
         while (1):
-            # check if serial port can be accessed.
-            try:
-                sr = codecs.getreader("UTF-8")(self.ser,
-                                               errors='replace')
-                c = sr.read(1)
-            # try to re-open it with a timeout of 1s otherwise
-            except (serial.SerialException, ValueError):
-                self.logger.warning("Serial port disconnected, waiting to "
-                                    "get reconnected...")
-                self.ser.close()
-                time.sleep(1)
-                if os.path.exists(self.port):
-                    self.logger.warning("Try to reconnect to %s again..."
-                                        % (self.port))
-                    try:
-                        self.serial_connect()
-                        self.logger.info("Reconnected to serial port %s" % self.port)
-                    except serial.SerialException:
-                        pass
-                continue
+            # one of the if branches might have read c already
+            if not c_already_read:
+                try:
+                    c = self._read_char()
+                # try to re-open it with a timeout of 1s otherwise
+                except (serial.SerialException, ValueError):
+                    self._handle_serial_exception()
+                    continue
+            c_already_read = False
             if c == '\r':
                 if (self.newline == "LFCR" and nlreceived) or (self.newline == "CR"):
                     self.handle_line(output)
@@ -662,8 +737,31 @@ class SerCmd(cmd.Cmd):
             elif c == self.serprompt and output == "":
                 sys.stdout.write('%c ' % self.serprompt)
                 sys.stdout.flush()
+                # self.serprompt was read, but a space (that we also printed
+                # above) may follow. As such, read the next character, but keep
+                # it for the next iteration in case it is not a space.
+                # If we don't do this, the space from the prompt will be
+                # prepended to the next output, causing the next prompt on empty
+                # output potentially to be ignored, since `output` will be " "
+                try:
+                    c = self._read_char()
+                # try to re-open it with a timeout of 1s otherwise
+                except (serial.SerialException, ValueError):
+                    self._handle_serial_exception()
+                    continue
+                if c != ' ':            # not a space?
+                    # then use `c` in the next iteration
+                    c_already_read = True
             else:
                 output += c
+
+            # Hack to correctly handle reset ANSI escape code in the stream
+            # When the reset escape sequence is detected, it is written and
+            # flushed immediately to stdout
+            if output == '\033[0m':
+                sys.stdout.write(output)
+                sys.stdout.flush()
+                output = ""
 
             crreceived = c == '\r'
             nlreceived = c == '\n'
@@ -679,10 +777,10 @@ class PytermProt(Protocol):
 
     def dataReceived(self, data):
         sys.stdout.write(data)
-        if(data.strip() == "/exit"):
+        if (data.strip() == "/exit"):
             reactor.callLater(2, self.factory.shell.do_PYTERM_exit, data)
         else:
-            self.factory.shell.ser.write(data + "\n")
+            self.factory.shell._write_char(data + "\n")
 
     def sendMessage(self, msg):
         self.transport.writeSomeData("%d#%s\n" % (len(msg), msg))
@@ -739,6 +837,12 @@ if __name__ == "__main__":
                         help="Connect to a TCP port instead of a serial port. "
                         "Format is <hostname>:<port>. If the colon is missing"
                         " host defaults to \"localhost\"")
+    parser.add_argument("-ps", "--process",
+                        help="Start a subprocess and connect pyterm to its "
+                        "stdio.")
+    parser.add_argument("-pa", "--process-args",
+                        help="Adding optional arguments to subprocess",
+                        action="append", nargs='*')
     parser.add_argument("-b", "--baudrate",
                         help="Specifies baudrate for the serial port, default "
                         "is %s" % defaultbaud,
@@ -796,14 +900,39 @@ if __name__ == "__main__":
                         % defaultprompt,
                         default=defaultprompt)
 
+    # Keep help message in sync if changing the default
+    parser.add_argument("--repeat-command-on-empty-line",
+                        dest='repeat_command_on_empty_line',
+                        action='store_true',
+                        help="Repeat command on empty line (Default)")
+    parser.add_argument("--no-repeat-command-on-empty-line",
+                        dest='repeat_command_on_empty_line',
+                        action="store_false",
+                        help="Do not repeat command on empty line")
+    parser.add_argument("--reconnect",
+                        dest='reconnect',
+                        action='store_true',
+                        help="Try to reconnect when failing on connection "
+                             "setup (Default)")
+    parser.add_argument("--no-reconnect",
+                        dest='reconnect',
+                        action="store_false",
+                        help="Do not try to reconnect when failing on "
+                             "connection setup (Default)")
+
+    parser.set_defaults(
+        repeat_command_on_empty_line=defaultrepeat_cmd_empty_line,
+        reconnect=defaultreconnect)
+
     args = parser.parse_args()
 
     if args.noprefix:
         args.format = ""
     myshell = SerCmd(args.port, args.baudrate, args.toggle, args.tcp_serial,
-                     args.directory, args.config, args.host, args.run_name,
-                     args.log_dir_name, args.newline, args.format,
-                     args.set_rts, args.set_dtr, args.prompt)
+                     args.process, args.process_args, args.directory,
+                     args.config, args.host, args.run_name, args.log_dir_name,
+                     args.newline, args.format, args.set_rts, args.set_dtr,
+                     args.prompt, args.repeat_command_on_empty_line)
     myshell.prompt = ''
 
     try:

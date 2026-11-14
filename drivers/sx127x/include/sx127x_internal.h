@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2016 Unwired Devices <info@unwds.com>
- *               2017 Inria Chile
- *               2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Unwired Devices <info@unwds.com>
+ * SPDX-FileCopyrightText: 2017 Inria Chile
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_sx127x
@@ -18,9 +17,6 @@
  * @author      José Ignacio Alamos <jose.alamos@inria.cl>
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef SX127X_INTERNAL_H
-#define SX127X_INTERNAL_H
 
 #include <inttypes.h>
 #include "sx127x.h"
@@ -38,6 +34,17 @@ extern "C" {
 #else /* MODULE_SX1276 */
 #define SX127X_RSSI_OFFSET_LF                              (-164)
 #define SX127X_RSSI_OFFSET_HF                              (-157)
+#endif
+/** @} */
+
+/**
+ * @name   Device specific logic level to indicate POR-cycle is active
+ * @{
+ */
+#if defined(MODULE_SX1272)
+#define SX127X_POR_ACTIVE_LOGIC_LEVEL                      (1)
+#else /* MODULE_SX1276 */
+#define SX127X_POR_ACTIVE_LOGIC_LEVEL                      (0)
 #endif
 /** @} */
 
@@ -135,5 +142,4 @@ void sx1276_rx_chain_calibration(sx127x_t *dev);
 }
 #endif
 
-#endif /* SX127X_INTERNAL_H */
 /** @} */

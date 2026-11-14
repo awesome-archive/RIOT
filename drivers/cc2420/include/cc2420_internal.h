@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2014 Milan Babel <babel@inf.fu-berlin.de> and INRIA
- *               2015-2016 Freie Universität Berlin
- *               2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Milan Babel <babel@inf.fu-berlin.de> and INRIA
+ * SPDX-FileCopyrightText: 2015-2016 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
   * @ingroup    drivers_cc2420
@@ -22,8 +21,6 @@
   * @author     Francisco Acosta <francisco.acosta@inria.fr>
   *
   */
-#ifndef CC2420_INTERNAL_H
-#define CC2420_INTERNAL_H
 
 #include <stdint.h>
 
@@ -39,9 +36,7 @@ extern "C" {
 #define CC2420_RESET_DELAY      (500U)
 #define CC2420_XOSCON_DELAY     (2000U)
 
-
 uint8_t cc2420_strobe(const cc2420_t *dev, const uint8_t command);
-
 
 /**
  * @brief   Read from a register at address `addr` from device `dev`.
@@ -122,5 +117,4 @@ void cc2420_en_xosc(cc2420_t *dev);
 }
 #endif
 
-#endif /* CC2420_INTERNAL_H */
 /** @} */

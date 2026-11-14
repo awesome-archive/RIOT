@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Frits Kuipers
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Frits Kuipers
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_ds18 DS18 temperature sensor driver
@@ -35,8 +34,7 @@
  * @author      Frits Kuipers <frits.kuipers@gmail.com>
  */
 
-#ifndef DS18_H
-#define DS18_H
+#include <stdint.h>
 
 #include "periph/gpio.h"
 
@@ -51,7 +49,6 @@ extern "C" {
 #define DS18_OK                       (0)
 #define DS18_ERROR                    (-1)
 /** @} */
-
 
 /**
  * @brief Device initialization parameters
@@ -104,10 +101,10 @@ int ds18_trigger(const ds18_t *dev);
 int ds18_read(const ds18_t *dev, int16_t *temperature);
 
 /**
- * @brief   convenience fuction for triggering a conversion and reading the
+ * @brief   convenience function for triggering a conversion and reading the
  * value
  *
- * @note This function will block for the convertion time. The current
+ * @note This function will block for the conversion time. The current
  * implementation of the driver uses 12-bit resolution, so this time is 750 ms.
  *
  * @param[in] dev           device descriptor
@@ -123,4 +120,3 @@ int ds18_get_temperature(const ds18_t *dev, int16_t *temperature);
 #endif
 
 /** @} */
-#endif /* DS18_H */

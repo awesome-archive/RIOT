@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Frits Kuipers
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016 Frits Kuipers
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_maple-mini
@@ -17,9 +16,6 @@
  * @author      Sebastian Meiling <s@mlng.net>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,21 +25,16 @@ extern "C" {
  * @{
  */
 #define XTIMER_WIDTH        (16)
-#define XTIMER_BACKOFF      5
+#define XTIMER_BACKOFF      (19)
 /** @} */
 
 /**
  * @name Macros for controlling the on-board LEDs.
  * @{
  */
-#define LED0_PIN            GPIO_PIN(PORT_B, 1)
-
-#define LED_PORT            GPIOB
-#define LED0_MASK           (1 << 1)
-
-#define LED0_ON             (LED_PORT->BSRR = LED0_MASK)
-#define LED0_OFF            (LED_PORT->BRR  = LED0_MASK)
-#define LED0_TOGGLE         (LED_PORT->ODR ^= LED0_MASK)
+#define LED0_PIN_NUM        1
+#define LED0_PORT           GPIO_PORT_B /**< GPIO port of LED 0 */
+#define LED0_PORT_NUM       PORT_B
 /** @} */
 
 /**
@@ -59,14 +50,10 @@ extern "C" {
  */
 #define STDIO_UART_DEV      UART_DEV(1)
 
-/**
- * @brief   Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
+#include "stm32_leds.h"
+
 /** @} */

@@ -1,12 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2014 Martin Landsmann <Martin.Landsmann@HAW-Hamburg.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
+ */
+
 /**
- * universal address container implementation
- *
- * Copyright (C) 2014 Martin Landsmann <Martin.Landsmann@HAW-Hamburg.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
- *
  * @ingroup sys_universal_address
  * @{
  * @file
@@ -27,14 +24,14 @@
 #endif
 #include "mutex.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 #include "universal_address.h"
 
 /**
  * @brief Maximum number of entries handled
  */
-/* determine the maximum numer of entries */
+/* determine the maximum number of entries */
 #ifndef UNIVERSAL_ADDRESS_MAX_ENTRIES
 /* all potential users of universal addresses have to add their requirements here */
 #   if defined(MODULE_FIB) && defined(MODULE_GNRC_IPV6)
@@ -142,8 +139,8 @@ universal_address_container_t *universal_address_add(uint8_t *addr, size_t addr_
     pEntry->use_count++;
 
     if (pEntry->use_count == 1) {
-        DEBUG("[universal_address_add] universal_address_table_filled: %d\n", \
-              (int)universal_address_table_filled);
+        DEBUG("[universal_address_add] universal_address_table_filled: %" PRIuSIZE "\n", \
+              universal_address_table_filled);
         universal_address_table_filled++;
     }
 
@@ -166,8 +163,8 @@ void universal_address_rem(universal_address_container_t *entry)
             }
         }
         else {
-            DEBUG("[universal_address_rem] universal_address_table_filled: %d\n", \
-                  (int)universal_address_table_filled);
+            DEBUG("[universal_address_rem] universal_address_table_filled: %" PRIuSIZE "\n", \
+                  universal_address_table_filled);
         }
     }
 
@@ -359,8 +356,8 @@ int universal_address_get_num_used_entries(void)
 
 void universal_address_print_table(void)
 {
-    printf("[universal_address_print_table] universal_address_table_filled: %d\n", \
-           (int)universal_address_table_filled);
+    printf("[universal_address_print_table] universal_address_table_filled: %" PRIuSIZE "\n", \
+           universal_address_table_filled);
 
     /* cppcheck-suppress unsignedLessThanZero
      * (reason: UNIVERSAL_ADDRESS_MAX_ENTRIES may be zero in which case this

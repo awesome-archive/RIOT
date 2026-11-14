@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 University of California, Berkeley
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 University of California, Berkeley
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_mma7660 MMA7660 Accelerometer
@@ -19,9 +18,6 @@
  *
  * @author      Michael Andersen <m.andersen@cs.berkeley.edu>
  */
-
-#ifndef MMA7660_H
-#define MMA7660_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -127,7 +123,6 @@ typedef struct {
  * @return                 -MMA7660_I2C_WRITE_ERR on i2c bus write error
  */
 int mma7660_init(mma7660_t *dev, const mma7660_params_t *params);
-
 
 /**
  * @brief   Set the mode register
@@ -257,5 +252,4 @@ int mma7660_read_counts(const mma7660_t *dev, int8_t *x, int8_t *y, int8_t *z);
 }
 #endif
 
-#endif /* MMA7660_H */
 /** @} */

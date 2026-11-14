@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_w5100
@@ -16,13 +15,20 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef W5100_PARAMS_H
-#define W5100_PARAMS_H
-
 #include "board.h"
+
+#ifdef MODULE_SHIELD_W5100
+#include "arduino_iomap.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef MODULE_SHIELD_W5100
+#define W5100_PARAM_SPI         ARDUINO_SPI_ISP
+#define W5100_PARAM_CS          ARDUINO_PIN_10
+#define W5100_PARAM_EVT         ARDUINO_PIN_2
 #endif
 
 /**
@@ -56,11 +62,9 @@ extern "C" {
 static const  w5100_params_t w5100_params[] = {
     W5100_PARAMS
 };
-/** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* W5100_PARAMS_H */
 /** @} */

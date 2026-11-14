@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2019 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -12,7 +9,7 @@
  * @{
  *
  * @file
- * @brief       Low-level random number generator driver implementation
+ * @brief       Low-level random number generator driver implementation for ESP8266 SoCs
  *
  * @author      Gunar Schorcht <gunar@schorcht.net>
  *
@@ -23,7 +20,7 @@
 #include "periph_conf.h"
 #include "periph/hwrng.h"
 
-#include "esp/wdev_regs.h"
+#define RNG_DATA_REG (*(volatile uint32_t *)RNG_DATA_REG_ADDR)
 
 void hwrng_init(void)
 {
@@ -37,7 +34,7 @@ void hwrng_read(void *buf, unsigned int num)
 
     while (count < num) {
         /* read next 4 bytes of random data */
-        uint32_t tmp = WDEV.HWRNG;
+        uint32_t tmp = RNG_DATA_REG;
 
         /* copy data into result vector */
         for (int i = 0; i < 4 && count < num; i++) {
@@ -47,7 +44,7 @@ void hwrng_read(void *buf, unsigned int num)
     }
 }
 
-uint32_t hwrand (void)
+uint32_t hwrand(void)
 {
     uint32_t _tmp;
     hwrng_read(&_tmp, sizeof(uint32_t));

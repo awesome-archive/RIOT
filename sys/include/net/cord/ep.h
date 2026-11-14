@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017-2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017-2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_cord_ep CoRE RD Endpoint
@@ -14,8 +13,8 @@
  * This module implements a CoRE Resource Directory endpoint library, that
  * allows RIOT nodes to register themselves with resource directories.
  * It implements the standard endpoint functionality as defined in
- * draft-ietf-core-resource-directory-15.
- * @see https://tools.ietf.org/html/draft-ietf-core-resource-directory-15
+ * RFC 9176.
+ * @see https://datatracker.ietf.org/doc/html/rfc9176
  *
  * # Design Decisions
  * - all operations provided by this module are fully synchronous, meaning that
@@ -30,9 +29,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef NET_CORD_EP_H
-#define NET_CORD_EP_H
 
 #include "net/sock/udp.h"
 
@@ -115,5 +111,4 @@ void cord_ep_dump_status(void);
 }
 #endif
 
-#endif /* NET_CORD_EP_H */
 /** @} */

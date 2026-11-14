@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_lis3dh LIS3DH accelerometer
@@ -21,9 +20,6 @@
  *
  * @author      Joakim Nohlgård <joakim.nohlgard@eistec.se>
  */
-
-#ifndef LIS3DH_H
-#define LIS3DH_H
 
 #include <stdint.h>
 
@@ -746,7 +742,7 @@ typedef struct {
 /**
  * @brief   Result vector for accelerometer measurement
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     int16_t acc_x;          /**< Acceleration in the X direction in milli-G */
     int16_t acc_y;          /**< Acceleration in the Y direction in milli-G */
@@ -905,5 +901,4 @@ int lis3dh_get_fifo_level(const lis3dh_t *dev);
 }
 #endif
 
-#endif /* LIS3DH_H */
 /** @} */

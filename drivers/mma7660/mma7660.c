@@ -1,11 +1,7 @@
 /*
- * Copyright (C) 2016 University of California, Berkeley
- *               2018 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
- *
+ * SPDX-FileCopyrightText: 2016 University of California, Berkeley
+ * SPDX-FileCopyrightText: 2018 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -30,7 +26,7 @@
 #include "mma7660.h"
 #include "mma7660_reg.h"
 
-#define ENABLE_DEBUG     (0)
+#define ENABLE_DEBUG     0
 #include "debug.h"
 
 #define I2C_SPEED        I2C_SPEED_FAST

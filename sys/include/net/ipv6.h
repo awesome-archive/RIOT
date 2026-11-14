@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_ipv6    IPv6
@@ -19,8 +18,6 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_IPV6_H
-#define NET_IPV6_H
 
 #include "net/ipv6/addr.h"
 #include "net/ipv6/ext.h"
@@ -41,6 +38,4 @@ extern "C" {
 }
 #endif
 
-
-#endif /* NET_IPV6_H */
 /** @} */

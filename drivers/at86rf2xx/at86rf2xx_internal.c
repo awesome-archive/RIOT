@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2013 Alaeddine Weslati <alaeddine.weslati@inria.fr>
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2013 Alaeddine Weslati <alaeddine.weslati@inria.fr>
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -21,14 +18,16 @@
  * @}
  */
 
-#include "periph/spi.h"
-#include "periph/gpio.h"
-#include "xtimer.h"
+#include "ztimer.h"
 #include "at86rf2xx_internal.h"
 #include "at86rf2xx_registers.h"
 
-#define SPIDEV          (dev->params.spi)
-#define CSPIN           (dev->params.cs_pin)
+#if !AT86RF2XX_IS_PERIPH
+#  include "periph/spi.h"
+#  include "periph/gpio.h"
+
+#  define SPIDEV          (dev->params.spi)
+#  define CSPIN           (dev->params.cs_pin)
 
 static inline void getbus(const at86rf2xx_t *dev)
 {
@@ -101,11 +100,13 @@ void at86rf2xx_fb_stop(const at86rf2xx_t *dev)
     spi_release(SPIDEV);
 }
 
+#endif /* SPI based transceiver */
+
 uint8_t at86rf2xx_get_status(const at86rf2xx_t *dev)
 {
     /* if sleeping immediately return state */
-    if (dev->state == AT86RF2XX_STATE_SLEEP) {
-        return dev->state;
+    if (dev->sleep) {
+        return AT86RF2XX_STATE_SLEEP;
     }
 
     return (at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
@@ -114,100 +115,58 @@ uint8_t at86rf2xx_get_status(const at86rf2xx_t *dev)
 
 void at86rf2xx_assert_awake(at86rf2xx_t *dev)
 {
+    uint8_t state;
     if (at86rf2xx_get_status(dev) == AT86RF2XX_STATE_SLEEP) {
         /* wake up and wait for transition to TRX_OFF */
+#if AT86RF2XX_IS_PERIPH
+        /* Setting SLPTR bit in TRXPR to 0 returns the radio transceiver
+         * to the TRX_OFF state */
+        *AT86RF2XX_REG__TRXPR &= ~(AT86RF2XX_TRXPR_SLPTR);
+#else
         gpio_clear(dev->params.sleep_pin);
-        xtimer_usleep(AT86RF2XX_WAKEUP_DELAY);
+#endif
+        ztimer_sleep(ZTIMER_USEC, AT86RF2XX_WAKEUP_DELAY);
 
-        /* update state: on some platforms, the timer behind xtimer
+        /* update state: on some platforms, the timer behind ztimer
          * may be inaccurate or the radio itself may take longer
          * to wake up due to extra capacitance on the oscillator.
          * Spin until we are actually awake
          */
         do {
-            dev->state = at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
+            state = at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
                          & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS;
-        } while (dev->state != AT86RF2XX_TRX_STATUS__TRX_OFF);
+        } while (state != AT86RF2XX_TRX_STATUS__TRX_OFF);
     }
 }
 
 void at86rf2xx_hardware_reset(at86rf2xx_t *dev)
 {
+    uint8_t state;
     /* trigger hardware reset */
+#if AT86RF2XX_IS_PERIPH
+    /* set reset Bit */
+    *(AT86RF2XX_REG__TRXPR) |= AT86RF2XX_TRXPR_TRXRST;
+#else
     gpio_clear(dev->params.reset_pin);
-    xtimer_usleep(AT86RF2XX_RESET_PULSE_WIDTH);
+    ztimer_sleep(ZTIMER_USEC, AT86RF2XX_RESET_PULSE_WIDTH);
     gpio_set(dev->params.reset_pin);
-    xtimer_usleep(AT86RF2XX_RESET_DELAY);
+#endif
+    ztimer_sleep(ZTIMER_USEC, AT86RF2XX_RESET_DELAY);
 
     /* update state: if the radio state was P_ON (initialization phase),
      * it remains P_ON. Otherwise, it should go to TRX_OFF
      */
     do {
-        dev->state = at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
+        state = at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
                      & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS;
-    } while ((dev->state != AT86RF2XX_STATE_TRX_OFF)
-             && (dev->state != AT86RF2XX_STATE_P_ON));
+    } while ((state != AT86RF2XX_STATE_TRX_OFF)
+             && (state != AT86RF2XX_STATE_P_ON));
 }
 
-void at86rf2xx_configure_phy(at86rf2xx_t *dev)
+#if AT86RF2XX_RANDOM_NUMBER_GENERATOR
+void at86rf2xx_get_random(at86rf2xx_t *dev, uint8_t *data, size_t len)
 {
-    /* we must be in TRX_OFF before changing the PHY configuration */
-    uint8_t prev_state = at86rf2xx_set_state(dev, AT86RF2XX_STATE_TRX_OFF);
-
-#ifdef MODULE_AT86RF212B
-    /* The TX power register must be updated after changing the channel if
-     * moving between bands. */
-    int16_t txpower = at86rf2xx_get_txpower(dev);
-
-    uint8_t trx_ctrl2 = at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_CTRL_2);
-    uint8_t rf_ctrl0 = at86rf2xx_reg_read(dev, AT86RF2XX_REG__RF_CTRL_0);
-
-    /* Clear previous configuration for PHY mode */
-    trx_ctrl2 &= ~(AT86RF2XX_TRX_CTRL_2_MASK__FREQ_MODE);
-    /* Clear previous configuration for GC_TX_OFFS */
-    rf_ctrl0 &= ~AT86RF2XX_RF_CTRL_0_MASK__GC_TX_OFFS;
-
-    if (dev->netdev.chan != 0) {
-        /* Set sub mode bit on 915 MHz as recommended by the data sheet */
-        trx_ctrl2 |= AT86RF2XX_TRX_CTRL_2_MASK__SUB_MODE;
-    }
-
-    if (dev->page == 0) {
-        /* BPSK coding */
-        /* Data sheet recommends using a +2 dB setting for BPSK */
-        rf_ctrl0 |= AT86RF2XX_RF_CTRL_0_GC_TX_OFFS__2DB;
-    }
-    else if (dev->page == 2) {
-        /* O-QPSK coding */
-        trx_ctrl2 |= AT86RF2XX_TRX_CTRL_2_MASK__BPSK_OQPSK;
-        /* Data sheet recommends using a +1 dB setting for O-QPSK */
-        rf_ctrl0 |= AT86RF2XX_RF_CTRL_0_GC_TX_OFFS__1DB;
-    }
-
-    at86rf2xx_reg_write(dev, AT86RF2XX_REG__TRX_CTRL_2, trx_ctrl2);
-    at86rf2xx_reg_write(dev, AT86RF2XX_REG__RF_CTRL_0, rf_ctrl0);
-#endif
-
-    uint8_t phy_cc_cca = at86rf2xx_reg_read(dev, AT86RF2XX_REG__PHY_CC_CCA);
-    /* Clear previous configuration for channel number */
-    phy_cc_cca &= ~(AT86RF2XX_PHY_CC_CCA_MASK__CHANNEL);
-
-    /* Update the channel register */
-    phy_cc_cca |= (dev->netdev.chan & AT86RF2XX_PHY_CC_CCA_MASK__CHANNEL);
-    at86rf2xx_reg_write(dev, AT86RF2XX_REG__PHY_CC_CCA, phy_cc_cca);
-
-#ifdef MODULE_AT86RF212B
-    /* Update the TX power register to achieve the same power (in dBm) */
-    at86rf2xx_set_txpower(dev, txpower);
-#endif
-
-    /* Return to the state we had before reconfiguring */
-    at86rf2xx_set_state(dev, prev_state);
-}
-
-#if defined(MODULE_AT86RF233) || defined(MODULE_AT86RF231)
-void at86rf2xx_get_random(const at86rf2xx_t *dev, uint8_t *data, size_t len)
-{
+    at86rf2xx_disable_smart_idle(dev);
     for (size_t byteCount = 0; byteCount < len; ++byteCount) {
         uint8_t rnd = 0;
         for (uint8_t i = 0; i < 4; ++i) {
@@ -220,6 +179,26 @@ void at86rf2xx_get_random(const at86rf2xx_t *dev, uint8_t *data, size_t len)
             rnd |= regVal;
         }
         data[byteCount] = rnd;
+    }
+    at86rf2xx_enable_smart_idle(dev);
+}
+#endif
+
+#if !AT86RF2XX_IS_PERIPH
+void at86rf2xx_spi_init(at86rf2xx_t *dev, void (*irq_handler)(void *arg), void *ctx)
+{
+    /* initialize GPIOs */
+    spi_init_cs(dev->params.spi, dev->params.cs_pin);
+    gpio_init(dev->params.sleep_pin, GPIO_OUT);
+    gpio_clear(dev->params.sleep_pin);
+    gpio_init(dev->params.reset_pin, GPIO_OUT);
+    gpio_set(dev->params.reset_pin);
+    gpio_init_int(dev->params.int_pin, GPIO_IN, GPIO_RISING, irq_handler, ctx);
+
+    /* Intentionally check if bus can be acquired, if assertions are on */
+    if (!IS_ACTIVE(NDEBUG)) {
+        spi_acquire(dev->params.spi, dev->params.cs_pin, SPI_MODE_0, dev->params.spi_clk);
+        spi_release(dev->params.spi);
     }
 }
 #endif

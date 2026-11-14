@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Fundacion Inria Chile
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    pkg_openthread_cli   OpenThread
@@ -13,6 +12,35 @@
  * @see         https://github.com/openthread/openthread
  *
  * Thread is a mesh oriented network stack running for IEEE802.15.4 networks.
+ *
+ * The RIOT port allows to directly call OpenThread API functions using
+ * @ref sys_event. For example:
+ *
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.c}
+ * #include "ot.h"
+ * #include "openthread/thread.h"
+ *
+ * static void _panid_handler(event_t *event);
+ * static event_t event_panid = {
+ *     .handler = _panid_handler
+ * };
+ *
+ * static void _panid_handler(event_t *event)
+ * {
+ *     (void) event;
+ *     uint16_t panid = otLinkGetPanId(openthread_get_instance());
+ *     do_something_with_panid(panid);
+ * }
+ *
+ * int main(void)
+ * {
+ *     event_post(openthread_get_evq(), &event_panid);
+ *     return 0;
+ * }
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
+ * @see https://openthread.io/releases/thread-reference-20180619
+ *
  * @{
  *
  * @file
@@ -20,9 +48,6 @@
  * @author      Jose Ignacio Alamos <jialamos@uc.cl>
  * @author      Baptiste Clenet <bapclenet@gmail.com>
  */
-
-#ifndef OT_H
-#define OT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,23 +58,8 @@ extern "C" {
 #include "net/ethernet.h"
 #include "net/netdev.h"
 #include "thread.h"
-#include "openthread/types.h"
-
-/**
- * @name    Openthread message types
- * @{
- */
-/** @brief   xtimer message receiver event */
-#define OPENTHREAD_XTIMER_MSG_TYPE_EVENT                    (0x2235)
-/** @brief   message received from driver */
-#define OPENTHREAD_NETDEV_MSG_TYPE_EVENT                    (0x2236)
-/** @brief   event indicating a serial (UART) message was sent to OpenThread */
-#define OPENTHREAD_SERIAL_MSG_TYPE_EVENT                    (0x2237)
-/** @brief   event for frame reception */
-#define OPENTHREAD_MSG_TYPE_RECV                            (0x2238)
-/** @brief   event indicating an OT_JOB message */
-#define OPENTHREAD_JOB_MSG_TYPE_EVENT                       (0x2240)
-/** @} */
+#include "openthread/instance.h"
+#include "event.h"
 
 /**
  * @name    Openthread constants
@@ -60,14 +70,16 @@ extern "C" {
 /** @brief   sizeof in bytes the two first members of she serial structure */
 #define OPENTHREAD_SIZEOF_LENGTH_AND_FREEBUFF               (4U)
 /** @brief   sizeof the serial buffer */
-#define OPENTHREAD_SERIAL_BUFFER_SIZE                       OPENTHREAD_SIZEOF_LENGTH_AND_FREEBUFF + 100
+#define OPENTHREAD_SERIAL_BUFFER_SIZE                       OPENTHREAD_SIZEOF_LENGTH_AND_FREEBUFF \
+                                                            + 100
 /** @brief   sizeof the spinel payload data */
-#define OPENTHREAD_SERIAL_BUFFER__PAYLOAD_SIZE              OPENTHREAD_SERIAL_BUFFER_SIZE - OPENTHREAD_SIZEOF_LENGTH_AND_FREEBUFF
+#define OPENTHREAD_SERIAL_BUFFER__PAYLOAD_SIZE              OPENTHREAD_SERIAL_BUFFER_SIZE \
+                                                            - OPENTHREAD_SIZEOF_LENGTH_AND_FREEBUFF
 /** @brief   error when no more buffer available */
 #define OPENTHREAD_ERROR_NO_EMPTY_SERIAL_BUFFER             -1
 /** @brief   serial buffer ready to use */
 #define OPENTHREAD_SERIAL_BUFFER_STATUS_FREE                (0x0001)
-/** @brief   serial buffer ready for processsing */
+/** @brief   serial buffer ready for processing */
 #define OPENTHREAD_SERIAL_BUFFER_STATUS_READY_TO_PROCESS    (0x0002)
 /** @brief   serial buffer payload full */
 #define OPENTHREAD_SERIAL_BUFFER_STATUS_FULL                (0x0004)
@@ -87,15 +99,6 @@ typedef struct {
 } serial_msg_t;
 
 /**
- * @brief   Struct containing an OpenThread job
- */
-typedef struct {
-    const char *command;                    /**< A pointer to the job name string. */
-    void *arg;                              /**< arg for the job **/
-    void *answer;                           /**< answer from the job **/
-} ot_job_t;
-
-/**
  * @brief Gets packet from driver and tells OpenThread about the reception.
  *
  * @param[in]  aInstance          pointer to an OpenThread instance
@@ -113,6 +116,20 @@ void recv_pkt(otInstance *aInstance, netdev_t *dev);
 void send_pkt(otInstance *aInstance, netdev_t *dev, netdev_event_t event);
 
 /**
+ * @brief Get OpenThread event queue
+ *
+ * @return pointer to the event queue
+ */
+event_queue_t *openthread_get_evq(void);
+
+/**
+ * @brief Get pointer to the OpenThread instance
+ *
+ * @return pointer to the OpenThread instance
+ */
+otInstance* openthread_get_instance(void);
+
+/**
  * @brief   Bootstrap OpenThread
  */
 void openthread_bootstrap(void);
@@ -126,7 +143,6 @@ void openthread_bootstrap(void);
  */
 void openthread_radio_init(netdev_t *dev, uint8_t *tb, uint8_t *rb);
 
-
 /**
  * @brief   Starts OpenThread thread.
  *
@@ -139,14 +155,8 @@ void openthread_radio_init(netdev_t *dev, uint8_t *tb, uint8_t *rb);
  * @return  PID of OpenThread thread
  * @return  -EINVAL if there was an error creating the thread
  */
-int openthread_netdev_init(char *stack, int stacksize, char priority, const char *name, netdev_t *netdev);
-
-/**
- * @brief   get PID of OpenThread thread.
- *
- * @return  PID of OpenThread thread
- */
-kernel_pid_t openthread_get_pid(void);
+int openthread_netdev_init(char *stack, int stacksize, char priority, const char *name,
+                           netdev_t *netdev);
 
 /**
  * @brief   Init OpenThread random
@@ -154,34 +164,12 @@ kernel_pid_t openthread_get_pid(void);
 void ot_random_init(void);
 
 /**
- * @brief   Execute OpenThread command. Call this function only in OpenThread thread
- *
- * @param[in]   ot_instance     OpenThread instance
- * @param[in]   command         OpenThread command name
- * @param[in]   arg             arg for the command
- * @param[out]  answer          answer for the command
- *
- * @return  0 on success, 1 on error
+ * @brief   Init shell for OpenThread CLI
  */
-uint8_t ot_exec_command(otInstance *ot_instance, const char* command, void *arg, void* answer);
-
-/**
- * @brief   Call OpenThread command in same thread as OT core (due to concurrency).
- *
- * @note    An OpenThread command allows direct calls to OpenThread API (otXXX functions) without worrying about concurrency
- * issues. All API calls should be made in OT_JOB type functions.
- *
- * @param[in]   command         name of the command to call
- * @param[in]   arg             arg for the command
- * @param[out]  answer          answer for the command
- *
- * @return  0 on success, 1 on error
- */
-uint8_t ot_call_command(char* command, void *arg, void* answer);
+void ot_shell_init(otInstance *aInstance);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* OT_H */
 /** @} */

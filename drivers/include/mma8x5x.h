@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2014 PHYTEC Messtechnik GmbH
- *               2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 PHYTEC Messtechnik GmbH
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_mma8x5x MMA8x5x Accelerometer
@@ -30,9 +29,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef MMA8X5X_H
-#define MMA8X5X_H
-
 #include <stdint.h>
 #include "periph/i2c.h"
 
@@ -40,9 +36,21 @@
 extern "C" {
 #endif
 
-#ifndef MMA8X5X_I2C_ADDRESS
-#define MMA8X5X_I2C_ADDRESS           0x1D /**< Accelerometer Default Address */
+/**
+ * @defgroup drivers_mma8x5x_config     MMA8x5x Accelerometer driver compile configuration
+ * @ingroup config_drivers_sensors
+ * @{
+ */
+/**
+ * @brief   Accelerometer Default Address
+ *
+ * The address value depends on the state of SA0 Address Pin in the case of MMA845x series.
+ * For more details refer Table 1 in datasheet (MMA8451Q/MMA8452Q/MMA8453Q)
+ */
+#ifndef CONFIG_MMA8X5X_I2C_ADDRESS
+#define CONFIG_MMA8X5X_I2C_ADDRESS           0x1D
 #endif
+/** @} */
 
 /**
  * @brief   Devices supported by this driver
@@ -59,14 +67,14 @@ enum {
  * @brief   Available sampling rates
  */
 enum {
-    MMA8X5X_RATE_800HZ = (0 << 3),  /**< 800 Hz Ouput Data Rate in WAKE mode */
-    MMA8X5X_RATE_400HZ = (1 << 3),  /**< 400 Hz Ouput Data Rate in WAKE mode */
-    MMA8X5X_RATE_200HZ = (2 << 3),  /**< 200 Hz Ouput Data Rate in WAKE mode */
-    MMA8X5X_RATE_100HZ = (3 << 3),  /**< 100 Hz Ouput Data Rate in WAKE mode */
-    MMA8X5X_RATE_50HZ  = (4 << 3),  /**< 50 Hz Ouput Data Rate in WAKE mode */
-    MMA8X5X_RATE_1HZ25 = (5 << 3),  /**< 12.5 Hz Ouput Data Rate in WAKE mode */
-    MMA8X5X_RATE_6HZ25 = (6 << 3),  /**< 6.25 Hz Ouput Data Rate in WAKE mode */
-    MMA8X5X_RATE_1HZ56 = (7 << 3)   /**< 1.56 Hz Ouput Data Rate in WAKE mode */
+    MMA8X5X_RATE_800HZ = (0 << 3),  /**< 800 Hz Output Data Rate in WAKE mode */
+    MMA8X5X_RATE_400HZ = (1 << 3),  /**< 400 Hz Output Data Rate in WAKE mode */
+    MMA8X5X_RATE_200HZ = (2 << 3),  /**< 200 Hz Output Data Rate in WAKE mode */
+    MMA8X5X_RATE_100HZ = (3 << 3),  /**< 100 Hz Output Data Rate in WAKE mode */
+    MMA8X5X_RATE_50HZ  = (4 << 3),  /**< 50 Hz Output Data Rate in WAKE mode */
+    MMA8X5X_RATE_1HZ25 = (5 << 3),  /**< 12.5 Hz Output Data Rate in WAKE mode */
+    MMA8X5X_RATE_6HZ25 = (6 << 3),  /**< 6.25 Hz Output Data Rate in WAKE mode */
+    MMA8X5X_RATE_1HZ56 = (7 << 3)   /**< 1.56 Hz Output Data Rate in WAKE mode */
 };
 
 /**
@@ -199,7 +207,7 @@ void mma8x5x_set_motiondetect(const mma8x5x_t *dev, uint8_t int_pin, uint8_t thr
  * Acknowledges (clears) a motion detection interrupt.
  * See @ref mma8x5x_set_motiondetect().
  *
- * @warning: this does incur an I2C write, thus should not be done from within
+ * @warning  this does incur an I2C write, thus should not be done from within
  *           the ISR.
  *
  * @param[in]   dev         device descriptor of accelerometer
@@ -210,5 +218,4 @@ void mma8x5x_ack_int(const mma8x5x_t *dev);
 }
 #endif
 
-#endif /* MMA8X5X_H */
 /** @} */

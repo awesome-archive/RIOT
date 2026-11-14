@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_ds1307  DS1307 RTC
@@ -17,8 +16,6 @@
  *
  * @author  Martine Lenders <m.lenders@fu-berlin.de>
  */
-#ifndef DS1307_H
-#define DS1307_H
 
 #include <stdbool.h>
 #include <time.h>
@@ -34,9 +31,13 @@ extern "C" {
 /**
  * @brief   I2C address of DS1307 RTC
  */
-#ifndef DS1307_I2C_ADDRESS
 #define DS1307_I2C_ADDRESS      (0x68)
-#endif
+
+/**
+ * @defgroup drivers_ds1307_config   DS1307 RTC driver compile configuration
+ * @ingroup config_drivers_sensors
+ * @{
+ */
 
 /**
  * @brief   Maximum I2C bus speed to use with the device
@@ -44,6 +45,7 @@ extern "C" {
 #ifndef DS1307_I2C_MAX_CLK
 #define DS1307_I2C_MAX_CLK      (I2C_SPEED_FAST)
 #endif
+/** @} */
 
 /**
  * @brief   Maximum size in byte of on-chip NVRAM
@@ -152,5 +154,4 @@ int ds1307_get_sqw_mode(const ds1307_t *dev);
 }
 #endif
 
-#endif /* DS1307_H */
 /** @} */

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016-2017 Bas Stottelaar <basstottelaar@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016-2017 Bas Stottelaar <basstottelaar@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -34,10 +31,47 @@ typedef struct {
 
 static rtt_state_t rtt_state;
 
+/* prescaler of 32768 = 1 s of resolution and overflow each 194 days */
+#if RTT_FREQUENCY == 1
+#define RTT_CMU_CLK_DIV cmuClkDiv_32768
+#elif RTT_FREQUENCY == 2
+#define RTT_CMU_CLK_DIV cmuClkDiv_16384
+#elif RTT_FREQUENCY == 4
+#define RTT_CMU_CLK_DIV cmuClkDiv_8192
+#elif RTT_FREQUENCY == 8
+#define RTT_CMU_CLK_DIV cmuClkDiv_4096
+#elif RTT_FREQUENCY == 16
+#define RTT_CMU_CLK_DIV cmuClkDiv_2048
+#elif RTT_FREQUENCY == 32
+#define RTT_CMU_CLK_DIV cmuClkDiv_1024
+#elif RTT_FREQUENCY == 64
+#define RTT_CMU_CLK_DIV cmuClkDiv_512
+#elif RTT_FREQUENCY == 128
+#define RTT_CMU_CLK_DIV cmuClkDiv_256
+#elif RTT_FREQUENCY == 256
+#define RTT_CMU_CLK_DIV cmuClkDiv_128
+#elif RTT_FREQUENCY == 512
+#define RTT_CMU_CLK_DIV cmuClkDiv_64
+#elif RTT_FREQUENCY == 1024
+#define RTT_CMU_CLK_DIV cmuClkDiv_32
+#elif RTT_FREQUENCY == 2048
+#define RTT_CMU_CLK_DIV cmuClkDiv_16
+#elif RTT_FREQUENCY == 4096
+#define RTT_CMU_CLK_DIV cmuClkDiv_8
+#elif RTT_FREQUENCY == 8192
+#define RTT_CMU_CLK_DIV cmuClkDiv_4
+#elif RTT_FREQUENCY == 16384
+#define RTT_CMU_CLK_DIV cmuClkDiv_2
+#elif RTT_FREQUENCY == 32768
+#define RTT_CMU_CLK_DIV cmuClkDiv_1
+#else
+#warning "no matching prescaler for RTT_FREQUENCY"
+#endif
+
 void rtt_init(void)
 {
-    /* prescaler of 32768 = 1 s of resolution and overflow each 194 days */
-    CMU_ClockDivSet(cmuClock_RTC, cmuClkDiv_32768);
+    /* setup prescaler */
+    CMU_ClockDivSet(cmuClock_RTC, RTT_CMU_CLK_DIV);
 
     /* enable clocks */
     CMU_ClockEnable(cmuClock_CORELE, true);

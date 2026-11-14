@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2015 Kaspar Schleiser <kaspar@schleiser.de>
- * Copyright (C) 2016 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2016 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup  sys_div   Integer division functions
@@ -20,9 +19,6 @@
  * @author    Joakim Nohlgård <joakim.nohlgard@eistec.se>
  * @{
  */
-
-#ifndef DIV_H
-#define DIV_H
 
 #include <assert.h>
 #include <stdint.h>
@@ -79,8 +75,8 @@ static inline uint64_t div_u64_by_15625(uint64_t val)
  * @brief Integer divide val by 125
  *
  * This function can be used to convert uint64_t microsecond times (or
- * intervals) to miliseconds and store them in uint32_t variables, with up to
- * ~50 days worth of miliseconds ((2**32*1000) -1).
+ * intervals) to milliseconds and store them in uint32_t variables, with up to
+ * ~50 days worth of milliseconds ((2**32*1000) -1).
  * Use e.g.,  ms = div_u64_by_125(microseconds >> 3)
  *
  * @pre val <= 536870911999 ((2**32 * 125) -1)
@@ -181,4 +177,3 @@ static inline uint32_t div_u32_mod_44488(uint32_t val)
 }
 #endif
 /** @} */
-#endif /* DIV_H */

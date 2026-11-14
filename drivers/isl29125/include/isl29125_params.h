@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- * Copyright (C) 2018 HAW-Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2018 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_isl29125
@@ -17,9 +16,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @author      Michel Rottleuthner <michel.rottleuthner@haw-hamburg.de>
  */
-
-#ifndef ISL29125_PARAMS_H
-#define ISL29125_PARAMS_H
 
 #include "board.h"
 #include "isl29125.h"
@@ -69,5 +65,4 @@ static const isl29125_params_t isl29125_params[] =
 }
 #endif
 
-#endif /* ISL29125_PARAMS_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    core_msg  Messaging / IPC
@@ -15,9 +14,20 @@
  * ========
  * IPC messages consist of a sender PID, a type, and some content. The sender
  * PID will be set by the IPC internally and is not required to be set by the
- * user. The type helps the receiver to multiplex different message types and
- * should be set to a system-wide unique value. The content can either be
- * provided as a 32-bit integer or a pointer.
+ * user. The type helps the receiver to multiplex different message types.
+ * The content can either be provided as a 32-bit integer or a pointer.
+ *
+ * Some message types are predefined; for example, @ref
+ * GNRC_NETAPI_MSG_TYPE_RCV & co are defined. These are fixed in the sense that
+ * registering for a particular set of messages (for the above, e.g. @ref
+ * gnrc_netreg_register) will use these message types. Threads that do nothing
+ * to receive such messages can safely use the same numbers for other purposes.
+ * The predefined types use non-conflicting ranges (e.g. `0x02NN`) to avoid
+ * ruling out simultaneous use of different components in the same thread.
+ *
+ * In general, threads may consider it an error to send them a message they did
+ * not request. Best practice is to log (but otherwise ignore) unexpected
+ * messages.
  *
  * Blocking vs non-blocking
  * ========================
@@ -162,12 +172,11 @@
  * @author      Kévin Roussel <Kevin.Roussel@inria.fr>
  */
 
-#ifndef MSG_H
-#define MSG_H
-
 #include <stdint.h>
 #include <stdbool.h>
-#include "kernel_types.h"
+
+#include "compiler_hints.h"
+#include "sched.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -191,7 +200,6 @@ typedef struct {
     } content;                  /**< Content of the message. */
 } msg_t;
 
-
 /**
  * @brief Send a message (blocking).
  *
@@ -212,7 +220,6 @@ typedef struct {
  */
 int msg_send(msg_t *m, kernel_pid_t target_pid);
 
-
 /**
  * @brief Send a message (non-blocking).
  *
@@ -230,7 +237,6 @@ int msg_send(msg_t *m, kernel_pid_t target_pid);
  * @return -1, on error (invalid PID)
  */
 int msg_try_send(msg_t *m, kernel_pid_t target_pid);
-
 
 /**
  * @brief Send a message to the current thread.
@@ -313,7 +319,13 @@ int msg_try_receive(msg_t *m);
  * @brief Send a message, block until reply received.
  *
  * This function sends a message to *target_pid* and then blocks until target
- * has sent a reply which is then stored in *reply*.
+ * has sent a reply which is then stored in *reply*. The responding thread must
+ * use @ref msg_reply().
+ *
+ * Any incoming messages other than the reply are put into the queue (if one is
+ * configured), block the sender (if sent with @ref msg_send from a thread), or
+ * rejected (if sent with @ref msg_try_send or from an interrupt) -- just like
+ * if the thread were blocked on anything different than message reception.
  *
  * @pre     @p target_pid is not the PID of the current thread.
  *
@@ -355,12 +367,37 @@ int msg_reply(msg_t *m, msg_t *reply);
 int msg_reply_int(msg_t *m, msg_t *reply);
 
 /**
- * @brief Check how many messages are available in the message queue
+ * @brief Check how many messages are available (waiting) in the message queue
+ *        of a specific thread
  *
- * @return Number of messages available in our queue on success
- * @return -1, if no caller's message queue is initialized
+ * @param[in] pid    a PID
+ *
+ * @return  Number of messages available in queue of the thread identified by
+ *          PID @p pid
+ * @retval  0       The message queue of the thread identified by PID @p pid is
+ *                  *not* initialized or PID @p pid does not refer to a running
+ *                  thread
  */
-int msg_avail(void);
+unsigned msg_avail_thread(kernel_pid_t pid);
+
+/**
+ * @brief Check how many messages are available (waiting) in the message queue
+ *
+ * @pre     The caller is running in thread context
+ *
+ * @return  Number of messages available in our queue
+ * @retval  0       Caller's message queue is *not* initialized
+ */
+unsigned msg_avail(void);
+
+/**
+ * @brief   Get maximum capacity of a thread's queue length
+ *
+ * @return  Number of total messages that fit in the queue of @p pid on success
+ * @retval  0       Either the thread identified by PID @p pid does not exist or
+ *                  has no message queue initialized (yet)
+ */
+unsigned msg_queue_capacity(kernel_pid_t pid);
 
 /**
  * @brief Initialize the current thread's message queue.
@@ -371,11 +408,24 @@ int msg_avail(void);
  *                  not be NULL.
  * @param[in] num   Number of ``msg_t`` structures in array.
  *                  **MUST BE POWER OF TWO!**
+ *
+ * If array resides on the stack, the containing stack frame must never be
+ * left, not even if it is the current thread's entry function.
  */
+ACCESS(write_only, 1, 2)
 void msg_init_queue(msg_t *array, int num);
 
 /**
+ * @brief Number of messages to be maximally printed through @ref msg_queue_print
+ */
+#ifndef CONFIG_MSG_QUEUE_PRINT_MAX
+#  define CONFIG_MSG_QUEUE_PRINT_MAX 16U
+#endif
+
+/**
  * @brief   Prints the message queue of the current thread.
+ *
+ * @note    Prints at most CONFIG_MSG_QUEUE_PRINT_MAX messages.
  */
 void msg_queue_print(void);
 
@@ -383,5 +433,4 @@ void msg_queue_print(void);
 }
 #endif
 
-#endif /* MSG_H */
 /** @} */

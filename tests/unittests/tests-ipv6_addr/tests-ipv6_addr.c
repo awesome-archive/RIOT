@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -255,7 +252,6 @@ static void test_ipv6_addr_is_site_local_site_local_multicast(void)
     };
     TEST_ASSERT_EQUAL_INT(true, ipv6_addr_is_site_local(&a));
 }
-
 
 static void test_ipv6_addr_is_site_local(void)
 {
@@ -553,6 +549,19 @@ static void test_ipv6_addr_match_prefix_same_pointer(void)
     TEST_ASSERT_EQUAL_INT(128, ipv6_addr_match_prefix(&a, &a));
 }
 
+static void test_ipv6_addr_init(void)
+{
+    ipv6_addr_t a = { {
+            0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+        },
+    };
+    ipv6_addr_t b;
+    ipv6_addr_init(&b, 0xff02000000000000ULL, 0x1);
+
+    TEST_ASSERT_EQUAL_INT(true, ipv6_addr_equal(&a, &b));
+}
+
 static void test_ipv6_addr_init_prefix(void)
 {
     ipv6_addr_t a = { {
@@ -826,7 +835,7 @@ static void test_ipv6_addr_to_str__addr_NULL(void)
 
 static void test_ipv6_addr_to_str__result_NULL(void)
 {
-    ipv6_addr_t a;
+    ipv6_addr_t a = {0};
 
     TEST_ASSERT_NULL(ipv6_addr_to_str(NULL, &a, IPV6_ADDR_MAX_STR_LEN));
 }
@@ -1019,11 +1028,68 @@ static void test_ipv6_addr_from_str__success6(void)
     ipv6_addr_t result;
 
 #ifdef MODULE_IPV4_ADDR
-    TEST_ASSERT_NOT_NULL(ipv6_addr_from_str(&result, "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"));
+    TEST_ASSERT_NOT_NULL(ipv6_addr_from_str(&result, "ffff:ffff:ffff:ffff:ffff:ffff"
+                                                     ":255.255.255.255"));
 #else
     TEST_ASSERT_NOT_NULL(ipv6_addr_from_str(&result, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"));
 #endif
     TEST_ASSERT(ipv6_addr_equal(&a, &result));
+}
+
+static void test_ipv6_addr_split_iface__no_iface(void)
+{
+    char a[] = "fe80::f8f9:fafb:fcfd:feff";
+    TEST_ASSERT_NULL(ipv6_addr_split_iface(a));
+}
+
+static void test_ipv6_addr_split_iface__with_iface(void)
+{
+    char a[] = "fe80::f8f9:fafb:fcfd:feff%eth0";
+    char *iface = ipv6_addr_split_iface(a);
+    TEST_ASSERT_NOT_NULL(iface);
+    TEST_ASSERT_EQUAL_INT(strcmp("eth0", iface), 0);
+    /* check that the separator has been replaced with '\0' */
+    TEST_ASSERT_EQUAL_INT(*(iface - 1), '\0');
+}
+
+static void test_ipv6_addr_split_prefix__no_prefix(void)
+{
+    char a[] = "fd00:dead:beef::1";
+    TEST_ASSERT_EQUAL_INT(ipv6_addr_split_prefix(a), 128);
+}
+
+static void test_ipv6_addr_split_prefix__with_prefix(void)
+{
+    char a[] = "fd00:dead:beef::1/64";
+    TEST_ASSERT_EQUAL_INT(ipv6_addr_split_prefix(a), 64);
+    /* check that the separator has been replaced with '\0' */
+    TEST_ASSERT_EQUAL_INT(strcmp("fd00:dead:beef::1", a), 0);
+}
+
+static void test_ipv6_addr_from_buf__success(void)
+{
+    ipv6_addr_t a = { {
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+            0xff, 0xff, 0xff, 0xff, 255, 255, 255, 255
+        }
+    };
+    ipv6_addr_t result;
+
+#ifdef MODULE_IPV4_ADDR
+    TEST_ASSERT_NOT_NULL(ipv6_addr_from_buf(&result, "ffff:ffff:ffff:ffff:ffff:ffff"
+                                                     ":255.255.255.255%tap0", 45));
+#else
+    TEST_ASSERT_NOT_NULL(ipv6_addr_from_buf(&result, "ffff:ffff:ffff:ffff:ffff:ffff"
+                                                     ":ffff:ffff%tap0", 39));
+#endif
+    TEST_ASSERT(ipv6_addr_equal(&a, &result));
+}
+
+static void test_ipv6_addr_from_buf__too_long_len(void)
+{
+    ipv6_addr_t result;
+
+    TEST_ASSERT_NULL(ipv6_addr_from_buf(&result, "::1", IPV6_ADDR_MAX_STR_LEN + 1));
 }
 
 Test *tests_ipv6_addr_tests(void)
@@ -1076,6 +1142,7 @@ Test *tests_ipv6_addr_tests(void)
         new_TestFixture(test_ipv6_addr_match_prefix_match_127),
         new_TestFixture(test_ipv6_addr_match_prefix_match_128),
         new_TestFixture(test_ipv6_addr_match_prefix_same_pointer),
+        new_TestFixture(test_ipv6_addr_init),
         new_TestFixture(test_ipv6_addr_init_prefix),
         new_TestFixture(test_ipv6_addr_init_iid),
         new_TestFixture(test_ipv6_addr_set_unspecified),
@@ -1114,6 +1181,12 @@ Test *tests_ipv6_addr_tests(void)
         new_TestFixture(test_ipv6_addr_from_str__success4),
         new_TestFixture(test_ipv6_addr_from_str__success5),
         new_TestFixture(test_ipv6_addr_from_str__success6),
+        new_TestFixture(test_ipv6_addr_split_iface__no_iface),
+        new_TestFixture(test_ipv6_addr_split_iface__with_iface),
+        new_TestFixture(test_ipv6_addr_split_prefix__no_prefix),
+        new_TestFixture(test_ipv6_addr_split_prefix__with_prefix),
+        new_TestFixture(test_ipv6_addr_from_buf__success),
+        new_TestFixture(test_ipv6_addr_from_buf__too_long_len),
     };
 
     EMB_UNIT_TESTCALLER(ipv6_addr_tests, NULL, NULL, fixtures);

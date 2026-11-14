@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Hamburg University of Applied Sciences
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Hamburg University of Applied Sciences
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_soft_spi Soft SPI
@@ -14,7 +13,7 @@
  * This module provides a software implemented Serial Peripheral Interface bus.
  * It is intended to be used in situation where hardware spi is not available.
  * The signatures of the functions are similar to the functions declared in spi.h
- * The clock speed is approximated by using xtimer_nanosleep.
+ * The clock speed is approximated by using xtimer_usleep.
  * Currently only the use of MOSI in master mode is implemented. Therefore receiving
  * data from a slave is currently not possible.
  * @{
@@ -25,9 +24,6 @@
  * @author      Markus Blechschmidt <Markus.Blechschmidt@haw-hamburg.de>
  */
 
-#ifndef SOFT_SPI_H
-#define SOFT_SPI_H
-
 #include "periph/gpio.h"
 #include "periph/spi.h"
 #include "mutex.h"
@@ -36,6 +32,11 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup drivers_softspi_config      Software SPI driver compile configuration
+ * @ingroup config_drivers_soft_periph
+ * @{
+ */
 /**
  * @brief   Default SPI device access macro
  */
@@ -56,6 +57,7 @@ extern "C" {
 #ifndef SOFT_SPI_CS_UNDEF
 #define SOFT_SPI_CS_UNDEF    (GPIO_UNDEF)
 #endif
+/** @} */
 
 /**
  * @brief   Default type for SPI devices
@@ -110,9 +112,9 @@ typedef enum {
  * delay between two clock edges.
  */
 typedef enum {
-    SOFT_SPI_CLK_100KHZ = 5000,     /**< drive the SPI bus with less than 100kHz */
-    SOFT_SPI_CLK_400KHZ = 1250,     /**< drive the SPI bus with less than 400kHz */
-    SOFT_SPI_CLK_DEFAULT = 0,       /**< drive the SPI bus with maximum speed possible */
+    SOFT_SPI_CLK_100KHZ = 5,     /**< drive the SPI bus with less than 100kHz */
+    SOFT_SPI_CLK_1MHZ   = 1,     /**< drive the SPI bus with less than 1MHz */
+    SOFT_SPI_CLK_DEFAULT = 0,    /**< drive the SPI bus with maximum speed possible */
 } soft_spi_clk_t;
 
 /**
@@ -179,16 +181,12 @@ int soft_spi_init_cs(soft_spi_t bus, soft_spi_cs_t cs);
  * @note    This function expects the @p bus and the @p cs parameters to be
  *          valid (they are checked in soft_spi_init and soft_spi_init_cs before)
  *
- * @param[in] bus       SPI device to access
- * @param[in] cs        chip select pin/line to use
- * @param[in] mode      mode to use for the new transaction
- * @param[in] clk       bus clock speed to use for the transaction
- *
- * @return              SOFT_SPI_OK on success
- * @return              SOFT_SPI_NOMODE if given mode is not supported
- * @return              SOFT_SPI_NOCLK if given clock speed is not supported
+ * @param[in]   bus     SPI device to access
+ * @param[in]   cs      chip select pin/line to use
+ * @param[in]   mode    mode to use for the new transaction
+ * @param[in]   clk     bus clock speed to use for the transaction
  */
-int soft_spi_acquire(soft_spi_t bus, soft_spi_cs_t cs, soft_spi_mode_t mode, soft_spi_clk_t clk);
+void soft_spi_acquire(soft_spi_t bus, soft_spi_cs_t cs, soft_spi_mode_t mode, soft_spi_clk_t clk);
 
 /**
  * @brief   Finish an ongoing SPI transaction by releasing the given SPI bus
@@ -262,5 +260,4 @@ void soft_spi_transfer_regs(soft_spi_t bus, soft_spi_cs_t cs, uint8_t reg,
 }
 #endif
 
-#endif /* SOFT_SPI_H */
 /** @} */

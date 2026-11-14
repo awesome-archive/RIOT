@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017,2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017-2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_benchmark Benchmark
@@ -18,13 +17,10 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef BENCHMARK_H
-#define BENCHMARK_H
-
 #include <stdint.h>
 
 #include "irq.h"
-#include "xtimer.h"
+#include "ztimer/stopwatch.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,17 +37,16 @@ extern "C" {
  * @param[in] runs      number of times to run @p func
  * @param[in] func      function call to benchmark
  */
-#define BENCHMARK_FUNC(name, runs, func)                    \
-    {                                                           \
-        unsigned _benchmark_irqstate = irq_disable();           \
-        uint32_t _benchmark_time = xtimer_now_usec();           \
+#define BENCHMARK_FUNC(name, runs, func)                        \
+    do {                                                        \
+        ztimer_stopwatch_t timer = { .clock = ZTIMER_USEC };    \
+        ztimer_stopwatch_start(&timer);                         \
         for (unsigned long i = 0; i < runs; i++) {              \
             func;                                               \
         }                                                       \
-        _benchmark_time = (xtimer_now_usec() - _benchmark_time);\
-        irq_restore(_benchmark_irqstate);                       \
-        benchmark_print_time(_benchmark_time, runs, name);      \
-    }
+        benchmark_print_time(ztimer_stopwatch_measure(&timer), runs, name); \
+        ztimer_stopwatch_stop(&timer);                          \
+    } while (0)
 
 /**
  * @brief   Output the given time as well as the time per run on STDIO
@@ -66,5 +61,4 @@ void benchmark_print_time(uint32_t time, unsigned long runs, const char *name);
 }
 #endif
 
-#endif /* BENCHMARK_H */
 /** @} */

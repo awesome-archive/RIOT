@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_lis3mdl LIS3MDL 3-axis magnetometer
@@ -20,9 +19,6 @@
  *
  * @author      René Herthel <rene-herthel@outlook.de>
  */
-
-#ifndef LIS3MDL_H
-#define LIS3MDL_H
 
 #include <stdint.h>
 #include "periph/i2c.h"
@@ -106,7 +102,6 @@ typedef struct {
     lis3mdl_op_t op_mode;            /**< Operation mode */
 } lis3mdl_params_t;
 
-
 /**
  * @brief   Device descriptor for LIS3MDL sensor
  */
@@ -159,5 +154,4 @@ void lis3mdl_disable(const lis3mdl_t *dev);
 }
 #endif
 
-#endif /* LIS3MDL_H */
 /** @} */

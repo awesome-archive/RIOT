@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2016-17 Kaspar Schleiser <kaspar@schleiser.de>
- *               2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016-2017 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @addtogroup  sys_evtimer
@@ -17,8 +16,6 @@
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
  * @author      Martine Lenders <m.lenders@fu-berlin.de>
  */
-#ifndef EVTIMER_MSG_H
-#define EVTIMER_MSG_H
 
 #include "msg.h"
 #include "evtimer.h"
@@ -84,5 +81,4 @@ static inline void evtimer_init_msg(evtimer_t *evtimer)
 }
 #endif
 
-#endif /* EVTIMER_MSG_H */
 /** @} */

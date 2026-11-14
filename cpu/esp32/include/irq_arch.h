@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     cpu_esp32
@@ -18,88 +17,58 @@
  * @}
  */
 
-#ifndef IRQ_ARCH_H
-#define IRQ_ARCH_H
-
-#include "irq.h"
-#include "sched.h"
-#include "thread.h"
+#include "irq_arch_common.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @brief   Indicates the interrupt nesting depth
+ * @name   CPU interrupt numbers
  *
- * The variable is increment on entry into and decremented on exit from an ISR.
- */
-extern volatile uint32_t irq_interrupt_nesting;
-
-/**
-  * @brief fixed allocated CPU interrupt numbers that are used by RIOT
-  * @{
-  */
-#define CPU_INUM_GPIO       2   /* level interrupt, low priority = 1 */
-#define CPU_INUM_CAN        3   /* level interrupt, low priority = 1 */
-#define CPU_INUM_UART       5   /* level interrupt, low priority = 1 */
-#define CPU_INUM_RTC        9   /* level interrupt, low priority = 1 */
-#define CPU_INUM_I2C        12  /* level interrupt, low priority = 1 */
-#define CPU_INUM_WDT        13  /* level interrupt, low priority = 1 */
-#define CPU_INUM_SOFTWARE   17  /* level interrupt, low priority = 1 */
-#define CPU_INUM_ETH        18  /* level interrupt, low priority = 1 */
-#define CPU_INUM_TIMER      19  /* level interrupt, medium priority = 2 */
-/** @} */
-
-#if defined(SDK_INT_HANDLING) || defined(DOXYGEN)
-/**
- * @brief   Macros that have to be used on entry into and reset from an ISR
+ * All interrupts that are used for RIOT-OS are preallocated and fix.
+ * The allocated interrupts are all level interrupts, most of them with
+ * low priority.
  *
- * NOTE: since they use a local variable they can be used only in same function
  * @{
  */
-/** Macro that has to be used at the entry point of an ISR */
-#define irq_isr_enter()    int _irq_state = irq_disable (); \
-                           irq_interrupt_nesting++;
 
-/** Macro that has to be used at the exit point of an ISR */
-#define irq_isr_exit()     if (irq_interrupt_nesting) \
-                               irq_interrupt_nesting--; \
-                           irq_restore (_irq_state); \
-                           if (sched_context_switch_request) \
-                               thread_yield();
-
-#else /* SDK_INT_HANDLING */
-
-/* in non SDK task handling all the stuff is done in _frxt_int_enter and _frxt_int_exit */
-#define irq_isr_enter() /* int _irq_state = irq_disable (); \
-                           irq_interrupt_nesting++; */
-
-#define irq_isr_exit()  /* if (irq_interrupt_nesting) \
-                               irq_interrupt_nesting--; \
-                           irq_restore (_irq_state); */
-
-#endif /* SDK_INT_HANDLING */
-
-/**
- * @brief   Macros to enter and exit from critical region
- *
- * NOTE: since they use a local variable they can be used only in same function
- * @{
- */
-#define critical_enter()   int _irq_state = irq_disable ()
-#define critical_exit()    irq_restore(_irq_state)
-
-/**
- * @brief   Macros to enter and exit from critical region with state variable
- */
-#define critical_enter_var(m)   m = irq_disable ()
-#define critical_exit_var(m)    irq_restore(m)
-
+/* On Xtensa-based ESP32x SoCs, interrupt 0 is reserved for the WiFi interface
+ * and interrupt 1 is available. However, since interrupt 0 is not available on
+ * RISC-V-based ESP32x SoCs, interrupt 1 is used for the WiFi interface instead.
+ * Therefore, we use interrupt 1 for the RMT peripheral on Xtensa-based ESP32x
+ * SoCs, but we use interrupt 11 for the RMT peripheral on RISC-V-based ESP32x
+ * SoCs. Interrupt 11 is reserved for profiling on Xtensa-based ESP32x SoCs. */
+#if defined(__XTENSA__)
+#  define CPU_INUM_RMT           1  /**< Level interrupt with low priority 1 */
+#else
+#  define CPU_INUM_RMT          11  /**< Level interrupt with low priority 1 */
+#endif
+#define CPU_INUM_GPIO            2  /**< Level interrupt with low priority 1 */
+#define CPU_INUM_BLE             5  /**< Level interrupt with low priority 1 */
+#define CPU_INUM_BT_MAC          8  /**< Level interrupt with low priority 1 */
+#define CPU_INUM_RTT             9  /**< Level interrupt with low priority 1 */
+#define CPU_INUM_SERIAL_JTAG    10  /**< Edge  interrupt with low priority 1 */
+#define CPU_INUM_I2C            12  /**< Level interrupt with low priority 1 */
+#define CPU_INUM_UART           13  /**< Level interrupt with low priority 1 */
+#define CPU_INUM_CAN            17  /**< Level interrupt with low priority 1 */
+#define CPU_INUM_ETH            18  /**< Level interrupt with low priority 1 */
+#define CPU_INUM_USB            18  /**< Level interrupt with low priority 1 */
+#define CPU_INUM_LCDCAM         19  /**< Level interrupt with medium priority 2 */
+#define CPU_INUM_FRC2           20  /**< Level interrupt with medium priority 2 */
+#define CPU_INUM_SYSTIMER       20  /**< Level interrupt with medium priority 2 */
+#define CPU_INUM_SDMMC          21  /**< Level interrupt with medium priority 2 */
+#define CPU_INUM_TIMER          22  /**< Edge  interrupt with medium priority 2 */
+#define CPU_INUM_WDT            23  /**< Level interrupt with medium priority 3 */
+#define CPU_INUM_ZMAC           27  /**< Level interrupt with medium priority 3 */
+#define CPU_INUM_SOFTWARE       29  /**< Software interrupt with medium priority 3 */
 /** @} */
+
+/**
+ * @brief   Initialize architecture specific interrupt handling
+ */
+void esp_irq_init(void);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* IRQ_ARCH_H */

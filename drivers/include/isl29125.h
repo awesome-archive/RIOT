@@ -1,11 +1,10 @@
 /*
- * Copyright 2015 Ludwig Knüpfer
- * Copyright 2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Ludwig Knüpfer
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_isl29125 ISL29125 RGB light sensor
@@ -24,7 +23,7 @@
  *
  * ## Usage
  *
- * Examine `tests/driver_isr29125` for an exemplary application using
+ * Examine `tests/drivers/isr29125` for an exemplary application using
  * this driver.
  *
  * ## Caveats
@@ -44,9 +43,6 @@
  * @author      Martin Heusmann <martin.heusmann@haw-hamburg.de>
  * @author      Cenk Gündoğan <mail-github@cgundogan.de>
  */
-
-#ifndef ISL29125_H
-#define ISL29125_H
 
 #include <stdint.h>
 
@@ -214,5 +210,4 @@ int isl29125_read_irq_status(const isl29125_t *dev);
 }
 #endif
 
-#endif /* ISL29125_H */
 /** @} */

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *               2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_cc2420
@@ -18,9 +17,6 @@
  * @author      Francisco Acosta <francisco.acosta@inria.fr>
  */
 
-#ifndef CC2420_REGISTERS_H
-#define CC2420_REGISTERS_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,33 +27,26 @@ extern "C" {
  */
 #define CC2420_OPT_AUTOACK          (0x0001)    /**< auto ACKs active */
 #define CC2420_OPT_CSMA             (0x0002)    /**< CSMA active */
-#define CC2420_OPT_PROMISCUOUS      (0x0004)    /**< promiscuous mode
-                                                 *   active */
+#define CC2420_OPT_PROMISCUOUS      (0x0004)    /**< promiscuous mode active */
 #define CC2420_OPT_PRELOADING       (0x0008)    /**< preloading enabled */
-#define CC2420_OPT_TELL_TX_START    (0x0010)    /**< notify MAC layer on TX
-                                                 *   start */
-#define CC2420_OPT_TELL_TX_END      (0x0020)    /**< notify MAC layer on TX
-                                                 *   finished */
-#define CC2420_OPT_TELL_RX_START    (0x0040)    /**< notify MAC layer on RX
-                                                 *   start */
-#define CC2420_OPT_TELL_RX_END      (0x0080)    /**< notify MAC layer on RX
-                                                 *   finished */
 /** @} */
 
 /**
- * @name    Possible device state change commands
+ * @name    device state change commands
  * @{
  */
 enum {
-    CC2420_GOTO_PD,       /**< power down */
+    CC2420_GOTO_PD,         /**< power down */
     CC2420_GOTO_IDLE,       /**< idle */
-    CC2420_GOTO_RX,       /**< receive state */
+    CC2420_GOTO_RX,         /**< receive state */
     CC2420_GOTO_TXON,       /**< transmit packet without CCA */
-    CC2420_GOTO_TXONCCA        /**< transmit packet using CCA */
+    CC2420_GOTO_TXONCCA     /**< transmit packet using CCA */
 };
+/** @} */
 
 /**
  * @name    (Selected) device states
+ * @{
  */
 enum {
     CC2420_STATE_PD          = 0,   /**< power down */
@@ -66,6 +55,7 @@ enum {
     CC2420_STATE_RX_SEARCH   = 6,   /**< receive SFD search */
     CC2420_STATE_RX_OVERFLOW = 17   /**< receive buffer overflow */
 };
+/** @} */
 
 /**
  * @name    CC2420 SPI commands
@@ -79,7 +69,6 @@ enum {
 #define CC2420_FIFO_READ            (CC2420_REG_RXFIFO | CC2420_REG_READ)
 #define CC2420_FIFO_WRITE           (CC2420_REG_TXFIFO | CC2420_REG_WRITE)
 /** @} */
-
 
 /**
  * @name    CC2420 strobe commands
@@ -245,10 +234,8 @@ enum {
 #define CC2420_MANFIDH_VAL          (0x3000)
 /** @} */
 
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CC2420_REGISTERS_H */
 /** @} */

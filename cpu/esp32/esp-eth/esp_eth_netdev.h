@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     cpu_esp32_esp_eth
@@ -16,9 +15,10 @@
  * @author      Gunar Schorcht <gunar@schorcht.net>
  */
 
-#ifndef ESP_ETH_NETDEV_H
-#define ESP_ETH_NETDEV_H
+#include <stdbool.h>
 
+#include "mutex.h"
+#include "net/ethernet.h"
 #include "net/netdev.h"
 
 #ifdef __cplusplus
@@ -33,20 +33,19 @@ extern const netdev_driver_t esp_eth_driver;
 /**
  * @brief   Device descriptor for ESP-ETH devices
  */
-typedef struct
-{
+typedef struct {
     netdev_t netdev;                    /**< netdev parent struct */
 
-    uint16_t rx_len;                     /**< number of bytes received */
-    uint16_t tx_len;                     /**< number of bytes in transmit buffer */
+    void    *eth_driver;                /**< EMAC driver handle */
+
+    uint16_t rx_len;                    /**< number of bytes received */
+    uint16_t tx_len;                    /**< number of bytes in transmit buffer */
 
     uint8_t  rx_buf[ETHERNET_MAX_LEN];  /**< receive buffer */
     uint8_t  tx_buf[ETHERNET_MAX_LEN];  /**< transmit buffer */
 
     uint32_t event;                     /**< received event */
     bool     link_up;                   /**< indicates whether link is up */
-
-    gnrc_netif_t* netif;                /**< reference to the corresponding netif */
 
     mutex_t dev_lock;                   /**< device is already in use */
 
@@ -56,5 +55,4 @@ typedef struct
 }
 #endif
 
-#endif /* ESP_ETH_NETDEV_H */
 /** @} */

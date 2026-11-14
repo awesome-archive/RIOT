@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 PHYTEC Messtechnik GmbH
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016 PHYTEC Messtechnik GmbH
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -27,7 +24,7 @@
 #include "kw2xrf_intern.h"
 #include "byteorder.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #define KW2XRF_LQI_HW_MAX           230      /**< LQI Saturation Level */
@@ -263,26 +260,20 @@ void kw2xrf_set_pan(kw2xrf_t *dev, uint16_t pan)
 
 void kw2xrf_set_addr_short(kw2xrf_t *dev, uint16_t addr)
 {
-    uint8_t val_ar[2];
-    val_ar[0] = (addr >> 8);
-    val_ar[1] = (uint8_t)addr;
-#ifdef MODULE_SIXLOWPAN
-    /* https://tools.ietf.org/html/rfc4944#section-12 requires the first bit to
-     * 0 for unicast addresses */
-    val_ar[0] &= 0x7F;
-#endif
-    kw2xrf_write_iregs(dev, MKW2XDMI_MACSHORTADDRS0_LSB, val_ar,
+    uint16_t tmp;
+    uint8_t *ap = (uint8_t *)&tmp;
+
+    byteorder_htolebufs(ap, addr);
+    kw2xrf_write_iregs(dev, MKW2XDMI_MACSHORTADDRS0_LSB, ap,
                        IEEE802154_SHORT_ADDRESS_LEN);
 }
 
 void kw2xrf_set_addr_long(kw2xrf_t *dev, uint64_t addr)
 {
     uint64_t tmp;
-    uint8_t *ap = (uint8_t *)(&tmp);
+    uint8_t *ap = (uint8_t *)&tmp;
 
-    for (unsigned i = 0; i < IEEE802154_LONG_ADDRESS_LEN; i++) {
-        ap[i] = (addr >> ((IEEE802154_LONG_ADDRESS_LEN - 1 - i) * 8));
-    }
+    byteorder_htolebufll(ap, addr);
 
     kw2xrf_write_iregs(dev, MKW2XDMI_MACLONGADDRS0_0, ap,
                        IEEE802154_LONG_ADDRESS_LEN);
@@ -368,8 +359,6 @@ void kw2xrf_set_option(kw2xrf_t *dev, uint16_t option, bool state)
 
     /* set option field */
     if (state) {
-        dev->netdev.flags |= option;
-
         /* trigger option specific actions */
         switch (option) {
             case KW2XRF_OPT_AUTOCCA:
@@ -398,29 +387,12 @@ void kw2xrf_set_option(kw2xrf_t *dev, uint16_t option, bool state)
                     MKW2XDM_PHY_CTRL1_RXACKRQD);
                 break;
 
-            case KW2XRF_OPT_TELL_RX_START:
-                kw2xrf_clear_dreg_bit(dev, MKW2XDM_PHY_CTRL2,
-                    MKW2XDM_PHY_CTRL2_RX_WMRK_MSK);
-                break;
-
-            case KW2XRF_OPT_TELL_RX_END:
-                kw2xrf_clear_dreg_bit(dev, MKW2XDM_PHY_CTRL2,
-                    MKW2XDM_PHY_CTRL2_RXMSK);
-                break;
-
-            case KW2XRF_OPT_TELL_TX_END:
-                kw2xrf_clear_dreg_bit(dev, MKW2XDM_PHY_CTRL2,
-                    MKW2XDM_PHY_CTRL2_TXMSK);
-                break;
-
-            case KW2XRF_OPT_TELL_TX_START:
             default:
                 /* do nothing */
                 break;
         }
     }
     else {
-        dev->netdev.flags &= ~(option);
         /* trigger option specific actions */
         switch (option) {
             case KW2XRF_OPT_AUTOCCA:
@@ -432,15 +404,6 @@ void kw2xrf_set_option(kw2xrf_t *dev, uint16_t option, bool state)
                 /* disable promiscuous mode */
                 kw2xrf_clear_dreg_bit(dev, MKW2XDM_PHY_CTRL4,
                     MKW2XDM_PHY_CTRL4_PROMISCUOUS);
-                /* re-enable AUTOACK only if the option is set */
-                if (dev->netdev.flags & KW2XRF_OPT_AUTOACK) {
-                    kw2xrf_set_dreg_bit(dev, MKW2XDM_PHY_CTRL1,
-                        MKW2XDM_PHY_CTRL1_AUTOACK);
-                }
-                if (dev->netdev.flags & KW2XRF_OPT_ACK_REQ) {
-                    kw2xrf_set_dreg_bit(dev, MKW2XDM_PHY_CTRL1,
-                        MKW2XDM_PHY_CTRL1_RXACKRQD);
-                }
                 break;
 
             case KW2XRF_OPT_AUTOACK:
@@ -453,23 +416,6 @@ void kw2xrf_set_option(kw2xrf_t *dev, uint16_t option, bool state)
                     MKW2XDM_PHY_CTRL1_RXACKRQD);
                 break;
 
-            case KW2XRF_OPT_TELL_RX_START:
-                kw2xrf_set_dreg_bit(dev, MKW2XDM_PHY_CTRL2,
-                    MKW2XDM_PHY_CTRL2_RX_WMRK_MSK);
-                break;
-
-            case KW2XRF_OPT_TELL_RX_END:
-                kw2xrf_set_dreg_bit(dev, MKW2XDM_PHY_CTRL2,
-                    MKW2XDM_PHY_CTRL2_RXMSK);
-                break;
-
-            case KW2XRF_OPT_TELL_TX_END:
-                kw2xrf_set_dreg_bit(dev, MKW2XDM_PHY_CTRL2,
-                    MKW2XDM_PHY_CTRL2_TXMSK);
-                break;
-
-
-            case KW2XRF_OPT_TELL_TX_START:
             default:
                 /* do nothing */
                 break;

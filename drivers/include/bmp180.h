@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_bmp180 BMP180 temperature and pressure sensor
@@ -20,9 +19,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef BMP180_H
-#define BMP180_H
 
 #include "saul.h"
 #include "periph/i2c.h"
@@ -92,7 +88,7 @@ enum {
  *
  * @return                  BMP180_OK on success
  * @return                  -BMP180_ERR_NODEV if not a BMP180 at given address
- * @return                  -BMP180_ERR_NOCAL if an error occured when reading calibration values
+ * @return                  -BMP180_ERR_NOCAL if an error occurred when reading calibration values
  */
 int bmp180_init(bmp180_t *dev, const bmp180_params_t *params);
 
@@ -138,5 +134,4 @@ uint32_t bmp180_sealevel_pressure(const bmp180_t *dev, int16_t altitude);
 }
 #endif
 
-#endif /* BMP180_H */
 /** @} */

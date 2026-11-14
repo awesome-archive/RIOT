@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Michel Rottleuthner <michel.rottleuthner@haw-hamburg.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Michel Rottleuthner <michel.rottleuthner@haw-hamburg.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     pkg_fatfs
@@ -15,14 +14,12 @@
  * @author      Michel Rottleuthner <michel.rottleuthner@haw-hamburg.de>
  */
 
-#ifndef FATFS_DISKIO_MTD_H
-#define FATFS_DISKIO_MTD_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "fatfs/diskio.h" /* FatFs lower layer API */
+#include "fatfs/source/ff.h"
+#include "fatfs/source/diskio.h" /* FatFs lower layer API */
 
 #define RTC_YEAR_OFFSET   (1900)
 #define FATFS_YEAR_OFFSET (1980)
@@ -41,5 +38,4 @@ extern "C" {
 }
 #endif
 
-#endif /* FATFS_DISKIO_MTD_H */
 /** @} */

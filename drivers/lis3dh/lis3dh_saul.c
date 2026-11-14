@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -39,13 +36,13 @@ static int read_acc(const void *dev, phydat_t *res)
     res->val[2] = xyz.acc_z;
     /* unit: milli-G */
     res->scale = -3;
-    res->unit = UNIT_G;
+    res->unit = UNIT_G_FORCE;
 
     return 3;
 }
 
 const saul_driver_t lis3dh_saul_driver = {
     .read = read_acc,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_ACCEL,
 };

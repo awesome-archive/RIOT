@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Phytec Messtechnik GmbH
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Phytec Messtechnik GmbH
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_kw2xrf
@@ -16,9 +15,7 @@
  * @author      Johann Fischer <j.fischer@phytec.de>
  */
 
-#ifndef KW2XRF_GETSET_H
-#define KW2XRF_GETSET_H
-
+#include "kw2xrf_reg.h"
 #include "kw2xrf.h"
 
 #ifdef __cplusplus
@@ -122,10 +119,10 @@ uint16_t kw2xrf_get_addr_short(kw2xrf_t *dev);
 uint64_t kw2xrf_get_addr_long(kw2xrf_t *dev);
 
 /**
- * @brief   Get CCA threshhold of a given device
+ * @brief   Get CCA threshold of a given device
  *
  * @param[in] dev       kw2xrf device descriptor
- * @return              current CCA threshhold
+ * @return              current CCA threshold
  */
 int8_t kw2xrf_get_cca_threshold(kw2xrf_t *dev);
 
@@ -171,7 +168,7 @@ int16_t kw2xrf_get_rssi(uint32_t value);
 netopt_state_t kw2xrf_get_status(kw2xrf_t *dev);
 
 /**
- * @brief               Enable continous CCA
+ * @brief               Enable continuous CCA
  *
  * @param[in] dev       kw2xrf device descriptor
  *
@@ -200,5 +197,4 @@ void kw2xrf_set_option(kw2xrf_t *dev, uint16_t option, bool state);
 }
 #endif
 
-#endif /* KW2XRF_GETSET_H */
 /** @} */

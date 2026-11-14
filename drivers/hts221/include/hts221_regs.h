@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_hts221
@@ -15,9 +14,6 @@
  *
  * @author      Sebastian Meiling <s@mlng.net>
  */
-
-#ifndef HTS221_REGS_H
-#define HTS221_REGS_H
 
 #include "board.h"
 #include "hts221.h"
@@ -125,7 +121,7 @@ enum {
  */
 #define HTS221_REGS_CTRL_REG2_BOOT      (1 << 7)    /**< Reboot memory content */
 #define HTS221_REGS_CTRL_REG2_HEATER    (1 << 1)    /**< Heater ON */
-#define HTS221_REGS_CTRL_REG2_OS_EN     (1 << 2)    /**< One-shot enable, start new dataset */
+#define HTS221_REGS_CTRL_REG2_OS_EN     (1 << 0)    /**< One-shot enable, start new dataset */
 /** @} */
 
 /**
@@ -149,5 +145,4 @@ enum {
 }
 #endif
 
-#endif /* HTS221_REGS_H */
 /** @} */

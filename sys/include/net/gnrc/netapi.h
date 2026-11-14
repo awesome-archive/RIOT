@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_netapi   GNRC communication interface
@@ -56,13 +55,12 @@
  * @}
  */
 
-#ifndef NET_GNRC_NETAPI_H
-#define NET_GNRC_NETAPI_H
-
-#include "thread.h"
-#include "net/netopt.h"
+#include "compiler_hints.h"
+#include "net/gnrc/netapi/notify.h"
 #include "net/gnrc/nettype.h"
 #include "net/gnrc/pkt.h"
+#include "net/netopt.h"
+#include "thread.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -89,9 +87,16 @@ extern "C" {
 #define GNRC_NETAPI_MSG_TYPE_GET        (0x0204)
 
 /**
- * @brief   @ref core_msg type for replying to get and set option messages
+ * @brief   @ref core_msg type for replying to get/set option, and notify messages
  */
 #define GNRC_NETAPI_MSG_TYPE_ACK        (0x0205)
+
+/**
+ * @brief   @ref core_msg type for sending a general event notifications to one or more subscribers
+ *
+ * This sends back a @ref GNRC_NETAPI_MSG_TYPE_ACK, so it should be used with `msg_send_receive()`.
+ */
+#define GNRC_NETAPI_MSG_TYPE_NOTIFY     (0x0207)
 
 /**
  * @brief   Data structure to be send for setting (@ref GNRC_NETAPI_MSG_TYPE_SET)
@@ -141,7 +146,6 @@ int _gnrc_netapi_send_recv(kernel_pid_t pid, gnrc_pktsnip_t *pkt, uint16_t type)
 int _gnrc_netapi_get_set(kernel_pid_t pid, netopt_t opt, uint16_t context,
                          void *data, size_t data_len, uint16_t type);
 
-
 /**
  * @brief   Shortcut function for sending @ref GNRC_NETAPI_MSG_TYPE_SND messages
  *
@@ -184,6 +188,25 @@ static inline int gnrc_netapi_dispatch_send(gnrc_nettype_t type, uint32_t demux_
 {
     return gnrc_netapi_dispatch(type, demux_ctx, GNRC_NETAPI_MSG_TYPE_SND, pkt);
 }
+
+/**
+ * @brief   Sends a @ref GNRC_NETAPI_MSG_TYPE_NOTIFY command to all subscribers to
+ *          (@p type, @p demux_ctx).
+ *
+ * @note    This blocks the sender until all registered subscribers have ack'ed the notification
+ *          or sending has failed. The @p data can be freed after the function returned.
+ *
+ * @param[in] type          Type of the targeted network module.
+ * @param[in] demux_ctx     Demultiplexing context for @p type.
+ * @param[in] event         Notification event type.
+ * @param[in] data          Data associated with the event.
+ * @param[in] data_len      Size of @p data.
+ *
+ * @return Number of subscribers to (@p type, @p demux_ctx).
+ */
+ACCESS(read_write, 4, 5)
+int gnrc_netapi_notify(gnrc_nettype_t type, uint32_t demux_ctx, netapi_notify_t event,
+                       void *data, size_t data_len);
 
 /**
  * @brief   Shortcut function for sending @ref GNRC_NETAPI_MSG_TYPE_RCV messages
@@ -230,6 +253,7 @@ static inline int gnrc_netapi_dispatch_receive(gnrc_nettype_t type, uint32_t dem
  *                      actual error value is for the implementation to decide but should be
  *                      sensible to indicate what went wrong.
  */
+ACCESS(write_only, 4, 5)
 static inline int gnrc_netapi_get(kernel_pid_t pid, netopt_t opt,
                                   uint16_t context, void *data, size_t max_len)
 {
@@ -252,6 +276,7 @@ static inline int gnrc_netapi_get(kernel_pid_t pid, netopt_t opt,
  *                      implementation to decide but should be sensible to indicate what went
  *                      wrong.
  */
+ACCESS(read_only, 4, 5)
 static inline int gnrc_netapi_set(kernel_pid_t pid, netopt_t opt,
                                   uint16_t context, const void *data,
                                   size_t data_len)
@@ -266,7 +291,6 @@ static inline int gnrc_netapi_set(kernel_pid_t pid, netopt_t opt,
 }
 #endif
 
-#endif /* NET_GNRC_NETAPI_H */
 /**
  * @}^
  */

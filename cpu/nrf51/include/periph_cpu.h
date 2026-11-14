@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015-2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015-2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup         cpu_nrf51
@@ -15,9 +14,6 @@
  *
  * @author          Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef PERIPH_CPU_H
-#define PERIPH_CPU_H
 
 #include "periph_cpu_common.h"
 
@@ -34,12 +30,12 @@ extern "C" {
  * @brief   Redefine some peripheral names to unify them between nRF51 and 52
  * @{
  */
-#define UART_IRQN           (UART0_IRQn)
 #define SPI_SCKSEL          (dev(bus)->PSELSCK)
 #define SPI_MOSISEL         (dev(bus)->PSELMOSI)
 #define SPI_MISOSEL         (dev(bus)->PSELMISO)
 /** @} */
 
+#ifndef DOXYGEN
 /**
  * @brief   Override I2C speed settings
  * @{
@@ -53,6 +49,7 @@ typedef enum {
     I2C_SPEED_HIGH      = 0x03,                         /**< not supported */
 } i2c_speed_t;
 /** @} */
+#endif /* ndef DOXYGEN */
 
 /**
  * @name    Use the shared I2C functions
@@ -64,6 +61,7 @@ typedef enum {
 #define PERIPH_I2C_NEED_WRITE_REG
 /** @} */
 
+#ifndef DOXYGEN
 /**
  * @brief   Override ADC resolution values
  * @{
@@ -78,21 +76,36 @@ typedef enum {
     ADC_RES_16BIT = 0xf3    /**< ADC resolution: 16 bit (not supported) */
 } adc_res_t;
 /** @} */
+#endif /* ndef DOXYGEN */
+
+/**
+ * @brief ADC configuration wrapper
+ */
+typedef gpio_t adc_conf_t;
 
 /**
  * @brief   I2C (TWI) configuration options
  */
 typedef struct {
     NRF_TWI_Type *dev;          /**< hardware device */
-    uint8_t pin_scl;            /**< SCL pin */
-    uint8_t pin_sda;            /**< SDA pin */
+    gpio_t pin_scl;             /**< SCL pin */
+    gpio_t pin_sda;             /**< SDA pin */
     uint8_t ppi;                /**< PPI channel to use */
     i2c_speed_t speed;          /**< bus speed */
 } i2c_conf_t;
+
+/**
+ * @brief  SPI configuration values
+ */
+typedef struct {
+    NRF_SPI_Type *dev;  /**< SPI device used */
+    gpio_t sclk;        /**< CLK pin */
+    gpio_t mosi;        /**< MOSI pin */
+    gpio_t miso;        /**< MISO pin */
+} spi_conf_t;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERIPH_CPU_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016-2018 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016-2018 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_si114x
@@ -16,9 +15,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef SI114X_INTERNALS_H
-#define SI114X_INTERNALS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -161,8 +157,8 @@ extern "C" {
 #define SI1145_ID                              (0x45)
 #define SI1146_ID                              (0x46)
 #define SI1147_ID                              (0x47)
-#define SI114X_STARTUP_TIME                    (25000UL) /* 25ms */
-#define SI114X_WAIT_10MS                       (10000UL) /* 10ms */
+#define SI114X_STARTUP_TIME_MS                 (25UL)   /**< startup time (25ms) */
+#define SI114X_WAIT_10MS                       (10UL)   /* 10ms */
 #define SI114X_INIT_VALUE                      (0x17)
 #define SI114X_UCOEF0_DEFAULT                  (0x29)
 #define SI114X_UCOEF1_DEFAULT                  (0x89)
@@ -203,5 +199,4 @@ extern "C" {
 }
 #endif
 
-#endif /* SI114X_INTERNALS_H */
 /** @} */

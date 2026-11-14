@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_ata8520e Microchip ATA8520E transceiver
@@ -22,12 +21,9 @@
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
 
-#ifndef ATA8520E_H
-#define ATA8520E_H
-
 #include <stdint.h>
 #include <inttypes.h>
-#include "xtimer.h"
+#include "mutex.h"
 #include "periph/gpio.h"
 #include "periph/spi.h"
 
@@ -239,5 +235,4 @@ int ata8520e_send_bit(ata8520e_t *dev, bool bit);
 }
 #endif
 
-#endif /* ATA8520E_H */
 /** @} */

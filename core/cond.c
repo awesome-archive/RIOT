@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2016 Sam Kumar <samkumar@berkeley.edu>
- *               2016 University of California, Berkeley
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Sam Kumar <samkumar@berkeley.edu>
+ * SPDX-FileCopyrightText: 2016 University of California, Berkeley
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -24,7 +21,7 @@
 #include "mutex.h"
 #include "thread.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 void cond_init(cond_t *cond)
@@ -35,7 +32,7 @@ void cond_init(cond_t *cond)
 void cond_wait(cond_t *cond, mutex_t *mutex)
 {
     unsigned irqstate = irq_disable();
-    thread_t *me = (thread_t *)sched_active_thread;
+    thread_t *me = thread_get_active();
 
     mutex_unlock(mutex);
     sched_set_status(me, STATUS_COND_BLOCKED);
@@ -58,7 +55,8 @@ static void _cond_signal(cond_t *cond, bool broadcast)
     uint16_t min_prio = THREAD_PRIORITY_MIN + 1;
 
     while ((next = list_remove_head(&cond->queue)) != NULL) {
-        thread_t *process = container_of((clist_node_t *)next, thread_t, rq_entry);
+        thread_t *process = container_of((clist_node_t *)next, thread_t,
+                                         rq_entry);
         sched_set_status(process, STATUS_PENDING);
         uint16_t process_priority = process->priority;
         if (process_priority < min_prio) {

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016-2018  OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016-2018 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_tja1042 TJA1042
@@ -20,8 +19,6 @@
  * @author      Aurelien Gonce <aurelien.gonce@altran.com>
  * @author      Vincent Dupont <vincent@otakeys.com>
  */
-#ifndef TJA1042_H
-#define TJA1042_H
 
 #include <stdio.h>
 
@@ -78,5 +75,4 @@ extern const trx_driver_t tja1042_driver;
 }
 #endif
 
-#endif /* TJA1042_H */
 /** @} */

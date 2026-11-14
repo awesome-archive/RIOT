@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017-2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017-2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_netdev_ble netdev BLE mode
@@ -73,9 +72,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef NET_NETDEV_BLE_H
-#define NET_NETDEV_BLE_H
 
 #include "net/netdev.h"
 
@@ -196,5 +192,4 @@ static inline void netdev_ble_stop(netdev_t *dev)
 }
 #endif
 
-#endif /* NET_NETDEV_BLE_H */
 /** @} */

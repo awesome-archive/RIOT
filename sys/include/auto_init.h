@@ -1,24 +1,24 @@
 /*
- * Copyright (C) 2010,2015 Freie Universität Berlin
- * Copyright (C) 2010 Kaspar Schleiser <kaspar@schleiser.de>
- * Copyright (C) 2013-2018 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2010 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2010 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2013-2018 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_auto_init Auto-initialization
  * @ingroup     sys
  * @brief       Auto initialize modules
  *
- * This feature can be enabled in any application by adding the `auto_init`
- * module to the application's `Makefile`:
+ * This feature is automatically enabled and can be disabled in any application
+ * by disabling the `auto_init` module in the application's `Makefile`:
  *
- * ~~~~~~~~~~~~~~~~~~~~~~~ {.mk}
- * USEMODULE += auto_init
- * ~~~~~~~~~~~~~~~~~~~~~~~
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.mk}
+ * DISABLE_MODULE += auto_init
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * `auto_init` initializes any included module that provides
  * auto-initialization capabilities.
@@ -37,14 +37,14 @@
  * automatically using the `auto_init` module.
  * To do so, each driver implementation must provide default initialization
  * parameters in the `DRIVER_params.h` file.
- * These parameters can be overriden from the application code in several ways
+ * These parameters can be overridden from the application code in several ways
  * (examples with the @ref drivers_bmp180 oversampling parameter
  * `BMP180_PARAM_OVERSAMPLING`):
  *
  *  - by passing them via the `CFLAGS` variable on the build command line:
  *
  * ```
- * CFLAGS=-DBMP180_PARAM_OVERSAMPLING=1 USEMODULE=bmp180 make BOARD=arduino-zero -C examples/default
+ * CFLAGS=-DBMP180_PARAM_OVERSAMPLING=1 USEMODULE=bmp180 make BOARD=arduino-zero -C examples/basic/default
  * ```
  *
  * - by setting the `CFLAGS` variable in the application `Makefile`:
@@ -79,6 +79,22 @@
  */
 
 /**
+ * @defgroup    sys_auto_init_lwip_netif lwIP netif drivers auto-initialization
+ * @ingroup     sys_auto_init
+ * @brief       Provides auto-initialization of network device drivers for lwIP
+ *
+ * @see @ref pkg_lwip, @ref sys_auto_init
+ */
+
+/**
+ * @defgroup    sys_auto_init_multimedia Multimedia driver auto-initialization
+ * @ingroup     sys_auto_init
+ * @brief       Provides auto-initialization of Multimedia drivers
+ *
+ * @see @ref drivers_multimedia, @ref sys_auto_init
+ */
+
+/**
  * @{
  *
  * @file
@@ -89,9 +105,6 @@
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
 
-#ifndef AUTO_INIT_H
-#define AUTO_INIT_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -100,7 +113,7 @@ extern "C" {
  * @brief Initializes all high level modules that do not require parameters for
  *        initialization or uses default values.
  *
- *        This function gets called - if not explicitely disabled - by @ref
+ *        This function gets called - if not explicitly disabled - by @ref
  *        kernel_init right before jumping into @e main.
  */
 void auto_init(void);
@@ -110,4 +123,3 @@ void auto_init(void);
 #endif
 
 /** @} */
-#endif /* AUTO_INIT_H */

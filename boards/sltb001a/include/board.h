@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015-2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015-2020 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_sltb001a
@@ -17,26 +16,37 @@
  * @author      Bas Stottelaar <basstottelaar@gmail.com>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include "cpu.h"
 #include "periph_conf.h"
+#include "periph/adc.h"
 #include "periph/gpio.h"
 #include "periph/spi.h"
+#include "periph/timer.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @name    Xtimer configuration
+ * @name    ztimer configuration
  *
- * The timer runs at 250 KHz to increase accuracy.
+ * The timer runs at 250 kHz to increase accuracy, or at 32.768 kHz if
+ * LETIMER is used.
  * @{
  */
-#define XTIMER_HZ           (250000UL)
-#define XTIMER_WIDTH        (16)
+#if IS_ACTIVE(CONFIG_EFM32_ZTIMER_USE_LETIMER)
+#  define CONFIG_ZTIMER_USEC_DEV            (TIMER_DEV(1))  /**< Timer peripheral for ztimer */
+#  define CONFIG_ZTIMER_USEC_BASE_FREQ      (32768UL)       /**< Running at 32.768 kHz */
+#  define CONFIG_ZTIMER_USEC_WIDTH          (16)            /**< Running on a 16-bit timer */
+#  define CONFIG_ZTIMER_USEC_ADJUST_SET     (37)            /**< Overhead for ztimer_set */
+#  define CONFIG_ZTIMER_USEC_ADJUST_SLEEP   (37)            /**< Overhead for ztimer_sleep */
+#else
+#  define CONFIG_ZTIMER_USEC_DEV            (TIMER_DEV(0))  /**< Timer peripheral for ztimer */
+#  define CONFIG_ZTIMER_USEC_BASE_FREQ      (250000UL)      /**< Running at 250 kHz */
+#  define CONFIG_ZTIMER_USEC_WIDTH          (16)            /**< Running on a 16-bit timer */
+#  define CONFIG_ZTIMER_USEC_ADJUST_SET     (24)            /**< Overhead for ztimer_set */
+#  define CONFIG_ZTIMER_USEC_ADJUST_SLEEP   (24)            /**< Overhead for ztimer_sleep */
+#endif
 /** @} */
 
 /**
@@ -68,9 +78,18 @@ extern "C" {
 /** @} */
 
 /**
+ * @name    Core temperature sensor configuration
+ *
+ * Connection to the on-chip temperature sensor.
+ * @{
+ */
+#define CORETEMP_ADC        ADC_LINE(0)
+/** @} */
+
+/**
  * @name    Environmental sensors configuration
  *
- * Pin for enabling environmental sensors (BMP280, Si1133, Si7021, Si7210A).
+ * Pin for enabling environmental sensors (BMP280, Si1133, Si7021, Si7210).
  * @{
  */
 #define ENV_SENSE_PIC_ADDR  (0x01)
@@ -94,13 +113,13 @@ extern "C" {
  * Connection to the on-board air quality/gas sensor (CCS811).
  * @{
  */
-#ifndef CCS811_ENABLED
-#define CCS811_ENABLED      (0)
-#endif
-#define CCS811_I2C          I2C_DEV(0)
-#define CCS811_PIC_ADDR     (0x03)
-#define CCS811_PIC_EN_BIT   (0x00)
-#define CCS811_PIC_WAKE_BIT (0x01)
+#define CCS811_I2C              I2C_DEV(0)
+
+#define CCS811_PIC_ADDR         (0x03)
+#define CCS811_PIC_EN_BIT       (0x00)
+#define CCS811_PIC_WAKE_BIT     (0x01)
+
+#define CCS811_PARAM_I2C_DEV    CCS811_I2C
 /** @} */
 
 /**
@@ -110,7 +129,7 @@ extern "C" {
  * @{
  */
 #ifndef ICM20648_ENABLED
-#define ICM20648_ENABLED    (0)
+#define ICM20648_ENABLED    0
 #endif
 #define ICM20648_SPI        SPI_DEV(0)
 #define ICM20648_PIC_ADDR   (0x00)
@@ -135,16 +154,16 @@ extern "C" {
  * @{
  */
 #ifndef RGB_LED1_ENABLED
-#define RGB_LED1_ENABLED    (1)
+#define RGB_LED1_ENABLED    1
 #endif
 #ifndef RGB_LED2_ENABLED
-#define RGB_LED2_ENABLED    (1)
+#define RGB_LED2_ENABLED    1
 #endif
 #ifndef RGB_LED3_ENABLED
-#define RGB_LED3_ENABLED    (1)
+#define RGB_LED3_ENABLED    1
 #endif
 #ifndef RGB_LED4_ENABLED
-#define RGB_LED4_ENABLED    (1)
+#define RGB_LED4_ENABLED    1
 #endif
 #define RGB_LED_ADDR        (0x04)
 #define RGB_LED_EN_BIT      (0x00)
@@ -161,7 +180,7 @@ extern "C" {
  * @{
  */
 #ifndef SI1133_ENABLED
-#define SI1133_ENABLED      (0)
+#define SI1133_ENABLED      0
 #endif
 #define SI1133_I2C          I2C_DEV(0)
 /** @} */
@@ -180,24 +199,18 @@ extern "C" {
 /**
  * @name    Hall-effect sensor configuration
  *
- * Connection to the on-board hall-effect sensor (Si7210A). Available on Rev. A02
- * boards only.
+ * Connection to the on-board hall-effect sensor (Si7210). Available on
+ * Rev. A02 boards only.
  * @{
  */
-#ifndef SI7210A_ENABLED
-#define SI7210A_ENABLED     (0)
+#ifndef SI7210_ENABLED
+#define SI7210_ENABLED      0
 #endif
-#define SI7210A_I2C         I2C_DEV(0)
+#define SI7210_I2C          I2C_DEV(0)
 /** @} */
-
-/**
- * @brief   Initialize the board (GPIO, sensors, clocks).
- */
-void board_init(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_io1_xplained Atmel IO1 Xplained Extension board
@@ -32,13 +31,10 @@
  * @{
  *
  * @file
- * @brief       Device driver interface for the Atmel IO1 Xplained extention.
+ * @brief       Device driver interface for the Atmel IO1 Xplained extension.
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef IO1_XPLAINED_H
-#define IO1_XPLAINED_H
 
 #include "saul.h"
 #include "at30tse75x.h"
@@ -108,5 +104,4 @@ int io1_xplained_read_light_level(uint16_t *light);
 }
 #endif
 
-#endif /* IO1_XPLAINED_H */
 /** @} */

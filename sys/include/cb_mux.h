@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Acutam Automation, LLC
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Acutam Automation, LLC
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_cb_mux Callback multiplexer
@@ -25,9 +24,6 @@
  *
  * @author      Matthew Blue <matthew.blue.neuro@gmail.com>
  */
-
-#ifndef CB_MUX_H
-#define CB_MUX_H
 
 #include <stdint.h>
 
@@ -139,5 +135,3 @@ void cb_mux_iter(cb_mux_t *head, cb_mux_iter_t func, void *arg);
 #endif
 
 /** @} */
-
-#endif /* CB_MUX_H */

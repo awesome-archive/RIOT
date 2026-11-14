@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2014 Loci Controls Inc.
- *               2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Loci Controls Inc.
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -25,9 +22,10 @@
 #include "vendor/hw_soc_adc.h"
 
 #include "cpu.h"
+#include "cc2538_rfcore.h"
 #include "periph/hwrng.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 static cc2538_soc_adc_t *soc_adc = (cc2538_soc_adc_t *)SOC_ADC_BASE;

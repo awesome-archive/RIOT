@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017 Fundacion Inria Chile
- *               2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Fundacion Inria Chile
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup         pkg_semtech-loramac
@@ -19,14 +18,11 @@
  * @author          Francisco Molina <francisco.molina@inria.cl>
  */
 
-#ifndef SEMTECH_LORAMAC_TIMER_H
-#define SEMTECH_LORAMAC_TIMER_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "xtimer.h"
+#include "ztimer.h"
 #include "msg.h"
 
 #include "semtech_loramac.h"
@@ -37,7 +33,7 @@ extern "C" {
 typedef struct TimerEvent_s {
     uint32_t timeout;   /**< Timer timeout in us */
     uint8_t running;    /**< Check if timer is running */
-    xtimer_t dev;       /**< xtimer instance attached to this LoRaMAC timer */
+    ztimer_t dev;       /**< ztimer instance attached to this LoRaMAC timer */
     msg_t msg;          /**< message attacher to this LoRaMAC timer */
     void (*cb)(void);   /**< callback to call when timer timeout */
 } TimerEvent_t;
@@ -126,5 +122,4 @@ void TimerLowPowerHandler(void);
 }
 #endif
 
-#endif /* SEMTECH_LORAMAC_TIMER_H */
 /** @} */

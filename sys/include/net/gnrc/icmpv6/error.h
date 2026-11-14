@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_icmpv6_error ICMPv6 error messages
@@ -17,8 +16,6 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_GNRC_ICMPV6_ERROR_H
-#define NET_GNRC_ICMPV6_ERROR_H
 
 #include <errno.h>
 #include <stdint.h>
@@ -85,7 +82,7 @@ void gnrc_icmpv6_error_time_exc_send(uint8_t code,
  *          multicast
  *
  * @param[in] code      The [code for the message](@ref net_icmpv6_error_param_prob_codes).
- * @param[in] ptr       Pointer to the errorneous octet in @p orig_pkt.
+ * @param[in] ptr       Pointer to the erroneous octet in @p orig_pkt.
  * @param[in] orig_pkt  The invoking packet.
  */
 void gnrc_icmpv6_error_param_prob_send(uint8_t code, void *ptr,
@@ -106,5 +103,4 @@ void gnrc_icmpv6_error_param_prob_send(uint8_t code, void *ptr,
 }
 #endif
 
-#endif /* NET_GNRC_ICMPV6_ERROR_H */
 /** @} */

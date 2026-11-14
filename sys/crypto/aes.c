@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2013 Freie Universität Berlin, Computer Systems & Telematics
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2013 Freie Universität Berlin, Computer Systems & Telematics
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -32,25 +29,55 @@
  * @}
  */
 
-#include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include "crypto/aes.h"
 #include "crypto/ciphers.h"
+#include "kernel_defines.h"
 
+#if !IS_USED(MODULE_CRYPTO_AES_128) && !IS_USED(MODULE_CRYPTO_AES_192) && \
+    !IS_USED(MODULE_CRYPTO_AES_256)
+    #error "sys/crypto/aes: No aes module used."
+#endif
+
+/**
+ * @brief AES key size used
+ */
+#if IS_USED(MODULE_CRYPTO_AES_128) && !IS_USED(MODULE_CRYPTO_AES_192) && \
+    !IS_USED(MODULE_CRYPTO_AES_256)
+#  define AES_KEY_SIZE(ctx) AES_KEY_SIZE_128
+#elif !IS_USED(MODULE_CRYPTO_AES_128) && IS_USED(MODULE_CRYPTO_AES_192) && \
+    !IS_USED(MODULE_CRYPTO_AES_256)
+#  define AES_KEY_SIZE(ctx) AES_KEY_SIZE_192
+#elif !IS_USED(MODULE_CRYPTO_AES_128) && !IS_USED(MODULE_CRYPTO_AES_192) && \
+    IS_USED(MODULE_CRYPTO_AES_256)
+#  define AES_KEY_SIZE(ctx) AES_KEY_SIZE_256
+#else
+#  define AES_KEY_SIZE(ctx) ctx->key_size
+#endif
+
+/**
+ * @brief AES key
+ * @see cipher_context_t
+ */
+typedef struct {
+    /** @cond INTERNAL */
+    uint32_t rd_key[4 * (AES_MAXNR + 1)];
+    int rounds;
+    /** @endcond */
+} aes_key_t;
 /**
  * Interface to the aes cipher
  */
 static const cipher_interface_t aes_interface = {
     AES_BLOCK_SIZE,
-    AES_KEY_SIZE,
     aes_init,
     aes_encrypt,
     aes_decrypt
 };
-const cipher_id_t CIPHER_AES_128 = &aes_interface;
+
+const cipher_id_t CIPHER_AES = &aes_interface;
 
 static const u32 Te0[256] = {
     0xc66363a5U, 0xf87c7c84U, 0xee777799U, 0xf67b7b8dU,
@@ -124,7 +151,8 @@ static const u32 Te0[256] = {
     #define Te1(n)  ((Te0[n] >>  8) | (Te0[n] << 24))
     #define Te2(n)  ((Te0[n] >> 16) | (Te0[n] << 16))
     #define Te3(n)  ((Te0[n] >> 24) | (Te0[n] <<  8))
-    #define Te4(n)  (((Te0[n] & 0x00FFFF00) >> 8) | ((Te0[n] & 0x00FFFF00) << 8))
+    #define Te4(n)  (((Te0[n] & 0x00FFFF00) >> 8) | \
+                     ((Te0[n] & 0x00FFFF00) << 8))
 #else /* MODULE_CRYPTO_AES_PRECALCULATED */
     #define Te0(n)  (Te0[n])
     #define Te1(n)  (Te1[n])
@@ -472,11 +500,12 @@ static const u32 Td0[256] = {
     #define Td2(n)  ((Td0[n] >> 16) | (Td0[n] << 16))
     #define Td3(n)  ((Td0[n] >> 24) | (Td0[n] <<  8))
 
-    /* helper to prevent the u8 to be promoted to signed int, which would turn
-     * left shift by 24 into undefined behaviour */
+/* helper to prevent the u8 to be promoted to signed int, which would turn
+ * left shift by 24 into undefined behaviour */
     #define Td4u(n) ((u32)Td4[n])
 
-    #define Td4(n)  (Td4u(n) | (Td4u(n) << 8) | (Td4u(n) << 16) | (Td4u(n)  << 24))
+    #define Td4(n)  (Td4u(n) | (Td4u(n) << 8) | (Td4u(n) << 16) | \
+                     (Td4u(n) << 24))
 
 static const u8 Td4[256] = {
     0x52U, 0x09U, 0x6aU, 0xd5U, 0x30U, 0x36U, 0xa5U, 0x38U,
@@ -793,14 +822,26 @@ static const u32 rcon[] = {
     0x1B000000, 0x36000000,
 };
 
-
 int aes_init(cipher_context_t *context, const uint8_t *key, uint8_t keySize)
 {
     uint8_t i;
 
+    if (keySize != AES_KEY_SIZE_128 && keySize != AES_KEY_SIZE_192 &&
+        keySize != AES_KEY_SIZE_256) {
+        return CIPHER_ERR_INVALID_KEY_SIZE;
+    }
+
+    if ((keySize == AES_KEY_SIZE_128 && !IS_USED(MODULE_CRYPTO_AES_128)) ||
+        (keySize == AES_KEY_SIZE_192 && !IS_USED(MODULE_CRYPTO_AES_192)) ||
+        (keySize == AES_KEY_SIZE_256 && !IS_USED(MODULE_CRYPTO_AES_256))) {
+        return CIPHER_ERR_INVALID_KEY_SIZE;
+    }
+
+    context->key_size = keySize;
+
     /* Make sure that context is large enough. If this is not the case,
        you should build with -DAES */
-    if(CIPHER_MAX_CONTEXT_SIZE < AES_KEY_SIZE) {
+    if (CIPHER_MAX_CONTEXT_SIZE < keySize) {
         return CIPHER_ERR_BAD_CONTEXT_SIZE;
     }
 
@@ -824,7 +865,7 @@ int aes_init(cipher_context_t *context, const uint8_t *key, uint8_t keySize)
  * Expand the cipher key into the encryption key schedule.
  */
 static int aes_set_encrypt_key(const unsigned char *userKey, const int bits,
-                               AES_KEY *key)
+                               aes_key_t *key)
 {
     u32 *rk;
     int i = 0;
@@ -857,12 +898,12 @@ static int aes_set_encrypt_key(const unsigned char *userKey, const int bits,
 
     if (bits == 128) {
         while (1) {
-            temp  = rk[3];
+            temp = rk[3];
             rk[4] = rk[0] ^
                     (Te4((temp >> 16) & 0xff) & 0xff000000) ^
                     (Te4((temp >>  8) & 0xff) & 0x00ff0000) ^
                     (Te4((temp) & 0xff)       & 0x0000ff00) ^
-                    (Te4((temp >> 24)       ) & 0x000000ff) ^
+                    (Te4((temp >> 24)) & 0x000000ff) ^
                     rcon[i];
             rk[5] = rk[1] ^ rk[4];
             rk[6] = rk[2] ^ rk[5];
@@ -886,7 +927,7 @@ static int aes_set_encrypt_key(const unsigned char *userKey, const int bits,
                      (Te4((temp >> 16) & 0xff) & 0xff000000) ^
                      (Te4((temp >>  8) & 0xff) & 0x00ff0000) ^
                      (Te4((temp) & 0xff)       & 0x0000ff00) ^
-                     (Te4((temp >> 24)       ) & 0x000000ff) ^
+                     (Te4((temp >> 24)) & 0x000000ff) ^
                      rcon[i];
             rk[ 7] = rk[ 1] ^ rk[ 6];
             rk[ 8] = rk[ 2] ^ rk[ 7];
@@ -912,7 +953,7 @@ static int aes_set_encrypt_key(const unsigned char *userKey, const int bits,
                      (Te4((temp >> 16) & 0xff) & 0xff000000) ^
                      (Te4((temp >>  8) & 0xff) & 0x00ff0000) ^
                      (Te4((temp) & 0xff)       & 0x0000ff00) ^
-                     (Te4((temp >> 24)       ) & 0x000000ff) ^
+                     (Te4((temp >> 24)) & 0x000000ff) ^
                      rcon[i];
             rk[ 9] = rk[ 1] ^ rk[ 8];
             rk[10] = rk[ 2] ^ rk[ 9];
@@ -924,7 +965,7 @@ static int aes_set_encrypt_key(const unsigned char *userKey, const int bits,
 
             temp = rk[11];
             rk[12] = rk[ 4] ^
-                     (Te4((temp >> 24)       ) & 0xff000000) ^
+                     (Te4((temp >> 24)) & 0xff000000) ^
                      (Te4((temp >> 16) & 0xff) & 0x00ff0000) ^
                      (Te4((temp >>  8) & 0xff) & 0x0000ff00) ^
                      (Te4((temp) & 0xff)       & 0x000000ff);
@@ -943,7 +984,7 @@ static int aes_set_encrypt_key(const unsigned char *userKey, const int bits,
  * Expand the cipher key into the decryption key schedule.
  */
 static int aes_set_decrypt_key(const unsigned char *userKey, const int bits,
-                               AES_KEY *key)
+                               aes_key_t *key)
 {
     u32 *rk;
     int i, j;
@@ -951,6 +992,7 @@ static int aes_set_decrypt_key(const unsigned char *userKey, const int bits,
 
     /* first, start with an encryption schedule */
     int status;
+
     status = aes_set_encrypt_key(userKey, bits, key);
 
     if (status < 0) {
@@ -982,29 +1024,29 @@ static int aes_set_decrypt_key(const unsigned char *userKey, const int bits,
         rk += 4;
 #ifdef MODULE_CRYPTO_AES_UNROLL
         rk[0] =
-            Td0(Te4((rk[0] >> 24)       ) & 0xff) ^
+            Td0(Te4((rk[0] >> 24)) & 0xff) ^
             Td1(Te4((rk[0] >> 16) & 0xff) & 0xff) ^
             Td2(Te4((rk[0] >>  8) & 0xff) & 0xff) ^
             Td3(Te4((rk[0]) & 0xff)       & 0xff);
         rk[1] =
-            Td0(Te4((rk[1] >> 24)       ) & 0xff) ^
+            Td0(Te4((rk[1] >> 24)) & 0xff) ^
             Td1(Te4((rk[1] >> 16) & 0xff) & 0xff) ^
             Td2(Te4((rk[1] >>  8) & 0xff) & 0xff) ^
             Td3(Te4((rk[1]) & 0xff)       & 0xff);
         rk[2] =
-            Td0(Te4((rk[2] >> 24)       ) & 0xff) ^
+            Td0(Te4((rk[2] >> 24)) & 0xff) ^
             Td1(Te4((rk[2] >> 16) & 0xff) & 0xff) ^
             Td2(Te4((rk[2] >>  8) & 0xff) & 0xff) ^
             Td3(Te4((rk[2]) & 0xff)       & 0xff);
         rk[3] =
-            Td0(Te4((rk[3] >> 24)       ) & 0xff) ^
+            Td0(Te4((rk[3] >> 24)) & 0xff) ^
             Td1(Te4((rk[3] >> 16) & 0xff) & 0xff) ^
             Td2(Te4((rk[3] >>  8) & 0xff) & 0xff) ^
             Td3(Te4((rk[3]) & 0xff)       & 0xff);
 #else
         for (int k = 0; k < 4; k++) {
             rk[k] =
-                Td0(Te4((rk[k] >> 24)       ) & 0xff) ^
+                Td0(Te4((rk[k] >> 24)) & 0xff) ^
                 Td1(Te4((rk[k] >> 16) & 0xff) & 0xff) ^
                 Td2(Te4((rk[k] >>  8) & 0xff) & 0xff) ^
                 Td3(Te4((rk[k]) & 0xff)       & 0xff);
@@ -1025,16 +1067,18 @@ int aes_encrypt(const cipher_context_t *context, const uint8_t *plainBlock,
 {
     /* setup AES_KEY */
     int res;
-    AES_KEY aeskey;
-    const AES_KEY *key = &aeskey;
+    aes_key_t aeskey;
+    const aes_key_t *key = &aeskey;
+
     res = aes_set_encrypt_key((unsigned char *)context->context,
-                                   AES_KEY_SIZE * 8, &aeskey);
+                              AES_KEY_SIZE(context) * 8, &aeskey);
     if (res < 0) {
         return res;
     }
 
     const u32 *rk;
     u32 s0, s1, s2, s3, t0, t1, t2, t3;
+
 #ifndef MODULE_CRYPTO_AES_UNROLL
     int r;
 #endif /* ?MODULE_CRYPTO_AES_UNROLL */
@@ -1155,22 +1199,30 @@ int aes_encrypt(const cipher_context_t *context, const uint8_t *plainBlock,
         if (key->rounds > 12) {
             /* round 12: */
             s0 = Te0(t0 >> 24) ^ Te1((t1 >> 16) & 0xff) ^ Te2((t2 >>  8) &
-                    0xff) ^ Te3(t3 & 0xff) ^ rk[48];
+                                                              0xff) ^ Te3(
+                t3 & 0xff) ^ rk[48];
             s1 = Te0(t1 >> 24) ^ Te1((t2 >> 16) & 0xff) ^ Te2((t3 >>  8) &
-                    0xff) ^ Te3(t0 & 0xff) ^ rk[49];
+                                                              0xff) ^ Te3(
+                t0 & 0xff) ^ rk[49];
             s2 = Te0(t2 >> 24) ^ Te1((t3 >> 16) & 0xff) ^ Te2((t0 >>  8) &
-                    0xff) ^ Te3(t1 & 0xff) ^ rk[50];
+                                                              0xff) ^ Te3(
+                t1 & 0xff) ^ rk[50];
             s3 = Te0(t3 >> 24) ^ Te1((t0 >> 16) & 0xff) ^ Te2((t1 >>  8) &
-                    0xff) ^ Te3(t2 & 0xff) ^ rk[51];
+                                                              0xff) ^ Te3(
+                t2 & 0xff) ^ rk[51];
             /* round 13: */
             t0 = Te0(s0 >> 24) ^ Te1((s1 >> 16) & 0xff) ^ Te2((s2 >>  8) &
-                    0xff) ^ Te3(s3 & 0xff) ^ rk[52];
+                                                              0xff) ^ Te3(
+                s3 & 0xff) ^ rk[52];
             t1 = Te0(s1 >> 24) ^ Te1((s2 >> 16) & 0xff) ^ Te2((s3 >>  8) &
-                    0xff) ^ Te3(s0 & 0xff) ^ rk[53];
+                                                              0xff) ^ Te3(
+                s0 & 0xff) ^ rk[53];
             t2 = Te0(s2 >> 24) ^ Te1((s3 >> 16) & 0xff) ^ Te2((s0 >>  8) &
-                    0xff) ^ Te3(s1 & 0xff) ^ rk[54];
+                                                              0xff) ^ Te3(
+                s1 & 0xff) ^ rk[54];
             t3 = Te0(s3 >> 24) ^ Te1((s0 >> 16) & 0xff) ^ Te2((s1 >>  8) &
-                    0xff) ^ Te3(s2 & 0xff) ^ rk[55];
+                                                              0xff) ^ Te3(
+                s2 & 0xff) ^ rk[55];
         }
     }
 
@@ -1183,25 +1235,25 @@ int aes_encrypt(const cipher_context_t *context, const uint8_t *plainBlock,
 
     while (1) {
         t0 =
-            Te0((s0 >> 24)       ) ^
+            Te0((s0 >> 24)) ^
             Te1((s1 >> 16) & 0xff) ^
             Te2((s2 >>  8) & 0xff) ^
             Te3((s3)       & 0xff) ^
             rk[4];
         t1 =
-            Te0((s1 >> 24)       ) ^
+            Te0((s1 >> 24)) ^
             Te1((s2 >> 16) & 0xff) ^
             Te2((s3 >>  8) & 0xff) ^
             Te3((s0)       & 0xff) ^
             rk[5];
         t2 =
-            Te0((s2 >> 24)       ) ^
+            Te0((s2 >> 24)) ^
             Te1((s3 >> 16) & 0xff) ^
             Te2((s0 >>  8) & 0xff) ^
             Te3((s1)       & 0xff) ^
             rk[6];
         t3 =
-            Te0((s3 >> 24)       ) ^
+            Te0((s3 >> 24)) ^
             Te1((s0 >> 16) & 0xff) ^
             Te2((s1 >>  8) & 0xff) ^
             Te3((s2)       & 0xff) ^
@@ -1214,25 +1266,25 @@ int aes_encrypt(const cipher_context_t *context, const uint8_t *plainBlock,
         }
 
         s0 =
-            Te0((t0 >> 24)       ) ^
+            Te0((t0 >> 24)) ^
             Te1((t1 >> 16) & 0xff) ^
             Te2((t2 >>  8) & 0xff) ^
             Te3((t3)       & 0xff) ^
             rk[0];
         s1 =
-            Te0((t1 >> 24)       ) ^
+            Te0((t1 >> 24)) ^
             Te1((t2 >> 16) & 0xff) ^
             Te2((t3 >>  8) & 0xff) ^
             Te3((t0)       & 0xff) ^
             rk[1];
         s2 =
-            Te0((t2 >> 24)       ) ^
+            Te0((t2 >> 24)) ^
             Te1((t3 >> 16) & 0xff) ^
             Te2((t0 >>  8) & 0xff) ^
             Te3((t1)       & 0xff) ^
             rk[2];
         s3 =
-            Te0((t3 >> 24)       ) ^
+            Te0((t3 >> 24)) ^
             Te1((t0 >> 16) & 0xff) ^
             Te2((t1 >>  8) & 0xff) ^
             Te3((t2)       & 0xff) ^
@@ -1241,32 +1293,32 @@ int aes_encrypt(const cipher_context_t *context, const uint8_t *plainBlock,
 
 #endif /* ?MODULE_CRYPTO_AES_UNROLL */
     /*
-         * apply last round and
-         * map cipher state to byte array block:
-         */
+     * apply last round and
+     * map cipher state to byte array block:
+     */
     s0 =
-        (Te4((t0 >> 24)       ) & 0xff000000) ^
+        (Te4((t0 >> 24)) & 0xff000000) ^
         (Te4((t1 >> 16) & 0xff) & 0x00ff0000) ^
         (Te4((t2 >>  8) & 0xff) & 0x0000ff00) ^
         (Te4((t3) & 0xff)       & 0x000000ff) ^
         rk[0];
-    PUTU32(cipherBlock     , s0);
+    PUTU32(cipherBlock, s0);
     s1 =
-        (Te4((t1 >> 24)       ) & 0xff000000) ^
+        (Te4((t1 >> 24)) & 0xff000000) ^
         (Te4((t2 >> 16) & 0xff) & 0x00ff0000) ^
         (Te4((t3 >>  8) & 0xff) & 0x0000ff00) ^
         (Te4((t0) & 0xff)       & 0x000000ff) ^
         rk[1];
     PUTU32(cipherBlock +  4, s1);
     s2 =
-        (Te4((t2 >> 24)       ) & 0xff000000) ^
+        (Te4((t2 >> 24)) & 0xff000000) ^
         (Te4((t3 >> 16) & 0xff) & 0x00ff0000) ^
         (Te4((t0 >>  8) & 0xff) & 0x0000ff00) ^
         (Te4((t1) & 0xff)       & 0x000000ff) ^
         rk[2];
     PUTU32(cipherBlock +  8, s2);
     s3 =
-        (Te4((t3 >> 24)       ) & 0xff000000) ^
+        (Te4((t3 >> 24)) & 0xff000000) ^
         (Te4((t0 >> 16) & 0xff) & 0x00ff0000) ^
         (Te4((t1 >>  8) & 0xff) & 0x0000ff00) ^
         (Te4((t2) & 0xff)       & 0x000000ff) ^
@@ -1284,10 +1336,11 @@ int aes_decrypt(const cipher_context_t *context, const uint8_t *cipherBlock,
 {
     /* setup AES_KEY */
     int res;
-    AES_KEY aeskey;
-    const AES_KEY *key = &aeskey;
+    aes_key_t aeskey;
+    const aes_key_t *key = &aeskey;
+
     res = aes_set_decrypt_key((unsigned char *)context->context,
-                              AES_KEY_SIZE * 8, &aeskey);
+                              AES_KEY_SIZE(context) * 8, &aeskey);
 
     if (res < 0) {
         return res;
@@ -1295,6 +1348,7 @@ int aes_decrypt(const cipher_context_t *context, const uint8_t *cipherBlock,
 
     const u32 *rk;
     u32 s0, s1, s2, s3, t0, t1, t2, t3;
+
 #ifndef MODULE_CRYPTO_AES_UNROLL
     int r;
 #endif /* ?MODULE_CRYPTO_AES_UNROLL */
@@ -1443,25 +1497,25 @@ int aes_decrypt(const cipher_context_t *context, const uint8_t *cipherBlock,
 
     while (1) {
         t0 =
-            Td0((s0 >> 24)       ) ^
+            Td0((s0 >> 24)) ^
             Td1((s3 >> 16) & 0xff) ^
             Td2((s2 >>  8) & 0xff) ^
             Td3((s1)       & 0xff) ^
             rk[4];
         t1 =
-            Td0((s1 >> 24)       ) ^
+            Td0((s1 >> 24)) ^
             Td1((s0 >> 16) & 0xff) ^
             Td2((s3 >>  8) & 0xff) ^
             Td3((s2)       & 0xff) ^
             rk[5];
         t2 =
-            Td0((s2 >> 24)       ) ^
+            Td0((s2 >> 24)) ^
             Td1((s1 >> 16) & 0xff) ^
             Td2((s0 >>  8) & 0xff) ^
             Td3((s3)       & 0xff) ^
             rk[6];
         t3 =
-            Td0((s3 >> 24)       ) ^
+            Td0((s3 >> 24)) ^
             Td1((s2 >> 16) & 0xff) ^
             Td2((s1 >>  8) & 0xff) ^
             Td3((s0)       & 0xff) ^
@@ -1474,25 +1528,25 @@ int aes_decrypt(const cipher_context_t *context, const uint8_t *cipherBlock,
         }
 
         s0 =
-            Td0((t0 >> 24)       ) ^
+            Td0((t0 >> 24)) ^
             Td1((t3 >> 16) & 0xff) ^
             Td2((t2 >>  8) & 0xff) ^
             Td3((t1)       & 0xff) ^
             rk[0];
         s1 =
-            Td0((t1 >> 24)       ) ^
+            Td0((t1 >> 24)) ^
             Td1((t0 >> 16) & 0xff) ^
             Td2((t3 >>  8) & 0xff) ^
             Td3((t2) & 0xff) ^
             rk[1];
         s2 =
-            Td0((t2 >> 24)       ) ^
+            Td0((t2 >> 24)) ^
             Td1((t1 >> 16) & 0xff) ^
             Td2((t0 >>  8) & 0xff) ^
             Td3((t3)       & 0xff) ^
             rk[2];
         s3 =
-            Td0((t3 >> 24)       ) ^
+            Td0((t3 >> 24)) ^
             Td1((t2 >> 16) & 0xff) ^
             Td2((t1 >>  8) & 0xff) ^
             Td3((t0)       & 0xff) ^
@@ -1501,32 +1555,32 @@ int aes_decrypt(const cipher_context_t *context, const uint8_t *cipherBlock,
 
 #endif /* ?MODULE_CRYPTO_AES_UNROLL */
     /*
-         * apply last round and
-         * map cipher state to byte array block:
-         */
+     * apply last round and
+     * map cipher state to byte array block:
+     */
     s0 =
-        (Td4((t0 >> 24)       ) & 0xff000000) ^
+        (Td4((t0 >> 24)) & 0xff000000) ^
         (Td4((t3 >> 16) & 0xff) & 0x00ff0000) ^
         (Td4((t2 >>  8) & 0xff) & 0x0000ff00) ^
         (Td4((t1) & 0xff)       & 0x000000ff) ^
         rk[0];
-    PUTU32(plainBlock     , s0);
+    PUTU32(plainBlock, s0);
     s1 =
-        (Td4((t1 >> 24)       ) & 0xff000000) ^
+        (Td4((t1 >> 24)) & 0xff000000) ^
         (Td4((t0 >> 16) & 0xff) & 0x00ff0000) ^
         (Td4((t3 >>  8) & 0xff) & 0x0000ff00) ^
         (Td4((t2) & 0xff)       & 0x000000ff) ^
         rk[1];
     PUTU32(plainBlock +  4, s1);
     s2 =
-        (Td4((t2 >> 24)       ) & 0xff000000) ^
+        (Td4((t2 >> 24)) & 0xff000000) ^
         (Td4((t1 >> 16) & 0xff) & 0x00ff0000) ^
         (Td4((t0 >>  8) & 0xff) & 0x0000ff00) ^
         (Td4((t3) & 0xff)       & 0x000000ff) ^
         rk[2];
     PUTU32(plainBlock +  8, s2);
     s3 =
-        (Td4((t3 >> 24)       ) & 0xff000000) ^
+        (Td4((t3 >> 24)) & 0xff000000) ^
         (Td4((t2 >> 16) & 0xff) & 0x00ff0000) ^
         (Td4((t1 >>  8) & 0xff) & 0x0000ff00) ^
         (Td4((t0) & 0xff)       & 0x000000ff) ^

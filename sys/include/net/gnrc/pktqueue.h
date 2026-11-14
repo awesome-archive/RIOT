@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014, 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for
- * more details.
+ * SPDX-FileCopyrightText: 2014-2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_pktqueue Packet queue
@@ -17,9 +16,6 @@
  *
  * @author      Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-
-#ifndef NET_GNRC_PKTQUEUE_H
-#define NET_GNRC_PKTQUEUE_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -84,7 +80,6 @@ static inline gnrc_pktqueue_t *gnrc_pktqueue_remove_head(gnrc_pktqueue_t **queue
 }
 #endif
 
-#endif /* NET_GNRC_PKTQUEUE_H */
 /**
  * @}
  */

@@ -1,11 +1,9 @@
 /*
- * Copyright (C) 2014 Philipp Rosenkranz
- * Copyright (C) 2013 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Philipp Rosenkranz
+ * SPDX-FileCopyrightText: 2013 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
 #include <string.h>
 #include <stdio.h>
 
@@ -63,7 +61,7 @@ static void test_bloom_based_on_dictionary_fixture(void)
 {
     int in = 0;
     int not_in = 0;
-    double false_positive_rate = 0;
+    int false_positive_rate = 0;
 
     load_dictionary_fixture();
 
@@ -78,11 +76,11 @@ static void test_bloom_based_on_dictionary_fixture(void)
             not_in++;
         }
     }
-    false_positive_rate = (double) in / (double) lenA;
+    false_positive_rate = (1000 * in) / lenA;
 
     TEST_ASSERT_EQUAL_INT(TESTS_BLOOM_PROB_IN_FILTER, in);
     TEST_ASSERT_EQUAL_INT(TESTS_BLOOM_NOT_IN_FILTER, not_in);
-    TEST_ASSERT(false_positive_rate < TESTS_BLOOM_FALSE_POS_RATE_THR);
+    TEST_ASSERT(false_positive_rate < TESTS_BLOOM_FALSE_POS_RATE_THR * 1000);
 }
 
 Test *tests_bloom_tests(void)

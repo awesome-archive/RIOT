@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_feetech Feetech driver
@@ -20,9 +19,6 @@
  *
  * @author      Loïc Dauphin <loic.dauphin@inria.fr>
  */
-
-#ifndef FEETECH_H
-#define FEETECH_H
 
 #include <stdlib.h>
 
@@ -166,5 +162,4 @@ int feetech_read(const feetech_t *device, feetech_addr_t addr, uint8_t *data, si
 }
 #endif
 
-#endif /* FEETECH_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for
- * more details.
+ * SPDX-FileCopyrightText: 2016 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_candev CAN device driver interface
@@ -21,9 +20,6 @@
  * @author      Toon Stegen <toon.stegen@altran.com>
  */
 
-#ifndef CAN_CANDEV_H
-#define CAN_CANDEV_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,7 +30,6 @@ extern "C" {
 #include "can/can.h"
 #include "can/common.h"
 #include "mutex.h"
-
 
 /**
  * @brief   Possible event types that are sent from the device driver to the
@@ -64,7 +59,7 @@ typedef struct candev candev_t;
  * @brief   Event callback for signaling event to upper layers
  *
  * @param[in] dev           CAN device descriptor
- * @param[in] type          type of the event
+ * @param[in] event         type of the event
  * @param[in] arg           event argument
  */
 typedef void (*candev_event_cb_t)(candev_t *dev, candev_event_t event, void *arg);
@@ -81,6 +76,10 @@ struct candev {
     void *isr_arg;                         /**< argument to pass on isr event */
     struct can_bittiming bittiming;        /**< device bittimings */
     enum can_state state;                  /**< device state */
+#ifdef MODULE_FDCAN
+    struct can_bittiming fd_data_bittiming;/**< device bittimings for FD CAN only */
+    uint16_t loop_delay;                   /**< CAN FD transceiver loop delay */
+#endif
 };
 
 /**
@@ -96,7 +95,7 @@ typedef struct candev_driver {
      * @return < 0 on error
      * @return mailbox id >= 0 if OK
      */
-    int (*send)(candev_t *dev, const struct can_frame *frame);
+    int (*send)(candev_t *dev, const can_frame_t *frame);
 
     /**
      * @brief Abort a packet sending
@@ -107,7 +106,7 @@ typedef struct candev_driver {
      * @return < 0 on error
      * @return 0 on OK
      */
-    int (*abort)(candev_t *dev, const struct can_frame *frame);
+    int (*abort)(candev_t *dev, const can_frame_t *frame);
 
     /**
      * @brief the driver's initialization function
@@ -178,5 +177,4 @@ typedef struct candev_driver {
 }
 #endif
 
-#endif /* CAN_CANDEV_H */
 /** @} */

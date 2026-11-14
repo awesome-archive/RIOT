@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2014 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -156,7 +153,7 @@ static void test_inet_csum__empty_app_buffer(void)
     uint16_t hdr_sum, pyld_sum, hdr_expected = 0xdcfc;
 
     /* result unnormalized:
-     * explictly using an odd-sized header for the first slice, to setup corner case  */
+     * explicitly using an odd-sized header for the first slice, to setup corner case  */
     hdr_sum = inet_csum_slice(0, data_hdr, sizeof(data_hdr), 0);
     TEST_ASSERT_EQUAL_INT(hdr_expected, hdr_sum);
 

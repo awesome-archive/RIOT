@@ -1,9 +1,9 @@
+BOARD ?= microbit
+
 include ../Makefile.tests_common
 
-BOARD = microbit
-
 # This test application is for the BBC micro:bit only
-BOARD_WHITELIST := microbit
+BOARDS_SUPPORTED := microbit microbit-v2 calliope-mini
 
 # We want to test the microbit support module
 USEMODULE += microbit

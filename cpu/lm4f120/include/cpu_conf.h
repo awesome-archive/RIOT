@@ -1,15 +1,12 @@
 /*
- * Copyright (C) 2015 Rakendra Thapa <rakendrathapa@gmail.com
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2015 Rakendra Thapa <rakendrathapa@gmail.com
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup        cpu_lm4f120 LM4F
- * @ingroup         cpu
- * @brief           CPU specific implementations for LM4F120
+ * @ingroup         cpu_lm4f120
  * @{
  *
  * @file
@@ -18,12 +15,7 @@
  * @author          Rakendra Thapa <rakendrathapa@gmail.com>
  */
 
-#ifndef CPU_CONF_H
-#define CPU_CONF_H
-
 #include "cpu_conf_common.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,6 +50,7 @@ extern "C" {
 #define CPU_DEFAULT_IRQ_PRIO            (1U)
 #define CPU_IRQ_NUMOF                   (139U)
 #define CPU_FLASH_BASE                  FLASH_BASE
+#define CPU_HAS_BITBAND                 (1)
 /** @} */
 
 /**
@@ -72,5 +65,4 @@ extern void cpu_clock_init(int);
 }
 #endif
 
-#endif /* CPU_CONF_H */
 /** @} */

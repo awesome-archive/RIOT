@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2013-15 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2013-2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @addtogroup  posix_sockets
@@ -26,8 +25,6 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef SYS_SOCKET_H
-#define SYS_SOCKET_H
 
 #ifdef CPU_NATIVE
 /* Ignore Linux definitions in native */
@@ -38,11 +35,12 @@
 #define __SOCKADDR_COMMON_SIZE  (sizeof (unsigned short int))
 #endif
 
+#include <stdalign.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 
-#include "kernel_types.h"
+#include "architecture.h"
 #include "net/af.h"
 #include "sys/bytes.h"
 
@@ -121,21 +119,26 @@ typedef unsigned short sa_family_t;   /**< address family type */
 
 /**
  * @brief   Used to define the socket address.
+ *
+ * @details This structure is is forced to be aligned as `uint32_t`, as e.g.
+ *          the IPv4 address is stored as `uint32_t`
  */
 struct sockaddr {
-    sa_family_t sa_family;                  /**< Address family */
+    alignas(uint32_t) sa_family_t sa_family;/**< Address family */
     char sa_data[SOCKADDR_MAX_DATA_LEN];    /**< Socket address (variable length data) */
 };
 
 /**
  * @brief   Implementation based socket address table.
  * @extends struct sockaddr
+ *
+ * @details This structure is is forced to be aligned as `uint32_t`, as e.g.
+ *          the IPv4 address is stored as `uint32_t`
  */
 struct sockaddr_storage {
-    sa_family_t ss_family;                  /**< Address family */
+    alignas(uint32_t) sa_family_t ss_family;/**< Address family */
     uint8_t ss_data[SOCKADDR_MAX_DATA_LEN]; /**< Socket address */
 };
-
 
 /**
  * @brief   Accept a new connection on a socket
@@ -229,7 +232,7 @@ int bind(int socket, const struct sockaddr *address,
  *                          on the address family of the socket.
  * @param[in] address_len   Specifies the length of the sockaddr structure
  *                          pointed to by the address argument.
- * @post The socket will be implicitely bound to an addressed, if it is not already bound.
+ * @post The socket will be implicitly bound to an addressed, if it is not already bound.
  *       According to
  *       http://pubs.opengroup.org/onlinepubs/009695399/functions/connect.html
  *       for a "socket [that] has not already been bound to a local address,
@@ -260,7 +263,7 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len);
  * @param[in,out] address_len   Specifies the length of the sockaddr structure on input and the
  *                              length of the stored address on output. If the address is greater
  *                              than the length of the supplied sockaddr structure, the stored
- *                              address shal be truncated.
+ *                              address shall be truncated.
  * @return  Upon successful completion, getpeername() shall return 0; otherwise,
  *          -1 shall be returned and errno set to indicate the error.
  */
@@ -286,7 +289,7 @@ int getpeername(int socket, struct sockaddr *__restrict address,
  * @param[in,out] address_len   Specifies the length of the sockaddr structure on input and the
  *                              length of the stored address on output. If the address is greater
  *                              than the length of the supplied sockaddr structure, the stored
- *                              address shal be truncated.
+ *                              address shall be truncated.
  * @return  Upon successful completion, getsockname() shall return 0; otherwise,
  *          -1 shall be returned and errno set to indicate the error.
  */
@@ -408,7 +411,7 @@ static inline ssize_t recv(int socket, void *buffer, size_t length, int flags)
  * @param[in] address_len   Specifies the length of the sockaddr structure pointed
  *                          to by the @p address argument.
  *
- * @post    The socket will implicitely be bound to the unspecified address and
+ * @post    The socket will implicitly be bound to the unspecified address and
  *          a random port, in case it is not already bound. Rationale: A client
  *          should not require to explicitly call bind() to receive packets,
  *          but is expected to receive replies sent to the ephemeral port that
@@ -460,10 +463,10 @@ static inline ssize_t send(int socket, const void *buffer, size_t length,
  *          that operate on sockets.
  *
  * @param[in] domain    Specifies the communications domain in which a socket
- *                      is to be created. Valid values are prefixed with ``AF_`
+ *                      is to be created. Valid values are prefixed with `AF_`
  *                      and defined in @ref socket.h.
  * @param[in] type      Specifies the type of socket to be created. Valued
- *                      values are prefixed with ``SOCK_`` and defined in
+ *                      values are prefixed with `SOCK_` and defined in
  *                      @ref socket.h.
  * @param[in] protocol  Specifies a particular protocol to be used with the
  *                      socket. Specifying a protocol of 0 causes socket() to
@@ -503,4 +506,3 @@ int setsockopt(int socket, int level, int option_name, const void *option_value,
 /**
  * @}
  */
-#endif /* SYS_SOCKET_H */

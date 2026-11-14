@@ -1,14 +1,12 @@
-# define the cpu used by ikea-tradfri
-export CPU = efm32
-export CPU_MODEL = efr32mg1p132f256gm32
-
-# set default port depending on operating system
-PORT_LINUX ?= /dev/ttyACM0
-PORT_DARWIN ?= $(firstword $(sort $(wildcard /dev/tty.usbmodem*)))
-
 # setup JLink for flashing
-export JLINK_DEVICE := EFR32MG1PxxxF256
-include $(RIOTMAKE)/tools/jlink.inc.mk
+JLINK_DEVICE = EFR32MG1PxxxF256
+JLINK_PRE_FLASH += r
 
-# setup serial terminal
-include $(RIOTMAKE)/tools/serial.inc.mk
+# setup OpenOCD for flashing
+OPENOCD_CONFIG ?= board/efm32.cfg
+
+# configure JLink as default programmer
+PROGRAMMER ?= jlink
+
+# board can also use BMP or OpenOCD as programmer
+PROGRAMMERS_SUPPORTED += bmp openocd

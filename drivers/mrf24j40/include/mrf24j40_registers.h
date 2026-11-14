@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017 Neo Nenaco <neo@nenaco.de>
- * Copyright (C) 2017 Koen Zandberg <koen@bergzand.net>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Neo Nenaco <neo@nenaco.de>
+ * SPDX-FileCopyrightText: 2017 Koen Zandberg <koen@bergzand.net>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup drivers_mrf24j40
@@ -18,13 +17,9 @@
  * @author      Koen Zandberg <koen@bergzand.net>
  */
 
-#ifndef MRF24J40_REGISTERS_H
-#define MRF24J40_REGISTERS_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /**
  * @name    SPI access specifiers
@@ -221,6 +216,28 @@ extern "C" {
 /** @} */
 
 /**
+ * @brief    Shift offsets for TXMCR register (0x11)
+ * @{
+ */
+#define MRF24J40_TXMCR_MACMINBE_SHIFT           (3U)
+/** @} */
+
+/**
+ * @brief   Bitfield definitions for the ACKTMOUT register (0x12)
+ * @{
+ */
+#define MRF24J40_ACKTMOUT_DRPACK                (0x80)
+#define MRF24J40_ACKTMOUT_MAWD6                 (0x40)
+#define MRF24J40_ACKTMOUT_MAWD5                 (0x20)
+#define MRF24J40_ACKTMOUT_MAWD4                 (0x10)
+#define MRF24J40_ACKTMOUT_MAWD3                 (0x08)
+#define MRF24J40_ACKTMOUT_MAWD2                 (0x04)
+#define MRF24J40_ACKTMOUT_MAWD1                 (0x02)
+#define MRF24J40_ACKTMOUT_MAWD0                 (0x01)
+
+/** @} */
+
+/**
  * @name    Bitfield definitions for the PACON2 register (0x18)
  * @{
  */
@@ -324,6 +341,30 @@ extern "C" {
 #define MRF24J40_INTCON_TXG2IE          (0x04)
 #define MRF24J40_INTCON_TXG1IE          (0x02)
 #define MRF24J40_INTCON_TXNIE           (0x01)
+/** @} */
+
+/**
+ * @name    Bitfield definitions for the GPIO register (0x33)
+ * @{
+ */
+#define MRF24J40_GPIO_0                 (0x01)
+#define MRF24J40_GPIO_1                 (0x02)
+#define MRF24J40_GPIO_2                 (0x04)
+#define MRF24J40_GPIO_3                 (0x08)
+#define MRF24J40_GPIO_4                 (0x10)
+#define MRF24J40_GPIO_5                 (0x20)
+/** @} */
+
+/**
+ * @name    Bitfield definitions for the TRISGPIO register (0x34)
+ * @{
+ */
+#define MRF24J40_TRISGPIO_TRISGP5       (0x20)
+#define MRF24J40_TRISGPIO_TRISGP4       (0x10)
+#define MRF24J40_TRISGPIO_TRISGP3       (0x08)
+#define MRF24J40_TRISGPIO_TRISGP2       (0x04)
+#define MRF24J40_TRISGPIO_TRISGP1       (0x02)
+#define MRF24J40_TRISGPIO_TRISGP0       (0x01)
 /** @} */
 
 /**
@@ -453,10 +494,19 @@ extern "C" {
 #define MRF24J40_SLPCON1_SLPCLKDIV0     (0x01)
 /** @} */
 
+/**
+ * @name    Bitfield definitions for the TESTMODE register (0x22F)
+ * @{
+ */
+#define MRF24J40_TESTMODE_RSSIWAIT1     (0x10)
+#define MRF24J40_TESTMODE_RSSIWAIT0     (0x08)
+#define MRF24J40_TESTMODE_TESTMODE2     (0x04)
+#define MRF24J40_TESTMODE_TESTMODE1     (0x02)
+#define MRF24J40_TESTMODE_TESTMODE0     (0x01)
+/** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* MRF24J40_REGISTERS_H */
 /** @} */

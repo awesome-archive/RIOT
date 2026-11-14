@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 Luminița Lăzărescu <cluminita.lazarescu@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Luminița Lăzărescu <cluminita.lazarescu@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -22,11 +19,11 @@
 #include "net/sntp.h"
 #include "net/ntp_packet.h"
 #include "net/sock/udp.h"
-#include "xtimer.h"
+#include "ztimer64.h"
 #include "mutex.h"
 #include "byteorder.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 static sock_udp_t _sntp_sock;
@@ -70,7 +67,7 @@ int sntp_sync(sock_udp_ep_t *server, uint32_t timeout)
     mutex_lock(&_sntp_mutex);
     _sntp_offset = (((int64_t)byteorder_ntohl(_sntp_packet.transmit.seconds)) * US_PER_SEC) +
                    ((((int64_t)byteorder_ntohl(_sntp_packet.transmit.fraction)) * 232)
-                   / 1000000) - xtimer_now_usec64();
+                   / 1000000) - ztimer64_now(ZTIMER64_USEC);
     mutex_unlock(&_sntp_mutex);
     return 0;
 }

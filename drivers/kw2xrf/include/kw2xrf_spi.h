@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 PHYTEC Messtechnik GmbH
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2015 PHYTEC Messtechnik GmbH
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_kw2xrf
@@ -14,9 +13,6 @@
  *
  * @author      Johann Fischer <j.fischer@phytec.de>
  */
-
-#ifndef KW2XRF_SPI_H
-#define KW2XRF_SPI_H
 
 #include <stdio.h>
 #include "board.h"
@@ -120,8 +116,6 @@ void kw2xrf_read_iregs(kw2xrf_t *dev, uint8_t addr, uint8_t *buf, uint8_t length
  * @param[in] dev device descriptor
  * @param[in] data A buffer with the value to write to the fifo.
  * @param[in] data_length The count of bytes which should be written.
- *
- * @return number of bytes written.
  */
 void kw2xrf_write_fifo(kw2xrf_t *dev, uint8_t *data, uint8_t data_length);
 
@@ -131,8 +125,6 @@ void kw2xrf_write_fifo(kw2xrf_t *dev, uint8_t *data, uint8_t data_length);
  * @param[in] dev device descriptor
  * @param[out] data A buffer to store the value of the fifo.
  * @param[in] data_length The count of bytes which should be read.
- *
- * @return number of bytes read.
  */
 void kw2xrf_read_fifo(kw2xrf_t *dev, uint8_t *data, uint8_t data_length);
 
@@ -140,5 +132,4 @@ void kw2xrf_read_fifo(kw2xrf_t *dev, uint8_t *data, uint8_t data_length);
 }
 #endif
 
-#endif /* KW2XRF_SPI_H */
 /** @} */

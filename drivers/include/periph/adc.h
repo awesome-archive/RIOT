@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014-2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014-2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_periph_adc ADC
@@ -30,6 +29,18 @@
  * waiting for the result of a conversion (e.g. through putting the calling
  * thread to sleep while waiting for the conversion results).
  *
+ * # (Low-) Power Implications
+ *
+ * The ADC peripheral(s) **should** only be powered on while adc_sample() is
+ * active. For implementing adc_sample() this means, that the peripheral should
+ * be powered on (i.e. through peripheral clock gating) at the beginning of the
+ * function and it should be powered back off at the end of the function.
+ *
+ * If the adc_sample() function is implemented in a way, that it will put the
+ * active thread to sleep for a certain amount of time, the implementation
+ * might need to block certain power states.
+ *
+ *
  * @todo        Extend interface for continuous mode?
  *
  * @{
@@ -40,10 +51,8 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef PERIPH_ADC_H
-#define PERIPH_ADC_H
-
 #include <limits.h>
+#include <stdint.h>
 
 #include "periph_cpu.h"
 #include "periph_conf.h"
@@ -56,14 +65,14 @@ extern "C" {
  * @brief   Define default ADC type identifier
  */
 #ifndef HAVE_ADC_T
-typedef unsigned int adc_t;
+typedef uint_fast8_t adc_t;
 #endif
 
 /**
  * @brief   Default ADC undefined value
  */
 #ifndef ADC_UNDEF
-#define ADC_UNDEF           (UINT_MAX)
+#define ADC_UNDEF           (UINT_FAST8_MAX)
 #endif
 
 /**
@@ -113,11 +122,35 @@ int adc_init(adc_t line);
  * @return                  the sampled value on success
  * @return                  -1 if resolution is not applicable
  */
-int adc_sample(adc_t line, adc_res_t res);
+int32_t adc_sample(adc_t line, adc_res_t res);
+
+/**
+ * @brief   Configure the ADC with a given resolution for continuous sampling
+ *
+ * @note requires the `periph_adc_continuous` feature
+ *
+ * @param[in] res           resolution to use for conversion
+ */
+void adc_continuous_begin(adc_res_t res);
+
+/**
+ * @brief   Sample an ADC line without powering off the ADC afterward
+ *
+ * @note requires the `periph_adc_continuous` feature
+ *
+ * @return                  the sampled value on success
+ */
+int32_t adc_continuous_sample(adc_t line);
+
+/**
+ * @brief   Disable the ADC to save power
+ *
+ * @note requires the `periph_adc_continuous` feature
+ */
+void adc_continuous_stop(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERIPH_ADC_H */
 /** @} */

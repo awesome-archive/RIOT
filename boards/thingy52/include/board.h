@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_thingy52
@@ -15,9 +14,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef BOARD_H
-#define BOARD_H
 
 #include "cpu.h"
 
@@ -34,13 +30,29 @@ extern "C" {
 /** @} */
 
 /**
- * @brief   Initialize board specific hardware
+ * @name    Power switch pins definitions
+ * @{
  */
-void board_init(void);
+#define SPK_PWR_CTRL_PIN    GPIO_PIN(0, 29) /**< Speaker power switch */
+#define VDD_PWR_CTRL_PIN    GPIO_PIN(0, 30) /**< VDD power switch */
+/** @} */
+
+/**
+ * @name    LIS2DH12 low power accelerometer configuration
+ * @{
+ */
+#define LIS2DH12_PARAM_I2C  I2C_DEV(1)
+/** @} */
+
+/**
+ * @name    LPS22HB device address
+ * @{
+ */
+#define LPSXXX_PARAM_ADDR   (0x5c)
+/** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

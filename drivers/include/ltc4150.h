@@ -1,10 +1,9 @@
 /*
- * Copyright 2019 Otto-von-Guericke-Universität Magdeburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2019 Otto-von-Guericke-Universität Magdeburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_ltc4150 LTC4150 coulomb counter
@@ -59,14 +58,10 @@
  * @author      Marian Buschsieweke <marian.buschsieweke@ovgu.de>
  */
 
-#ifndef LTC4150_H
-#define LTC4150_H
-
 #include <stdint.h>
 
 #include "mutex.h"
 #include "periph/gpio.h"
-#include "xtimer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -153,7 +148,7 @@ typedef struct {
     /**
      * @brief Pin indicating (dis-)charging, labeled POL
      *
-     * Set this pin to `GPIO_UNDEF` to tread every pulse as discharging. This
+     * Set this pin to `GPIO_UNDEF` to treat every pulse as discharging. This
      * pin is pulled low by the LTC4150 in case the battery is discharging.
      */
     gpio_t polarity;
@@ -240,7 +235,7 @@ extern const ltc4150_recorder_t ltc4150_last_minute;
  * @brief             Initialize the LTC4150 driver
  *
  * @param  dev        Device to initialize
- * @param  params     Information on how the LTC4150 is conntected
+ * @param  params     Information on how the LTC4150 is connected
  *
  * @retval  0         Success
  * @retval -EINVAL    Called with invalid argument(s)
@@ -344,5 +339,4 @@ void ltc4150_pulses2c(const ltc4150_dev_t *dev,
 }
 #endif
 
-#endif /* LTC4150_H */
 /** @} */

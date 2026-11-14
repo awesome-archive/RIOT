@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 Hamburg University of Applied Sciences
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2014 Hamburg University of Applied Sciences
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_nrf24l01p NRF24L01+ driver interface
@@ -19,9 +18,6 @@
  * @author      Peter Kietzmann <peter.kietzmann@haw-hamburg.de>
  *
  */
-
-#ifndef NRF24L01P_H
-#define NRF24L01P_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +47,6 @@ typedef enum {
     NRF24L01P_AW_4BYTE, /**< address width is 4 Byte */
     NRF24L01P_AW_5BYTE  /**< address width is 5 Byte */
 } nrf24l01p_aw_t;
-
 
 /**
  * @brief   Defines the RF datarate.
@@ -121,7 +116,6 @@ typedef enum {
 typedef enum {
     RCV_PKT_NRF24L01P = 0,  /**< transceiver received data */
 } nrf24l01p_rx_event_t ;
-
 
 /**
 * @brief   Read one register of the nrf24l01+ transceiver.
@@ -199,7 +193,7 @@ void nrf24l01p_transmit(const nrf24l01p_t *dev);
 * @param[in] answer Buffer to receive bytes to.
 * @param[in] size   Number of bytes to transfer. For nrf24l01+ in general 32.
 *
-* @return           Number of bytes that were transfered.
+* @return           Number of bytes that were transferred.
 * @return           -1 on error.
 */
 int nrf24l01p_read_payload(const nrf24l01p_t *dev, char *answer, unsigned int size);
@@ -277,7 +271,7 @@ void nrf24l01p_stop(const nrf24l01p_t *dev);
 * @param[in] data   Buffer to preload.
 * @param[in] size   Number of bytes in buffer. For nrf24l01+ e.g. 32
 *
-* @return           Number of bytes that were transfered.
+* @return           Number of bytes that were transferred.
 * @return           -1 on error.
 */
 int nrf24l01p_preload(const nrf24l01p_t *dev, char *data, unsigned int size);
@@ -313,11 +307,11 @@ int nrf24l01p_set_address_width(const nrf24l01p_t *dev, nrf24l01p_aw_t aw);
 *
 * @ note
 * This function sets the payload width for one packet. If the maximum of 32 bytes is
-* exeeded, this value is set to 32.
+* exceeded, this value is set to 32.
 *
 * @param[in] dev    Transceiver device to use.
 * @param[in] pipe   RX pipe to set the payload width.
-* @param[in] width  Numer of bytes per packet in RX payload.
+* @param[in] width  Number of bytes per packet in RX payload.
 *
 * @return           0 on success.
 * @return           -1 on error.
@@ -340,7 +334,7 @@ int nrf24l01p_set_payload_width(const nrf24l01p_t *dev,
 * @return           Address length on success.
 * @return           -1 on error.
 */
-int nrf24l01p_set_tx_address(const nrf24l01p_t *dev, const char *saddr, unsigned int length);
+int nrf24l01p_set_tx_address(const nrf24l01p_t *dev, const uint8_t *saddr, unsigned int length);
 
 /**
 * @brief   Set the TX address for the nrf24l01+ transceiver (long int).
@@ -370,7 +364,7 @@ int nrf24l01p_set_tx_address_long(const nrf24l01p_t *dev, uint64_t saddr, unsign
 * @return           Address length on success.
 * @return           -1 on error.
 */
-int nrf24l01p_set_rx_address(const nrf24l01p_t *dev, nrf24l01p_rx_pipe_t pipe, const char *saddr, unsigned int length);
+int nrf24l01p_set_rx_address(const nrf24l01p_t *dev, nrf24l01p_rx_pipe_t pipe, const uint8_t *saddr, unsigned int length);
 
 /**
 * @brief   Set the RX address for the nrf24l01+ transceiver (long int).
@@ -627,5 +621,4 @@ void nrf24l01p_rx_cb(void *arg);
 }
 #endif
 
-#endif /* NRF24L01P_H */
 /** @} */

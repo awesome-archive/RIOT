@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for
- * more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_ethernet_hdr Ethernet header
@@ -17,10 +16,6 @@
  *
  * @author      Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-
-
-#ifndef NET_ETHERNET_HDR_H
-#define NET_ETHERNET_HDR_H
 
 #include <inttypes.h>
 
@@ -51,7 +46,6 @@ typedef struct __attribute__((packed)) {
 }
 #endif
 
-#endif /* NET_ETHERNET_HDR_H */
 /**
  * @}
  */

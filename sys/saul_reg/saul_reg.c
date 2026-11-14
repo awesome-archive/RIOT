@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -30,7 +27,6 @@
  */
 saul_reg_t *saul_reg = NULL;
 
-
 int saul_reg_add(saul_reg_t *dev)
 {
     saul_reg_t *tmp = saul_reg;
@@ -50,29 +46,6 @@ int saul_reg_add(saul_reg_t *dev)
             tmp = tmp->next;
         }
         tmp->next = dev;
-    }
-    return 0;
-}
-
-int saul_reg_rm(saul_reg_t *dev)
-{
-    saul_reg_t *tmp = saul_reg;
-
-    if (saul_reg == NULL || dev == NULL) {
-        return -ENODEV;
-    }
-    if (saul_reg == dev) {
-        saul_reg = dev->next;
-        return 0;
-    }
-    while (tmp->next && (tmp->next != dev)) {
-        tmp = tmp->next;
-    }
-    if (tmp->next == dev) {
-        tmp->next = dev->next;
-    }
-    else {
-        return -ENODEV;
     }
     return 0;
 }
@@ -113,6 +86,19 @@ saul_reg_t *saul_reg_find_name(const char *name)
     return NULL;
 }
 
+saul_reg_t *saul_reg_find_type_and_name(uint8_t type, const char *name)
+{
+    saul_reg_t *tmp = saul_reg;
+
+    while (tmp) {
+        if (tmp->driver->type == type && strcmp(tmp->name, name) == 0) {
+            return tmp;
+        }
+        tmp = tmp->next;
+    }
+    return NULL;
+}
+
 int saul_reg_read(saul_reg_t *dev, phydat_t *res)
 {
     if (dev == NULL) {
@@ -121,7 +107,7 @@ int saul_reg_read(saul_reg_t *dev, phydat_t *res)
     return dev->driver->read(dev->dev, res);
 }
 
-int saul_reg_write(saul_reg_t *dev, phydat_t *data)
+int saul_reg_write(saul_reg_t *dev, const phydat_t *data)
 {
     if (dev == NULL) {
         return -ENODEV;

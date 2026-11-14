@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_bh1750fvi
@@ -16,10 +15,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef BH1750FVI_INTERNAL_H
-#define BH1750FVI_INTERNAL_H
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,7 +23,7 @@ extern "C" {
  * @brief   Result divisor (1.2 times 65535)
  *
  * The 16-bit RAW results have to be divided by 1.2. We do this by using fixed
- * floating point arithmetics by multiplying divisor and RAW value by 65535 (
+ * floating point arithmetic by multiplying divisor and RAW value by 65535 (
  * uint16_t max).
  */
 #define RES_DIV                 (78642)
@@ -58,10 +53,8 @@ extern "C" {
 #define DELAY_LMODE             (16000)     /**< typ. 16ms in L-mode */
 /** @} */
 
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BH1750FVI_INTERNAL_H */
 /** @} */

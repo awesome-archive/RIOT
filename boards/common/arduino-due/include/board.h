@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2014,2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    boards_common_arduino_due Arduino Due Common
@@ -18,11 +18,9 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include "cpu.h"
 #include "arduino_pinmap.h"
+#include "periph/gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,26 +37,8 @@ extern "C" {
 #define LED0_TOGGLE         ((PIOB->PIO_ODSR & PIO_PB27) ? LED0_OFF : LED0_ON)
 /** @} */
 
-/**
- * @name    Configuration parameters for the W5100 driver
- * @{
- */
-#ifndef W5100_PARAM_CS
-#define W5100_PARAM_CS          (ARDUINO_PIN_10)
-#endif
-#ifndef W5100_PARAM_EVT
-#define W5100_PARAM_EVT         (ARDUINO_PIN_2)
-#endif
-/** @} */
-
-/**
- * @brief Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

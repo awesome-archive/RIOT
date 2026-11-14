@@ -1,30 +1,27 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
-* @ingroup     sys_crypto
-* @{
-*
-* @file
-* @brief       Crypto mode - electronic code book
-*
-* @author      Nico von Geyso <nico.geyso@fu-berlin.de>
-*
-* @}
-*/
+ * @ingroup     sys_crypto
+ * @{
+ *
+ * @file
+ * @brief       Crypto mode - electronic code book
+ *
+ * @author      Nico von Geyso <nico.geyso@fu-berlin.de>
+ *
+ * @}
+ */
 
 #include <stddef.h>
 #include <stdint.h>
 
 #include "crypto/modes/ecb.h"
 
-int cipher_encrypt_ecb(cipher_t* cipher, uint8_t* input,
-                       size_t length, uint8_t* output)
+int cipher_encrypt_ecb(const cipher_t *cipher, const uint8_t *input,
+                       size_t length, uint8_t *output)
 {
     size_t offset;
     uint8_t block_size;
@@ -46,8 +43,8 @@ int cipher_encrypt_ecb(cipher_t* cipher, uint8_t* input,
     return offset;
 }
 
-int cipher_decrypt_ecb(cipher_t* cipher, uint8_t* input,
-                       size_t length, uint8_t* output)
+int cipher_decrypt_ecb(const cipher_t *cipher, const uint8_t *input,
+                       size_t length, uint8_t *output)
 {
     size_t offset = 0;
     uint8_t block_size;

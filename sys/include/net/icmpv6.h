@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_icmpv6  ICMPV6
@@ -20,8 +19,6 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_ICMPV6_H
-#define NET_ICMPV6_H
 
 #include <stdint.h>
 
@@ -231,5 +228,4 @@ void icmpv6_hdr_print(icmpv6_hdr_t *hdr);
 }
 #endif
 
-#endif /* NET_ICMPV6_H */
 /** @} */

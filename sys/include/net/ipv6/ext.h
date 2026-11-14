@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_ipv6_ext    IPv6 extension headers
@@ -17,11 +16,10 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_IPV6_EXT_H
-#define NET_IPV6_EXT_H
 
 #include <stdint.h>
 
+#include "net/ipv6/ext/frag.h"
 #include "net/ipv6/ext/rh.h"
 
 #ifdef __cplusplus
@@ -58,5 +56,4 @@ static inline ipv6_ext_t *ipv6_ext_get_next(ipv6_ext_t *ext)
 }
 #endif
 
-#endif /* NET_IPV6_EXT_H */
 /** @} */

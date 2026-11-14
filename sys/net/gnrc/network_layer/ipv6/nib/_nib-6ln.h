@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup net_gnrc_ipv6_nib
@@ -12,19 +11,18 @@
  *
  * @file
  * @brief   Definitions related to 6Lo node (6LN) functionality of the NIB
- * @see     @ref GNRC_IPV6_NIB_CONF_6LN
+ * @see     @ref CONFIG_GNRC_IPV6_NIB_6LN
  *
  * @author  Martine Lenders <m.lenders@fu-berlin.de>
  */
-#ifndef PRIV_NIB_6LN_H
-#define PRIV_NIB_6LN_H
 
+#include <kernel_defines.h>
 #include <stdint.h>
 
 #include "net/gnrc/ipv6/nib/conf.h"
 #include "net/sixlowpan/nd.h"
 #include "timex.h"
-#include "xtimer.h"
+#include "evtimer.h"
 
 #include "_nib-arsm.h"
 #include "_nib-internal.h"
@@ -33,13 +31,6 @@
 extern "C" {
 #endif
 
-static inline uint32_t _now_min(void)
-{
-    return (uint32_t)((xtimer_now_usec64() / (US_PER_SEC * SEC_PER_MIN)) &
-                      UINT32_MAX);
-}
-
-#if GNRC_IPV6_NIB_CONF_6LN || defined(DOXYGEN)
 /**
  * @brief   Additional (local) status to ARO status values for tentative
  *          addresses
@@ -62,6 +53,7 @@ static inline uint32_t _now_min(void)
  */
 #define _ADDR_REG_STATUS_UNAVAIL        (255)
 
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_6LN) || defined(DOXYGEN)
 /**
  * @brief   Resolves address statically from destination address using reverse
  *          translation of the IID
@@ -74,6 +66,27 @@ static inline uint32_t _now_min(void)
  */
 bool _resolve_addr_from_ipv6(const ipv6_addr_t *dst, gnrc_netif_t *netif,
                              gnrc_ipv6_nib_nc_t *nce);
+
+/**
+ * @brief   Build a link-local ipv6 address statically from the L2 address by
+ *          translating the hardware address to an EUI-64 and adding the link-local
+ *          IPv6 prefix.
+ *
+ * @note    Reverse of _resolve_addr_from_ipv6.
+ *
+ * @param[in] netif      The interface to @p l2addr.
+ * @param[in] l2addr     Layer 2 address.
+ * @param[in] l2addr_len Length of the layer 2 address.
+ * @param[out] ipv6addr  The resulting IPv6 address.
+ *
+ * @retval  sizeof(ipv6_addr_t) on success.
+ * @retval  `-ENOTSUP` if the interface does not represent a 6LN or when
+ *           gnrc_netif_t::device_type of @p netif does not support IID conversion.
+ * @retval  `-EINVAL` when @p addr_len is invalid for the
+ *          gnrc_netif_t::device_type of @p netif.
+ */
+int _build_ll_ipv6_from_addr(gnrc_netif_t *netif, const uint8_t *l2addr,
+                             uint8_t l2addr_len, ipv6_addr_t *ipv6addr);
 
 /**
  * @brief   Calculates exponential backoff for RS retransmissions
@@ -131,34 +144,33 @@ uint8_t _handle_aro(gnrc_netif_t *netif, const ipv6_hdr_t *ipv6,
  */
 void _handle_rereg_address(const ipv6_addr_t *addr);
 
-#if GNRC_IPV6_NIB_CONF_MULTIHOP_P6C || defined(DOXYGEN)
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C) || defined(DOXYGEN)
 _nib_abr_entry_t *_handle_abro(const sixlowpan_nd_opt_abr_t *abro);
 uint32_t _handle_6co(const icmpv6_hdr_t *icmpv6,
                      const sixlowpan_nd_opt_6ctx_t *sixco,
                      _nib_abr_entry_t *abr);
-#else   /* GNRC_IPV6_NIB_CONF_MULTIHOP_P6C || defined(DOXYGEN) */
+#else   /* CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C || defined(DOXYGEN) */
 uint32_t _handle_6co(const icmpv6_hdr_t *icmpv6,
                      const sixlowpan_nd_opt_6ctx_t *sixco);
-#endif  /* GNRC_IPV6_NIB_CONF_MULTIHOP_P6C || defined(DOXYGEN) */
-#else   /* GNRC_IPV6_NIB_CONF_6LN || defined(DOXYGEN) */
+#endif  /* CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C || defined(DOXYGEN) */
+#else   /* CONFIG_GNRC_IPV6_NIB_6LN || defined(DOXYGEN) */
 #define _resolve_addr_from_ipv6(dst, netif, nce)    (false)
+#define _build_ll_ipv6_from_addr(netif, l2addr, l2addr_len, ipv6addr)    (-ENOTSUP)
 /* _handle_aro() doesn't make sense without 6LR so don't even use it
  * => throw error in case it is compiled in => don't define it here as NOP macro
  */
 #define _get_next_rs_interval(netif)                (NDP_RS_MS_INTERVAL)
 #define _handle_rereg_address(netif)                (void)netif
-#if GNRC_IPV6_NIB_CONF_MULTIHOP_P6C || defined(DOXYGEN)
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C) || defined(DOXYGEN)
 #define _handle_abro(abro)                          (NULL)
 #define _handle_6co(icmpv6, sixco, abr)             (UINT32_MAX)
-#else   /* GNRC_IPV6_NIB_CONF_MULTIHOP_P6C || defined(DOXYGEN) */
+#else   /* CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C || defined(DOXYGEN) */
 #define _handle_6co(icmpv6, sixco)                  (UINT32_MAX)
-#endif  /* GNRC_IPV6_NIB_CONF_MULTIHOP_P6C || defined(DOXYGEN) */
-#endif  /* GNRC_IPV6_NIB_CONF_6LN || defined(DOXYGEN) */
-
+#endif  /* CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C || defined(DOXYGEN) */
+#endif  /* CONFIG_GNRC_IPV6_NIB_6LN || defined(DOXYGEN) */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PRIV_NIB_6LN_H */
 /** @} */

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -12,14 +9,17 @@
  * @file
  */
 
-#include "net/ipv6.h"
+#include <assert.h>
+
+#include "macros/utils.h"
 #include "net/gnrc/icmpv6.h"
-#include "net/gnrc/netif.h"
-#include "net/gnrc/pktbuf.h"
-
 #include "net/gnrc/icmpv6/error.h"
+#include "net/gnrc/netif.h"
+#include "net/gnrc/netreg.h"
+#include "net/gnrc/pktbuf.h"
+#include "net/ipv6.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 /* all error messages are basically the same size and format */
@@ -27,12 +27,10 @@
 #define ICMPV6_ERROR_SET_VALUE(data, value) \
     ((icmpv6_error_pkt_too_big_t *)(data))->mtu = byteorder_htonl(value)
 
-#define MIN(a, b)   ((a) < (b)) ? (a) : (b)
-
 /**
  * @brief   Get packet fit.
  *
- * Get's the minimum size for an ICMPv6 error message packet, based on the
+ * Gets the minimum size for an ICMPv6 error message packet, based on the
  * invoking packet's size and the interface the invoking packet came over.
  *
  * @param[in] orig_pkt  The invoking packet
@@ -50,6 +48,7 @@ static size_t _fit(const gnrc_pktsnip_t *orig_pkt)
 
     if (netif_hdr) {
         gnrc_netif_t *netif = gnrc_netif_hdr_get_netif(netif_hdr->data);
+        assert(netif != NULL);
 
         pkt_len -= netif_hdr->size;
         DEBUG("gnrc_icmpv6_error: fitting to MTU of iface %u (%u)\n",
@@ -211,8 +210,7 @@ static void _send(gnrc_pktsnip_t *pkt, const gnrc_pktsnip_t *orig_pkt,
         if (netif) {
             /* copy interface from original netif header to assure packet
              * goes out where it came from */
-            gnrc_netif_hdr_t *netif_hdr = netif->data;
-            kernel_pid_t netif_pid = netif_hdr->if_pid;
+            gnrc_netif_t *iface = gnrc_netif_hdr_get_netif(netif->data);
 
             netif = gnrc_netif_hdr_build(NULL, 0, NULL, 0);
             if (netif == NULL) {
@@ -220,9 +218,8 @@ static void _send(gnrc_pktsnip_t *pkt, const gnrc_pktsnip_t *orig_pkt,
                 gnrc_pktbuf_release(pkt);
                 return;
             }
-            netif_hdr = netif->data;
-            netif_hdr->if_pid = netif_pid;
-            LL_PREPEND(pkt, netif);
+            gnrc_netif_hdr_set_netif(netif->data, iface);
+            pkt = gnrc_pkt_prepend(pkt, netif);
         }
         if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_IPV6,
                                        GNRC_NETREG_DEMUX_CTX_ALL,
@@ -236,7 +233,8 @@ static void _send(gnrc_pktsnip_t *pkt, const gnrc_pktsnip_t *orig_pkt,
     }
 }
 
-static gnrc_pktsnip_t *_check_ipv6_hdr(const gnrc_pktsnip_t *orig_pkt)
+static gnrc_pktsnip_t *_check_ipv6_hdr(const gnrc_pktsnip_t *orig_pkt,
+                                       uint8_t type, uint8_t code)
 {
     /* discarding const qualifier is safe here */
     gnrc_pktsnip_t *ipv6 = gnrc_pktsnip_search_type((gnrc_pktsnip_t *)orig_pkt,
@@ -244,16 +242,27 @@ static gnrc_pktsnip_t *_check_ipv6_hdr(const gnrc_pktsnip_t *orig_pkt)
     assert(ipv6 != NULL);
     const ipv6_hdr_t *ipv6_hdr = ipv6->data;
 
+    /* see https://tools.ietf.org/html/rfc4443#section-2.4 (e.6) */
     if (ipv6_addr_is_unspecified(&ipv6_hdr->src) ||
         ipv6_addr_is_multicast(&ipv6_hdr->src)) {
         ipv6 = NULL;
+    }
+    /* ipv6_hdr->dst may only be multicast for Packet Too Big Messages
+     * and Parameter Problem Messages with code 2, see
+     * https://tools.ietf.org/html/rfc4443#section-2.4 (e.3) */
+    else if (ipv6_addr_is_multicast(&ipv6_hdr->dst)) {
+        if ((type != ICMPV6_PKT_TOO_BIG) &&
+            ((type != ICMPV6_PARAM_PROB) ||
+             (code != ICMPV6_ERROR_PARAM_PROB_OPT))) {
+            ipv6 = NULL;
+        }
     }
     return ipv6;
 }
 
 void gnrc_icmpv6_error_dst_unr_send(uint8_t code, const gnrc_pktsnip_t *orig_pkt)
 {
-    gnrc_pktsnip_t *ipv6 = _check_ipv6_hdr(orig_pkt);
+    gnrc_pktsnip_t *ipv6 = _check_ipv6_hdr(orig_pkt, ICMPV6_DST_UNR, code);
 
     if (ipv6 != NULL) {
         gnrc_pktsnip_t *pkt = _dst_unr_build(code, orig_pkt);
@@ -266,7 +275,7 @@ void gnrc_icmpv6_error_dst_unr_send(uint8_t code, const gnrc_pktsnip_t *orig_pkt
 void gnrc_icmpv6_error_pkt_too_big_send(uint32_t mtu,
                                         const gnrc_pktsnip_t *orig_pkt)
 {
-    gnrc_pktsnip_t *ipv6 = _check_ipv6_hdr(orig_pkt);
+    gnrc_pktsnip_t *ipv6 = _check_ipv6_hdr(orig_pkt, ICMPV6_PKT_TOO_BIG, 0);
 
     if (ipv6 != NULL) {
         gnrc_pktsnip_t *pkt = _pkt_too_big_build(mtu, orig_pkt);
@@ -279,7 +288,7 @@ void gnrc_icmpv6_error_pkt_too_big_send(uint32_t mtu,
 void gnrc_icmpv6_error_time_exc_send(uint8_t code,
                                      const gnrc_pktsnip_t *orig_pkt)
 {
-    gnrc_pktsnip_t *ipv6 = _check_ipv6_hdr(orig_pkt);
+    gnrc_pktsnip_t *ipv6 = _check_ipv6_hdr(orig_pkt, ICMPV6_TIME_EXC, code);
 
     if (ipv6 != NULL) {
         gnrc_pktsnip_t *pkt = _time_exc_build(code, orig_pkt);
@@ -292,7 +301,7 @@ void gnrc_icmpv6_error_time_exc_send(uint8_t code,
 void gnrc_icmpv6_error_param_prob_send(uint8_t code, void *ptr,
                                        const gnrc_pktsnip_t *orig_pkt)
 {
-    gnrc_pktsnip_t *ipv6 = _check_ipv6_hdr(orig_pkt);
+    gnrc_pktsnip_t *ipv6 = _check_ipv6_hdr(orig_pkt, ICMPV6_PARAM_PROB, code);
 
     if (ipv6 != NULL) {
         gnrc_pktsnip_t *pkt = _param_prob_build(code, ptr, orig_pkt);

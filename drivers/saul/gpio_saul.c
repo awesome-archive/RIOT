@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -25,7 +22,6 @@
 #include "periph/gpio.h"
 #include "saul/periph.h"
 
-
 static int read(const void *dev, phydat_t *res)
 {
     const saul_gpio_params_t *p = (const saul_gpio_params_t *)dev;
@@ -33,14 +29,12 @@ static int read(const void *dev, phydat_t *res)
 
     res->val[0] = (gpio_read(p->pin)) ? !inverted : inverted;
 
-    res->val[1] = 0;
-    res->val[2] = 0;
     res->unit = UNIT_BOOL;
     res->scale = 0;
     return 1;
 }
 
-static int write(const void *dev, phydat_t *state)
+static int write(const void *dev, const phydat_t *state)
 {
     const saul_gpio_params_t *p = (const saul_gpio_params_t *)dev;
     int inverted = (p->flags & SAUL_GPIO_INVERTED);
@@ -58,6 +52,6 @@ const saul_driver_t gpio_out_saul_driver = {
 
 const saul_driver_t gpio_in_saul_driver = {
     .read = read,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_BTN
 };

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Kees Bakker, SODAQ
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Kees Bakker, SODAQ
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_sodaq-one
@@ -16,22 +15,13 @@
  * @author      Kees Bakker <kees@sodaq.com>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include "cpu.h"
-#include "periph_conf.h"
+#include "board_common.h"
+#include "periph/gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @name    xtimer configuration
- * @{
- */
-#define XTIMER_WIDTH        (16)
-/** @} */
 
 /**
  * @name    LED pin definitions and handlers
@@ -67,6 +57,7 @@ extern "C" {
 
 /**
  * @name    User button
+ * @{
  */
 #define BTN0_PIN            GPIO_PIN(PA, 16)
 #define BTN0_MODE           GPIO_IN
@@ -74,6 +65,7 @@ extern "C" {
 
 /**
  * @name    GPS Time Pulse
+ * @{
  */
 #define GPS_TIMEPULSE_PIN   GPIO_PIN(PA, 14)
 #define GPS_TIMEPULSE_MODE  GPIO_IN
@@ -106,14 +98,8 @@ extern "C" {
 #define LORA_RESET_TOGGLE   (LORA_RESET_PORT.OUTTGL.reg = LORA_RESET_MASK)
 /** @} */
 
-/**
- * @brief Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

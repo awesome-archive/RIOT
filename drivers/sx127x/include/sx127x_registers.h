@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2016 Unwired Devices <info@unwds.com>
- *               2016 Inria Chile
- *               2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Unwired Devices <info@unwds.com>
+ * SPDX-FileCopyrightText: 2016 Inria Chile
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_sx127x
@@ -20,9 +19,6 @@
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  *
  */
-
-#ifndef SX127X_REGISTERS_H
-#define SX127X_REGISTERS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -464,7 +460,6 @@ extern "C" {
 #define RF_PLL_BANDWIDTH_300                                         (0xC0)  /* Default */
 /** @} */
 
-
 /* FSK modem definitions */
 
 /**
@@ -559,6 +554,7 @@ extern "C" {
 /* Version */
 #define SX127X_REG_VERSION                                           (0x42)
 #define VERSION_SX1276                                               (0x12)
+#define VERSION_SX1276_WLR089                                        (0x13)
 #define VERSION_SX1272                                               (0x22)
 
 /* Additional settings */
@@ -1429,5 +1425,4 @@ extern "C" {
 }
 #endif
 
-#endif /* SX127X_REGISTERS_H */
 /** @} */

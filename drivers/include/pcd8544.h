@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_pcd8544 PCD8544 LCD driver
- * @ingroup     drivers_actuators
+ * @ingroup     drivers_display
  * @brief       Driver for PCD8544 LCD displays
  *
  * @{
@@ -18,9 +17,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef PCD8544_H
-#define PCD8544_H
 
 #include <stdint.h>
 
@@ -118,9 +114,9 @@ void pcd8544_set_bias(const pcd8544_t *dev, uint8_t bias);
  * datasheet.
  *
  * @param[in] dev           device descriptor of display to use
- * @param[in] img           char array with image data (must be of size := 504)
+ * @param[in] img           uint8_t array with image data (must be of size := 504)
  */
-void pcd8544_write_img(const pcd8544_t *dev, const char img[]);
+void pcd8544_write_img(const pcd8544_t *dev, const uint8_t img[]);
 
 /**
  * @brief   Write a single ASCII character to the display
@@ -198,5 +194,4 @@ void pcd8544_riot(const pcd8544_t *dev);
 }
 #endif
 
-#endif /* PCD8544_H */
 /** @} */

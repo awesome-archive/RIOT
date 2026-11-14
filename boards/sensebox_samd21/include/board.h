@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_sensebox_samd21
@@ -19,13 +18,10 @@
  * @author      Leandro Lanzieri <leandro.lanzieri@haw-hamburg.de>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include "cpu.h"
 #include "periph_conf.h"
 #include "periph_cpu.h"
-#include "mtd_sdcard.h"
+#include "periph/gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,7 +52,6 @@ extern "C" {
  * @name    SW0 (Button) pin definitions
  * @{
  */
-#define BTN0_PORT           PORT->Group[PA]
 #define BTN0_PIN            GPIO_PIN(PA, 20)
 #define BTN0_MODE           GPIO_IN_PU
 /** @} */
@@ -121,7 +116,9 @@ extern "C" {
  * @name        SX127X
  *
  * SX127X configuration (on XBEE1 port). This particular board has
- * merged DIO0 and DIO1 interupt pins into one (defined as DIOMULTI).
+ * merged DIO0 and DIO1 interrupt pins into one. The driver will always
+ * check the interrupt type in the ISR handler, so it's enough to set
+ * the DIO0 pin in order to handle both DIO0 and DIO1.
  * @{
  */
 #define SX127X_PARAM_SPI                    (SPI_DEV(0))
@@ -130,15 +127,13 @@ extern "C" {
 
 #define SX127X_PARAM_RESET                  GPIO_UNDEF
 
-#define SX127X_PARAM_DIO0                   GPIO_UNDEF
+#define SX127X_PARAM_DIO0                   XBEE1_INT_PIN       /* D24 */
 
 #define SX127X_PARAM_DIO1                   GPIO_UNDEF
 
 #define SX127X_PARAM_DIO2                   GPIO_UNDEF
 
 #define SX127X_PARAM_DIO3                   GPIO_UNDEF
-
-#define SX127X_PARAM_DIO_MULTI              XBEE1_INT_PIN       /* D24 */
 
 #define SX127X_PARAM_PASELECT               (SX127X_PA_BOOST)
 /** @} */
@@ -165,39 +160,15 @@ extern "C" {
 
 #if defined(MODULE_MTD_SDCARD) || defined(DOXYGEN)
 /**
- * @brief MTD device 0 (SD Card) definition. mtd0 is defined in board.c
+ * @brief MTD device 0 (SD Card) definition. mtd_dev_get(0) is defined in board.c
  * @{
  */
-extern mtd_dev_t *mtd0;
-#define MTD_0 mtd0
-/** @} */
-
-/**
- * @brief Attributes for the mtd_sdcard driver
- * @{
- */
-#ifndef MTD_SD_CARD_PAGE_SIZE
-#define MTD_SD_CARD_PAGE_SIZE           (512)
-#endif
-
-#ifndef MTD_SD_CARD_PAGES_PER_SECTOR
-#define MTD_SD_CARD_PAGES_PER_SECTOR    (128)
-#endif
-
-#ifndef MTD_SD_CARD_SECTOR_COUNT
-#define MTD_SD_CARD_SECTOR_COUNT        (3921920UL)
-#endif
+#define MTD_0 mtd_dev_get(0)
 /** @} */
 #endif /* MODULE_MTD_SDCARD || DOXYGEN */
-
-/**
- * @brief   Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

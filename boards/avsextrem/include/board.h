@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2013 Zakaria Kasmi <zkasmi@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
- *
+ * SPDX-FileCopyrightText: 2013 Zakaria Kasmi <zkasmi@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
 
 /**
  * @ingroup     boards_avsextrem
@@ -19,11 +16,8 @@
  * @author      Zakaria Kasmi
  */
 
-
-#ifndef BOARD_H
-#define BOARD_H
+#include "lpc23xx.h"
 #include "bitarithm.h"
-#include "msba2_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,14 +42,8 @@ extern "C" {
 #define LED1_TOGGLE         (FIO3PIN ^= LED1_MASK)
 /** @} */
 
-/**
- * @brief   Initialize the board's clock system
- */
-void init_clks1(void);
-
 #ifdef __cplusplus
 }
 #endif
 
 /** @} */
-#endif /* BOARD_H */

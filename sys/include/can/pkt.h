@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016-2018 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup    sys_can_dll
@@ -17,16 +16,11 @@
  * @author      Toon Stegen <toon.stegen@altran.com>
  */
 
-#ifndef CAN_PKT_H
-#define CAN_PKT_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <stdatomic.h>
-
-#include "net/gnrc/pktbuf.h"
 
 #include "can/common.h"
 #include "can/can.h"
@@ -44,8 +38,7 @@ typedef struct {
     can_reg_entry_t entry;   /**< entry containing ifnum and upper layer info */
     atomic_uint ref_count;   /**< Reference counter (for rx frames) */
     int handle;              /**< handle (for tx frames */
-    struct can_frame frame;  /**< CAN Frame */
-    gnrc_pktsnip_t *snip;    /**< Pointer to the allocated snip */
+    can_frame_t frame;  /**< CAN Frame */
 } can_pkt_t;
 
 /**
@@ -65,9 +58,9 @@ void can_pkt_init(void);
  * @param[in] frame  the frame to copy
  * @param[in] tx_pid the pid of the sender's device thread
  *
- * @return an allocated CAN packet, NULL if an error occured
+ * @return an allocated CAN packet, NULL if an error occurred
  */
-can_pkt_t *can_pkt_alloc_tx(int ifnum, const struct can_frame *frame, kernel_pid_t tx_pid);
+can_pkt_t *can_pkt_alloc_tx(int ifnum, const can_frame_t *frame, kernel_pid_t tx_pid);
 
 /**
  * @brief Allocate an incoming CAN packet
@@ -75,9 +68,9 @@ can_pkt_t *can_pkt_alloc_tx(int ifnum, const struct can_frame *frame, kernel_pid
  * @param[in] ifnum  the interface number
  * @param[in] frame  the received frame
  *
- * @return an allocated CAN packet, NULL if an error occured
+ * @return an allocated CAN packet, NULL if an error occurred
  */
-can_pkt_t *can_pkt_alloc_rx(int ifnum, const struct can_frame *frame);
+can_pkt_t *can_pkt_alloc_rx(int ifnum, const can_frame_t *frame);
 
 #if defined(MODULE_CAN_MBOX) || defined(DOXYGEN)
 /**
@@ -90,9 +83,9 @@ can_pkt_t *can_pkt_alloc_rx(int ifnum, const struct can_frame *frame);
  * @param[in] frame  the frame to copy
  * @param[in] mbox   the pointer to the sender's mbox
  *
- * @return an allocated CAN packet, NULL if an error occured
+ * @return an allocated CAN packet, NULL if an error occurred
  */
-can_pkt_t *can_pkt_alloc_mbox_tx(int ifnum, const struct can_frame *frame, mbox_t *mbox);
+can_pkt_t *can_pkt_alloc_mbox_tx(int ifnum, const can_frame_t *frame, mbox_t *mbox);
 #endif
 
 /**
@@ -146,5 +139,4 @@ void can_pkt_buf_free(void *data, size_t size);
 }
 #endif
 
-#endif /* CAN_PKT_H */
 /** @} */

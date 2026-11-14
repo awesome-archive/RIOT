@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_isl29020
@@ -15,9 +14,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef ISL29020_PARAMS_H
-#define ISL29020_PARAMS_H
 
 #include "board.h"
 #include "isl29020.h"
@@ -35,7 +31,7 @@ extern "C" {
 #define ISL29020_PARAM_I2C              I2C_DEV(0)
 #endif
 #ifndef ISL29020_PARAM_ADDR
-#define ISL29020_PARAM_ADDR             (0x44)
+#define ISL29020_PARAM_ADDR             (CONFIG_ISL29020_DEFAULT_ADDRESS)
 #endif
 #ifndef ISL29020_PARAM_RANGE
 #define ISL29020_PARAM_RANGE            (ISL29020_RANGE_16K)
@@ -75,5 +71,4 @@ static const saul_reg_info_t isl29020_saul_info[] =
 }
 #endif
 
-#endif /* ISL29020_PARAMS_H */
 /** @} */

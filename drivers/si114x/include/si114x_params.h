@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016-2018 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016-2018 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_si114x
@@ -15,9 +14,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef SI114X_PARAMS_H
-#define SI114X_PARAMS_H
 
 #include "board.h"
 #include "si114x.h"
@@ -65,5 +61,4 @@ saul_reg_t si114x_saul_reg_info[] =
 }
 #endif
 
-#endif /* SI114X_PARAMS_H */
 /** @} */

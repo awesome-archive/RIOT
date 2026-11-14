@@ -1,10 +1,6 @@
 /*
- * Copyright (C) 2015 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
- *
+ * SPDX-FileCopyrightText: 2015 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -26,7 +22,7 @@
 #include "adt7310.h"
 #include "byteorder.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    0
 #include "debug.h"
 
 /* SPI command byte parameters */
@@ -66,7 +62,7 @@
 #define ADT7310_REG_ID_MASK_SILICON_VERSION  (0x07)
 
 /** @brief Expected manufacturer ID */
-#define ADT7310_EXPECTED_MANUF_ID (0b11000000)
+#define ADT7310_EXPECTED_MANUF_ID (0xC0)
 
 /** @brief 13 bit temperature mask */
 #define ADT7310_REG_VALUE_MASK_13BIT  (0xF8)
@@ -144,17 +140,17 @@ int adt7310_init(adt7310_t *dev, spi_t spi, spi_clk_t clk, gpio_t cs)
     /* CS */
     spi_init_cs(dev->spi, dev->cs);
 
-#if ENABLE_DEBUG
-    for (int i = 0; i < 8; ++i) {
-        uint16_t dbg_reg = 0;
-        status = adt7310_read_reg(dev, i, sizeof(dbg_reg), (uint8_t *)&dbg_reg);
-        if (status != 0) {
-            printf("Error reading address 0x%02x", i);
+    if (IS_ACTIVE(ENABLE_DEBUG)) {
+        for (int i = 0; i < 8; ++i) {
+            uint16_t dbg_reg = 0;
+            status = adt7310_read_reg(dev, i, sizeof(dbg_reg), (uint8_t *)&dbg_reg);
+            if (status != 0) {
+                printf("Error reading address 0x%02x", i);
+            }
+            dbg_reg = htons(dbg_reg);
+            printf("%02x: %04" PRIx16 "\n", i, dbg_reg);
         }
-        dbg_reg = htons(dbg_reg);
-        printf("%02x: %04" PRIx16 "\n", i, dbg_reg);
     }
-#endif
 
     /* Read ID register from device */
     status = adt7310_read_reg(dev, ADT7310_REG_ID, ADT7310_REG_SIZE_ID, &reg);

@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin, Hinnerk van Bruinehsen
- *               2016 Laurent Navet <laurent.navet@gmail.com>
- *               2018 Matthew Blue <matthew.blue.neuro@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin, Hinnerk van Bruinehsen
+ * SPDX-FileCopyrightText: 2016 Laurent Navet <laurent.navet@gmail.com>
+ * SPDX-FileCopyrightText: 2018 Matthew Blue <matthew.blue.neuro@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /*
  * @ingroup     boards_mega-xplained
@@ -20,9 +19,6 @@
  * @author      Laurent Navet <laurent.navet@gmail.com>
  * @author      Matthew Blue <matthew.blue.neuro@gmail.com>
  */
-
-#ifndef BOARD_H
-#define BOARD_H
 
 #include "cpu.h"
 #include "periph_cpu.h"
@@ -113,26 +109,20 @@ extern "C" {
  * @name    ADC NTC, light sensor, and filter lines
  * @{
  */
-#define NTC_OUTPUT             GPIO_PIN(PORT_A, 5)
-#define LIGHT_SENSOR_OUTPUT    GPIO_PIN(PORT_A, 6)
-#define FILTER_OUTPUT          GPIO_PIN(PORT_A, 7)
+#define NTC_OUTPUT             ADC_LINE(7)
+#define LIGHT_SENSOR_OUTPUT    ADC_LINE(6)
+#define FILTER_OUTPUT          ADC_LINE(5)
 /** @} */
 
 /**
  * @name CPU clock scale for mega-xplained
- *
+ * @{
  */
 #define CPU_ATMEGA_CLK_SCALE_INIT    CPU_ATMEGA_CLK_SCALE_DIV1
 /** @} */
-
-/**
- * @brief   Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

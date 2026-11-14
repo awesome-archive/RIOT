@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017 Inria
- *               2017 Inria Chile
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-FileCopyrightText: 2017 Inria Chile
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_sx127x
@@ -16,9 +15,6 @@
  * @author      José Ignacio Alamos <jose.alamos@inria.cl>
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef SX127X_PARAMS_H
-#define SX127X_PARAMS_H
 
 #include "board.h"
 #include "sx127x.h"
@@ -60,25 +56,30 @@ extern "C" {
 #define SX127X_PARAM_DIO3                   GPIO_PIN(1, 4)       /* D5 */
 #endif
 
-#ifndef SX127X_PARAM_DIO_MULTI
-#define SX127X_PARAM_DIO_MULTI              GPIO_UNDEF
-#endif
-
 #ifndef SX127X_PARAM_PASELECT
 #define SX127X_PARAM_PASELECT               (SX127X_PA_RFO)
 #endif
 
+#ifndef SX127X_PARAM_TX_SWITCH
+#define SX127X_PARAM_TX_SWITCH              GPIO_UNDEF
+#endif
+
+#ifndef SX127X_PARAM_RX_SWITCH
+#define SX127X_PARAM_RX_SWITCH              GPIO_UNDEF
+#endif
+
 #ifndef SX127X_PARAMS
-#ifdef SX127X_USE_DIO_MULTI
-#define SX127X_PARAMS             { .spi       = SX127X_PARAM_SPI,          \
-                                    .nss_pin   = SX127X_PARAM_SPI_NSS,      \
-                                    .reset_pin = SX127X_PARAM_RESET,        \
-                                    .dio0_pin  = SX127X_PARAM_DIO0,         \
-                                    .dio1_pin  = SX127X_PARAM_DIO1,         \
-                                    .dio2_pin  = SX127X_PARAM_DIO2,         \
-                                    .dio3_pin  = SX127X_PARAM_DIO3,         \
-                                    .dio_multi_pin = SX127X_PARAM_DIO_MULTI,\
-                                    .paselect  = SX127X_PARAM_PASELECT }
+#if defined(SX127X_USE_TX_SWITCH) || defined(SX127X_USE_RX_SWITCH)
+#define SX127X_PARAMS             { .spi            = SX127X_PARAM_SPI,          \
+                                    .nss_pin        = SX127X_PARAM_SPI_NSS,      \
+                                    .reset_pin      = SX127X_PARAM_RESET,        \
+                                    .dio0_pin       = SX127X_PARAM_DIO0,         \
+                                    .dio1_pin       = SX127X_PARAM_DIO1,         \
+                                    .dio2_pin       = SX127X_PARAM_DIO2,         \
+                                    .dio3_pin       = SX127X_PARAM_DIO3,         \
+                                    .rx_switch_pin  = SX127X_PARAM_RX_SWITCH,    \
+                                    .tx_switch_pin  = SX127X_PARAM_TX_SWITCH,    \
+                                    .paselect       = SX127X_PARAM_PASELECT }
 #else
 #define SX127X_PARAMS             { .spi       = SX127X_PARAM_SPI,          \
                                     .nss_pin   = SX127X_PARAM_SPI_NSS,      \
@@ -104,5 +105,4 @@ static const sx127x_params_t sx127x_params[] =
 }
 #endif
 
-#endif /* SX127X_PARAMS_H */
 /** @} */

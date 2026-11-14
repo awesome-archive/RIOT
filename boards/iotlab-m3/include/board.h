@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014-2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2014-2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_iotlab-m3
@@ -18,9 +17,6 @@
  * @author      Oliver Hahm <oliver.hahm@inria.fr>
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef BOARD_H
-#define BOARD_H
 
 #include <stdint.h>
 
@@ -46,7 +42,7 @@ extern "C" {
  * @name Define the interface to the LPS331AP pressure sensor
  * @{
  */
-#define LPS331AP_PARAM_ADDR        (0x5C)
+#define LPSXXX_PARAM_ADDR          (0x5C)
 /** @} */
 
 /**
@@ -65,9 +61,15 @@ extern "C" {
 #define LSM303DLHC_PARAM_MAG_PIN   GPIO_PIN(PORT_B, 2)
 /** @} */
 
+/**
+ * @name MTD configuration
+ * @{
+ */
+#define MTD_0     mtd_dev_get(0)      /**< SPI NOR Flash device */
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

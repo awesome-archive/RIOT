@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_mqttsn MQTT-SN Defines
@@ -20,20 +19,19 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef NET_MQTTSN_H
-#define NET_MQTTSN_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-#ifndef MQTTSN_DEFAULT_PORT
 /**
- * @brief   Default UDP port for MQTT-SN servers
+ * @name    The client ID must contain 1-23 characters
+ *
+ * @see MQTT-SN spec v1.2, section 5.3.1
+ * @{
  */
-#define MQTTSN_DEFAULT_PORT     (1883U)
-#endif
+#define MQTTSN_CLI_ID_MINLEN    (1U)
+#define MQTTSN_CLI_ID_MAXLEN    (23U)
+/** @} */
 
 /**
  * @brief   MQTT-SN flags
@@ -48,6 +46,7 @@ enum {
     MQTTSN_QOS_MASK   = 0x60,       /**< QoS level mask */
     MQTTSN_QOS_2      = 0x40,       /**< QoS level 2 */
     MQTTSN_QOS_1      = 0x20,       /**< QoS level 1 */
+    MQTTSN_QOS_NEG1   = 0x60,       /**< QoS level -1 (negative 1) */
     MQTTSN_QOS_0      = 0x00,       /**< QoS level 0 */
     MQTTSN_RETAIN     = 0x10,       /**< retain flag */
     MQTTSN_WILL       = 0x08,       /**< will flag, used during CONNECT */
@@ -107,5 +106,4 @@ enum {
 }
 #endif
 
-#endif /* NET_MQTTSN_H */
 /** @} */

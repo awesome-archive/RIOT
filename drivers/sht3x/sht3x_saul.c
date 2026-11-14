@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -22,7 +19,7 @@
 #include "sht3x.h"
 #include "sht3x_params.h"
 
-#define SHT3X_NUM      (sizeof(sht3x_params) / sizeof(sht3x_params[0]))
+#define SHT3X_NUM      ARRAY_SIZE(sht3x_params)
 extern sht3x_dev_t sht3x_devs[SHT3X_NUM];
 
 /**
@@ -51,7 +48,7 @@ static unsigned _dev2index (const sht3x_dev_t *dev)
     return SHT3X_NUM;
 }
 
-static int read(int dev)
+static int _read(int dev)
 {
     /* read both sensor values */
     unsigned res = sht3x_read(&sht3x_devs[dev], &_temp[dev], &_hum[dev]);
@@ -74,7 +71,7 @@ static int read_temp(const void *dev, phydat_t *data)
     }
 
     /* either local variable is valid or fetching it was successful */
-    if (_temp_valid[dev_index] || read(dev_index) == SHT3X_OK) {
+    if (_temp_valid[dev_index] || _read(dev_index) == SHT3X_OK) {
         /* mark local variable as invalid */
         _temp_valid[dev_index] = false;
 
@@ -96,7 +93,7 @@ static int read_hum(const void *dev, phydat_t *data)
     }
 
     /* either local variable is valid or fetching it was successful */
-    if (_hum_valid[dev_index] || read(dev_index) == SHT3X_OK) {
+    if (_hum_valid[dev_index] || _read(dev_index) == SHT3X_OK) {
         /* mark local variable as invalid */
         _hum_valid[dev_index] = false;
 
@@ -110,12 +107,12 @@ static int read_hum(const void *dev, phydat_t *data)
 
 const saul_driver_t sht3x_saul_driver_temperature = {
     .read = read_temp,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_TEMP
 };
 
 const saul_driver_t sht3x_saul_driver_humidity = {
     .read = read_hum,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_HUM
 };

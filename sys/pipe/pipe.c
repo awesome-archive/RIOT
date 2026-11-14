@@ -1,19 +1,6 @@
 /*
- * Copyright (C) 2014  René Kijewski  <rene.kijewski@fu-berlin.de>
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * SPDX-FileCopyrightText: 2014 René Kijewski <rene.kijewski@fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
 /**
@@ -69,9 +56,9 @@ static ssize_t pipe_rw(ringbuffer_t *rb,
             return 0;
         }
         else {
-            *this_op_blocked = (thread_t *) sched_active_thread;
+            *this_op_blocked = thread_get_active();
 
-            sched_set_status((thread_t *) sched_active_thread, STATUS_SLEEPING);
+            sched_set_status(thread_get_active(), STATUS_SLEEPING);
             irq_restore(old_state);
             thread_yield_higher();
         }

@@ -4,9 +4,9 @@ FEATURES_PROVIDED += periph_spi
 FEATURES_PROVIDED += periph_timer
 FEATURES_PROVIDED += periph_uart
 
+FEATURES_CONFLICT += periph_spi:periph_uart
+FEATURES_CONFLICT_MSG += "Both SPI and UART are provided by the same USART peripheral"
+
 # Various other features (if any)
 
-# The board MPU family (used for grouping by the CI system)
-FEATURES_MCU_GROUP = msp430
-
-include $(RIOTCPU)/msp430fxyz/Makefile.features
+include $(RIOTBOARD)/common/msb-430/Makefile.features

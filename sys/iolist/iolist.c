@@ -1,9 +1,8 @@
 /*
- * Copyright (C) 2018 Kaspar Schleiser <kaspar@schleiser.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2018 Inria
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -16,6 +15,9 @@
  * @}
  */
 
+#include <errno.h>
+#include <stdint.h>
+#include <string.h>
 #include <sys/uio.h>
 
 #include "iolist.h"
@@ -57,4 +59,21 @@ size_t iolist_to_iovec(const iolist_t *iolist, struct iovec *iov, unsigned *coun
     *count = _count;
 
     return bytes;
+}
+
+ssize_t iolist_to_buffer(const iolist_t *iolist, void *buf, size_t len)
+{
+    char *dst = buf;
+
+    while (iolist) {
+        if (iolist->iol_len > len) {
+            return -ENOBUFS;
+        }
+        memcpy(dst, iolist->iol_base, iolist->iol_len);
+        len -= iolist->iol_len;
+        dst += iolist->iol_len;
+        iolist = iolist->iol_next;
+    }
+
+    return (uintptr_t)dst - (uintptr_t)buf;
 }

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_ndp   IPv6 neighbor discovery (v2)
@@ -17,12 +16,10 @@
  *
  * @author  Martine Lenders <m.lenders@fu-berlin.de>
  */
-#ifndef NET_GNRC_NDP_H
-#define NET_GNRC_NDP_H
 
 #include <stdint.h>
 
-#include "kernel_types.h"
+#include "compiler_hints.h"
 #include "net/gnrc/pkt.h"
 #include "net/gnrc/netif.h"
 #include "net/ipv6/addr.h"
@@ -94,7 +91,7 @@ gnrc_pktsnip_t *gnrc_ndp_nbr_adv_build(const ipv6_addr_t *tgt, uint8_t flags,
 /**
  * @brief   Builds a router solicitation message for sending.
  *
- * @see `[RFC 4861, section 4.1](https://tools.ietf.org/html/rfc4861#section-4.1")
+ * @see [RFC 4861, section 4.1](https://tools.ietf.org/html/rfc4861#section-4.1")
  *
  * @param[in] options   Options to append to the router solicitation.
  *                      May be NULL for none.
@@ -107,7 +104,7 @@ gnrc_pktsnip_t *gnrc_ndp_rtr_sol_build(gnrc_pktsnip_t *options);
 /**
  * @brief   Builds a router advertisement message for sending.
  *
- * @see `[RFC 4861, section 4.2](https://tools.ietf.org/html/rfc4861#section-4.2")
+ * @see [RFC 4861, section 4.2](https://tools.ietf.org/html/rfc4861#section-4.2")
  *
  * @note    The source address for the packet MUST be the link-local address
  *          of the interface.
@@ -169,6 +166,7 @@ gnrc_pktsnip_t *gnrc_ndp_opt_build(uint8_t type, size_t size,
  * @return  The packet snip list of options, on success
  * @return  NULL, if packet buffer is full
  */
+ACCESS(read_only, 1, 2)
 gnrc_pktsnip_t *gnrc_ndp_opt_sl2a_build(const uint8_t *l2addr,
                                         uint8_t l2addr_len,
                                         gnrc_pktsnip_t *next);
@@ -192,6 +190,7 @@ gnrc_pktsnip_t *gnrc_ndp_opt_sl2a_build(const uint8_t *l2addr,
  * @return  The pkt snip list of options, on success
  * @return  NULL, if packet buffer is full
  */
+ACCESS(read_only, 1, 2)
 gnrc_pktsnip_t *gnrc_ndp_opt_tl2a_build(const uint8_t *l2addr,
                                         uint8_t l2addr_len,
                                         gnrc_pktsnip_t *next);
@@ -216,7 +215,7 @@ gnrc_pktsnip_t *gnrc_ndp_opt_tl2a_build(const uint8_t *l2addr,
  * @param[in] valid_ltime   Length of time in seconds that @p prefix is valid.
  *                          UINT32_MAX represents infinity.
  * @param[in] pref_ltime    Length of time in seconds that addresses using
- *                          @p prefix remain prefered. UINT32_MAX represents
+ *                          @p prefix remain preferred. UINT32_MAX represents
  *                          infinity.
  * @param[in] flags         Flags as defined in net/ndp.h.
  *                          - @ref NDP_OPT_PI_FLAGS_L == 1 indicates, that
@@ -232,6 +231,35 @@ gnrc_pktsnip_t *gnrc_ndp_opt_tl2a_build(const uint8_t *l2addr,
 gnrc_pktsnip_t *gnrc_ndp_opt_pi_build(const ipv6_addr_t *prefix,
                                       uint8_t prefix_len,
                                       uint32_t valid_ltime, uint32_t pref_ltime,
+                                      uint8_t flags, gnrc_pktsnip_t *next);
+/**
+ * @brief   Builds the route information option.
+ *
+ * @pre `prefix != NULL`
+ * @pre `!ipv6_addr_is_link_local(prefix) && !ipv6_addr_is_multicast(prefix)`
+ * @pre `prefix_len <= 128`
+ *
+ * @see [RFC 4191, section 2.3](https://tools.ietf.org/html/rfc4191#section-2.3)
+ *
+ * @note    Should only be used with router advertisemnents. This is not checked
+ *          however, since nodes should silently ignore it in other NDP messages.
+ *
+ * @param[in] prefix        An IPv6 address or a prefix of an IPv6 address.
+ *                          Must not be NULL or be a link-local or
+ *                          multicast address.
+ * @param[in] prefix_len    The length of @p prefix in bits. Must be between
+ *                          0 and 128.
+ * @param[in] route_ltime   Length of time in seconds that @p prefix is valid.
+ *                          UINT32_MAX represents infinity.
+ * @param[in] flags         Flags as defined in net/ndp.h.
+ * @param[in] next          More options in the packet. NULL, if there are none.
+ *
+ * @return  The packet snip list of options, on success
+ * @return  NULL, if packet buffer is full
+ */
+gnrc_pktsnip_t *gnrc_ndp_opt_ri_build(const ipv6_addr_t *prefix,
+                                      uint8_t prefix_len,
+                                      uint32_t route_ltime,
                                       uint8_t flags, gnrc_pktsnip_t *next);
 
 /**
@@ -269,7 +297,9 @@ gnrc_pktsnip_t *gnrc_ndp_opt_mtu_build(uint32_t mtu, gnrc_pktsnip_t *next);
  * @return  @p next, if RDNSS is not supported
  * @return  NULL, if packet buffer is full
  */
-gnrc_pktsnip_t *gnrc_ndp_opt_rdnss_build(uint32_t lifetime, ipv6_addr_t *addrs,
+ACCESS(read_only, 2, 3)
+gnrc_pktsnip_t *gnrc_ndp_opt_rdnss_build(uint32_t lifetime,
+                                         const ipv6_addr_t *addrs,
                                          unsigned addrs_num,
                                          gnrc_pktsnip_t *next);
 
@@ -387,5 +417,4 @@ void gnrc_ndp_rtr_adv_send(gnrc_netif_t *netif, const ipv6_addr_t *src,
 }
 #endif
 
-#endif /* NET_GNRC_NDP_H */
 /** @} */

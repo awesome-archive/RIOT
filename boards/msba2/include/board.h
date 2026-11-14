@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2013 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2013 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_msba2
@@ -16,10 +15,7 @@
  * @author      unknown
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
-#include "msba2_common.h"
+#include "lpc23xx.h"
 #include "bitarithm.h"
 
 #ifdef __cplusplus
@@ -46,21 +42,16 @@ extern "C" {
 /** @} */
 
 /**
- * @name    xtimer tuning values
+ * @name MTD configuration
  * @{
  */
-#define XTIMER_OVERHEAD     7
-#define XTIMER_SHOOT_EARLY  3
+#ifdef MODULE_MTD_MCI
+#define MTD_0 mtd_dev_get(0)
+#endif
 /** @} */
-
-/**
- * @brief   initialize the board's clock system
- */
-void init_clks1(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

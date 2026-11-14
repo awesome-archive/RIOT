@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Martin Landsmann
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martin Landsmann
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #include <stdio.h> /**< required for snprintf() */
@@ -51,7 +48,7 @@ static fib_table_t test_fib_sr_table;
 
 /*
  * @brief helper function to create source routes.
- *        The enrties are constructed with the given prefix and numbers
+ *        The entries are constructed with the given prefix and numbers
  *        counted from the given count borders (from and to).
  * @param[in] pre prefix string to use
  * @param[in] from starting index to count from
@@ -62,12 +59,21 @@ static fib_table_t test_fib_sr_table;
 static int _create_sr(const char *pre, size_t from, size_t to, fib_sr_t *sr, size_t buf_size)
 {
     char addr_nxt[buf_size];
+    size_t pre_len = strlen(pre);
 
-    strncpy(addr_nxt, pre, strlen(pre));
+    /* the prefix must leave room for at least one digit and the terminator */
+    if (pre_len + 2 > buf_size) {
+        return -EINVAL;
+    }
+
+    memcpy(addr_nxt, pre, pre_len);
 
     for (size_t i = from; i < to; ++i) {
         int res;
-        snprintf(&(addr_nxt[strlen(pre)]), buf_size, "%d", (int)i);
+        res = snprintf(&(addr_nxt[pre_len]), buf_size - pre_len, "%" PRIuSIZE, i);
+        if (res < 0 || (size_t)res >= buf_size - pre_len) {
+            return -ENOBUFS;
+        }
         /* append a  hop */
         res = fib_sr_entry_append(&test_fib_sr_table, sr, (uint8_t *)&addr_nxt, buf_size);
         if (res != 0) {
@@ -76,7 +82,6 @@ static int _create_sr(const char *pre, size_t from, size_t to, fib_sr_t *sr, siz
     }
     return 0;
 }
-
 
 /*
  * @brief create a new empty source route and check the parameters
@@ -106,7 +111,7 @@ static void test_fib_sr_01_create_empty_sr(void)
      * Uncomment the following two lines if you want to test the temporal behaviour
      * @note this may fail since unittests are currently not thread-friendly
      */
-    //xtimer_usleep(5 * US_PER_MS);
+    //xtimer_msleep(5);
     //TEST_ASSERT(sr_lifetime<10000);
 
     fib_deinit(&test_fib_sr_table);
@@ -144,7 +149,7 @@ static void test_fib_sr_02_change_sr_parameters(void)
      * Uncomment the following three lines if you want to test the temporal behaviour
      * @note this may fail since unittests are currently not thread-friendly
      */
-    //xtimer_usleep(5 * US_PER_MS);
+    //xtimer_msleep(5);
     //TEST_ASSERT(sr_lifetime>10000);
     //TEST_ASSERT(sr_lifetime<20000);
 
@@ -184,7 +189,7 @@ static void test_fib_sr_03_read_sr_parameters(void)
      * @note this may fail since unittests are currently not thread-friendly
      */
     /*
-       xtimer_usleep(1 * US_PER_MS);
+       xtimer_msleep(1);
        TEST_ASSERT_EQUAL_INT(-ENOENT, fib_sr_read_head(&test_fib_sr_table, local_sourceroutes[0],
                                                     &sr_iface_id, &sr_flags,
                                                     &sr_lifetime)
@@ -207,7 +212,6 @@ static void test_fib_sr_04_create_and_delete_sr(void)
 
     /* test wrong parameter */
     TEST_ASSERT_EQUAL_INT(-EFAULT, fib_sr_delete(&test_fib_sr_table, NULL));
-
 
     TEST_ASSERT_EQUAL_INT(0, fib_sr_delete(&test_fib_sr_table, local_sourceroutes[0]));
 
@@ -344,7 +348,6 @@ static void test_fib_sr_06_create_sr_with_hops(void)
 
     fib_deinit(&test_fib_sr_table);
 }
-
 
 /*
  * @brief create a new source route with a number of hops on its path,
@@ -491,9 +494,10 @@ static void test_fib_sr_10_create_sr_with_hops_and_get_a_route(void)
 
     TEST_ASSERT_EQUAL_INT(0, _create_sr("Some address X", 0, 10, local_sourceroutes[0], 16));
 
-    size_t addr_list_elements = 10;
-    size_t element_size = 16;
-    uint8_t addr_list[ addr_list_elements * element_size ];
+    enum { ADDR_LIST_ELEMENTS = 10, ELEMENT_SIZE = 16 };
+    size_t addr_list_elements = ADDR_LIST_ELEMENTS;
+    size_t element_size = ELEMENT_SIZE;
+    uint8_t addr_list[ADDR_LIST_ELEMENTS * ELEMENT_SIZE];
     kernel_pid_t sr_iface_id;
     uint32_t sr_flags = 0x0;
     snprintf(addr_nxt, add_buf_size, "Some address X9");
@@ -562,9 +566,10 @@ static void test_fib_sr_11_create_sr_with_hops_and_get_a_partial_route(void)
 
     TEST_ASSERT_EQUAL_INT(0, _create_sr("Some address X", 0, 10, local_sourceroutes[0], 16));
 
-    size_t addr_list_elements = 10;
-    size_t element_size = 16;
-    uint8_t addr_list[ addr_list_elements * element_size ];
+    enum { ADDR_LIST_ELEMENTS = 10, ELEMENT_SIZE = 16 };
+    size_t addr_list_elements = ADDR_LIST_ELEMENTS;
+    size_t element_size = ELEMENT_SIZE;
+    uint8_t addr_list[ADDR_LIST_ELEMENTS * ELEMENT_SIZE];
     kernel_pid_t sr_iface_id;
     uint32_t sr_flags = 0x0;
     snprintf(addr_nxt, add_buf_size, "Some address X7");
@@ -651,7 +656,6 @@ static void test_fib_sr_12_get_consecutive_sr(void)
                                                  add_buf_size)
                           );
 
-
     /* Create SR1 Z5,.., Z7,XX  */
     TEST_ASSERT_EQUAL_INT(0, fib_sr_create(&test_fib_sr_table, &local_sourceroutes[2],
                                            42, 0x0, 10000));
@@ -667,9 +671,10 @@ static void test_fib_sr_12_get_consecutive_sr(void)
 
     fib_sr_t *iter[1];
     iter[0] = NULL;
-    size_t addr_list_elements = 11;
-    size_t element_size = 16;
-    uint8_t addr_list[ addr_list_elements * element_size ];
+    enum { ADDR_LIST_ELEMENTS = 11, ELEMENT_SIZE = 16 };
+    size_t addr_list_elements = ADDR_LIST_ELEMENTS;
+    size_t element_size = ELEMENT_SIZE;
+    uint8_t addr_list[ADDR_LIST_ELEMENTS * ELEMENT_SIZE];
     kernel_pid_t sr_iface_id;
     uint32_t sr_flags = 0x0;
     snprintf(addr_nxt, add_buf_size, "Some address XX");

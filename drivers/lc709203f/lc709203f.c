@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 RWTH Aachen, Steffen Robertz, Josua Arndt
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 RWTH Aachen, Steffen Robertz, Josua Arndt
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -20,7 +17,8 @@
 
 #include "lc709203f.h"
 #include "assert.h"
-#define ENABLE_DEBUG        (0)
+
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 /*
@@ -45,7 +43,6 @@ static uint8_t _get_crc(uint8_t *rec_values, uint8_t len)
     }
     return crc;
 }
-
 
 int lc709203f_init(lc709203f_t *dev, const lc709203f_params_t *params)
 {
@@ -152,7 +149,9 @@ int16_t lc709203f_get_cell_temp(const lc709203f_t *dev)
         DEBUG("CRC Error \n");
         return 0;
     }
-    return ((((unsigned int)rec_buf[1] << 8) | rec_buf[0]) - 2731.5);
+    /* sensor temperature is given in 0.1K -> -2731.5 would be the correct value
+     * returning in 0.1°C int16_t -> using rounded 2732 */
+    return ((((int16_t)rec_buf[1] << 8) | rec_buf[0]) - 2732);
 }
 
 lc709203f_temp_obtaining_mode_t lc709203f_get_status_bit(const lc709203f_t *dev)

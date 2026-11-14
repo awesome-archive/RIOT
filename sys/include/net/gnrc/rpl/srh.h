@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_rpl_srh RPL source routing header extension
@@ -20,8 +19,6 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_GNRC_RPL_SRH_H
-#define NET_GNRC_RPL_SRH_H
 
 #include "net/ipv6/hdr.h"
 #include "net/ipv6/addr.h"
@@ -73,5 +70,4 @@ int gnrc_rpl_srh_process(ipv6_hdr_t *ipv6, gnrc_rpl_srh_t *rh, void **err_ptr);
 }
 #endif
 
-#endif /* NET_GNRC_RPL_SRH_H */
 /** @} */

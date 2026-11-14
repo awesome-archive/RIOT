@@ -1,11 +1,7 @@
 /*
- * Copyright (C) 2016 MUTEX NZ Ltd.
- * Copyright (C) 2015 Loci Controls Inc.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
- *
+ * SPDX-FileCopyrightText: 2016 MUTEX NZ Ltd.
+ * SPDX-FileCopyrightText: 2015 Loci Controls Inc.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -23,7 +19,7 @@
 
 #include "cc2538_rf.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 /* static const __flash uint8_t? */
@@ -62,58 +58,27 @@ static const uint8_t power_lut[NUM_POWER_LEVELS] = {
     255, /**<   7 dBm */
 };
 
-uint64_t cc2538_get_addr_long(void)
+void cc2538_get_addr_long(uint8_t *addr)
 {
-    uint64_t addr = RFCORE_FFSM_EXT_ADDR0;
-    addr <<= 8;
-    addr |= RFCORE_FFSM_EXT_ADDR1;
-    addr <<= 8;
-    addr |= RFCORE_FFSM_EXT_ADDR2;
-    addr <<= 8;
-    addr |= RFCORE_FFSM_EXT_ADDR3;
-    addr <<= 8;
-    addr |= RFCORE_FFSM_EXT_ADDR4;
-    addr <<= 8;
-    addr |= RFCORE_FFSM_EXT_ADDR5;
-    addr <<= 8;
-    addr |= RFCORE_FFSM_EXT_ADDR6;
-    addr <<= 8;
-    addr |= RFCORE_FFSM_EXT_ADDR7;
-    return addr;
+    addr[7] = RFCORE_FFSM_EXT_ADDR0;
+    addr[6] = RFCORE_FFSM_EXT_ADDR1;
+    addr[5] = RFCORE_FFSM_EXT_ADDR2;
+    addr[4] = RFCORE_FFSM_EXT_ADDR3;
+    addr[3] = RFCORE_FFSM_EXT_ADDR4;
+    addr[2] = RFCORE_FFSM_EXT_ADDR5;
+    addr[1] = RFCORE_FFSM_EXT_ADDR6;
+    addr[0] = RFCORE_FFSM_EXT_ADDR7;
 }
 
-uint16_t cc2538_get_addr_short(void)
+void cc2538_get_addr_short(uint8_t *addr)
 {
-    return (RFCORE_FFSM_SHORT_ADDR0 << 8) | RFCORE_FFSM_SHORT_ADDR1;
+    addr[1] = RFCORE_FFSM_SHORT_ADDR0;
+    addr[0] = RFCORE_FFSM_SHORT_ADDR1;
 }
 
 unsigned int cc2538_get_chan(void)
 {
     return IEEE802154_FREQ2CHAN(CC2538_MIN_FREQ + RFCORE_XREG_FREQCTRL);
-}
-
-uint64_t cc2538_get_eui64_primary(void)
-{
-    /*
-     * The primary EUI-64 seems to be written to memory in a non-sequential
-     * byte order, with both 4-byte halves of the address flipped.
-     */
-    uint64_t eui64 = ((uint8_t*)CC2538_EUI64_LOCATION_PRI)[4];
-    eui64 <<= 8;
-    eui64 |= ((uint8_t*)CC2538_EUI64_LOCATION_PRI)[5];
-    eui64 <<= 8;
-    eui64 |= ((uint8_t*)CC2538_EUI64_LOCATION_PRI)[6];
-    eui64 <<= 8;
-    eui64 |= ((uint8_t*)CC2538_EUI64_LOCATION_PRI)[7];
-    eui64 <<= 8;
-    eui64 |= ((uint8_t*)CC2538_EUI64_LOCATION_PRI)[0];
-    eui64 <<= 8;
-    eui64 |= ((uint8_t*)CC2538_EUI64_LOCATION_PRI)[1];
-    eui64 <<= 8;
-    eui64 |= ((uint8_t*)CC2538_EUI64_LOCATION_PRI)[2];
-    eui64 <<= 8;
-    eui64 |= ((uint8_t*)CC2538_EUI64_LOCATION_PRI)[3];
-    return eui64;
 }
 
 bool cc2538_get_monitor(void)
@@ -147,22 +112,22 @@ int cc2538_get_tx_power(void)
     return OUTPUT_POWER_MIN + best_index;
 }
 
-void cc2538_set_addr_long(uint64_t addr)
+void cc2538_set_addr_long(const uint8_t *addr)
 {
-    RFCORE_FFSM_EXT_ADDR0 = addr >> (7 * 8);
-    RFCORE_FFSM_EXT_ADDR1 = addr >> (6 * 8);
-    RFCORE_FFSM_EXT_ADDR2 = addr >> (5 * 8);
-    RFCORE_FFSM_EXT_ADDR3 = addr >> (4 * 8);
-    RFCORE_FFSM_EXT_ADDR4 = addr >> (3 * 8);
-    RFCORE_FFSM_EXT_ADDR5 = addr >> (2 * 8);
-    RFCORE_FFSM_EXT_ADDR6 = addr >> (1 * 8);
-    RFCORE_FFSM_EXT_ADDR7 = addr >> (0 * 8);
+    RFCORE_FFSM_EXT_ADDR0 = addr[7];
+    RFCORE_FFSM_EXT_ADDR1 = addr[6];
+    RFCORE_FFSM_EXT_ADDR2 = addr[5];
+    RFCORE_FFSM_EXT_ADDR3 = addr[4];
+    RFCORE_FFSM_EXT_ADDR4 = addr[3];
+    RFCORE_FFSM_EXT_ADDR5 = addr[2];
+    RFCORE_FFSM_EXT_ADDR6 = addr[1];
+    RFCORE_FFSM_EXT_ADDR7 = addr[0];
 }
 
-void cc2538_set_addr_short(uint16_t addr)
+void cc2538_set_addr_short(const uint8_t *addr)
 {
-    RFCORE_FFSM_SHORT_ADDR1 = addr;
-    RFCORE_FFSM_SHORT_ADDR0 = addr >> 8;
+    RFCORE_FFSM_SHORT_ADDR0 = addr[1];
+    RFCORE_FFSM_SHORT_ADDR1 = addr[0];
 }
 
 void cc2538_set_chan(unsigned int chan)

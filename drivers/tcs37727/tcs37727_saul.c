@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -40,6 +37,6 @@ static int read(const void *dev, phydat_t *res)
 
 const saul_driver_t tcs37727_saul_driver = {
     .read = read,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_COLOR,
 };

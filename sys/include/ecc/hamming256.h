@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Lucas Jenß
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Lucas Jenß
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     sys_ecc
@@ -15,15 +14,11 @@
  * @author      Lucas Jenß <lucas@x3ro.de>
  */
 
-#ifndef ECC_HAMMING256_H
-#define ECC_HAMMING256_H
-
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /**  No bit errors were detected in the message */
 #define Hamming_ERROR_NONE 0
@@ -37,7 +32,6 @@ extern "C" {
 /** Multiple bits are incorrect in the data and they cannot be corrected. */
 #define Hamming_ERROR_MULTIPLEBITS      3
 
-
 /**
  *  @brief Computes 3-bytes hamming codes for a data block whose size is multiple of
  *  256 bytes. Each 256 bytes block gets its own code.
@@ -47,7 +41,6 @@ extern "C" {
  *  @param[out] code  Codes buffer.
  */
 void hamming_compute256x( const uint8_t *data, uint32_t size, uint8_t *code );
-
 
 /**
  *  @brief Verifies 3-bytes hamming codes for a data block whose size is multiple of
@@ -63,10 +56,8 @@ void hamming_compute256x( const uint8_t *data, uint32_t size, uint8_t *code );
  */
 uint8_t hamming_verify256x( uint8_t *data, uint32_t size, const uint8_t *code );
 
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ECC_HAMMING256_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Hauke Petersen <devel@haukepetersen.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Hauke Petersen <devel@haukepetersen.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_lpd8808
@@ -15,9 +14,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef LPD8808_PARAMS_H
-#define LPD8808_PARAMS_H
 
 #include "board.h"
 
@@ -58,5 +54,4 @@ static const lpd8808_params_t lpd8808_params[] =
 }
 #endif
 
-#endif /* LPD8808_PARAMS_H */
 /** @} */

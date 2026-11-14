@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2015 Cenk Gündoğan <cnkgndgn@gmail.com>
- * Copyright (C) 2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Cenk Gündoğan <cnkgndgn@gmail.com>
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -15,19 +12,20 @@
  * @author Martine Lenders <m.lenders@fu-berlin.de>
  */
 
+#include <assert.h>
 #include <string.h>
 #include "net/gnrc/netif/internal.h"
 #include "net/gnrc/ipv6/ext/rh.h"
 #include "net/gnrc/rpl/srh.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG                0
 #include "debug.h"
-
-static char addr_str[IPV6_ADDR_MAX_STR_LEN];
 
 #define GNRC_RPL_SRH_PADDING(X)     ((X & 0xF0) >> 4)
 #define GNRC_RPL_SRH_COMPRE(X)      (X & 0x0F)
 #define GNRC_RPL_SRH_COMPRI(X)      ((X & 0xF0) >> 4)
+
+static char addr_str[IPV6_ADDR_MAX_STR_LEN];
 
 /* checks if multiple addresses within the source routing header exist on my
  * interfaces */
@@ -73,6 +71,13 @@ int gnrc_rpl_srh_process(ipv6_hdr_t *ipv6, gnrc_rpl_srh_t *rh, void **err_ptr)
     uint8_t current_pos, pref_elided, addr_len, compri_addr_len;
     const uint8_t new_seg_left = rh->seg_left - 1;
 
+    if ((rh->len * 8) < (GNRC_RPL_SRH_PADDING(rh->pad_resv) +
+                         (16 - GNRC_RPL_SRH_COMPRE(rh->compr)))) {
+        DEBUG("RPL SRH: inconsistent header received\n");
+        *err_ptr = &rh->len;
+        return GNRC_IPV6_EXT_RH_ERROR;
+    }
+
     assert(rh->seg_left > 0);
     num_addr = (((rh->len * 8) - GNRC_RPL_SRH_PADDING(rh->pad_resv) -
                  (16 - GNRC_RPL_SRH_COMPRE(rh->compr))) /
@@ -99,12 +104,10 @@ int gnrc_rpl_srh_process(ipv6_hdr_t *ipv6, gnrc_rpl_srh_t *rh, void **err_ptr)
 
     if (ipv6_addr_is_multicast(&ipv6->dst)) {
         DEBUG("RPL SRH: found a multicast destination address - discard\n");
-        *err_ptr = &ipv6->dst;
         return GNRC_IPV6_EXT_RH_ERROR;
     }
     if (ipv6_addr_is_multicast(&addr)) {
-        DEBUG("RPL SRH: found a multicast addres in next address - discard\n");
-        *err_ptr = current_address;
+        DEBUG("RPL SRH: found a multicast address in next address - discard\n");
         return GNRC_IPV6_EXT_RH_ERROR;
     }
 

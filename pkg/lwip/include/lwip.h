@@ -1,19 +1,12 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup    pkg_lwip    lwIP
- * @ingroup     pkg
- * @brief       A lightweight TCP/IP stack
- * @see         http://savannah.nongnu.org/projects/lwip/
- *
- * lwIP is a lightweight TCP/IP stack primarily for usage with Ethernet.
- * It can be used with the the @ref conn.
+ * @ingroup     pkg_lwip
  *
  * @{
  *
@@ -22,12 +15,17 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef LWIP_H
-#define LWIP_H
+
+#include "event.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @brief event queue for netdev events
+ */
+extern event_queue_t lwip_event_queue;
 
 /**
  * @brief   Initializes lwIP stack.
@@ -41,5 +39,4 @@ void lwip_bootstrap(void);
 }
 #endif
 
-#endif /* LWIP_H */
 /** @} */

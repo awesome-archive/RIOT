@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2016 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @file
  * @brief   POSIX compatible sys/statvfs.h definitions
  * @author  Joakim Nohlgård <joakim.nohlgard@eistec.se>
+ * @{
  */
 
 /* If building on native we need to use the system libraries instead */
@@ -18,8 +18,6 @@
 /* without the GCC pragma above #include_next will trigger a pedantic error */
 #include_next <sys/statvfs.h>
 #else
-#ifndef SYS_STATVFS_H
-#define SYS_STATVFS_H
 
 #include <sys/types.h> /* for fsblkcnt_t, fsfilcnt_t */
 #if MODULE_NEWLIB
@@ -68,8 +66,6 @@ enum {
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* SYS_STATVFS_H */
 
 #endif /* CPU_NATIVE */
 

@@ -40,10 +40,7 @@
 
    The drawbacks of this implementation are:
     - There is no message queue. The whole message must be ready in a buffer.
-    - It is not optimized for peformance.
-
-   The implementation is even simpler on a little endian platform. Just define the
-   LITTLE_ENDIAN symbol in that case.
+    - It is not optimized for performance.
 
    For a more complete set of implementations, please refer to
    the Keccak Code Package at https://github.com/gvanas/KeccakCodePackage
@@ -56,8 +53,11 @@
    ================================================================
  */
 
-#include <hashes/sha3.h>
 #include <stdint.h>
+#include <string.h>
+
+#include "hashes/sha3.h"
+#include "macros/utils.h"
 
 /**
  * Function to compute the Keccak[r, c] sponge function over a given input.
@@ -116,7 +116,6 @@ void sha3_256_final(keccak_state_t *ctx, void *digest)
     Keccak_final(ctx, digest, SHA3_256_DIGEST_LENGTH);
 }
 
-
 /**
  *  Function to compute SHA3-384 on the input message. The output length is fixed to 48 bytes.
  */
@@ -173,11 +172,7 @@ typedef uint8_t UINT8;
 typedef uint64_t UINT64;
 typedef UINT64 tKeccakLane;
 
-#if __BYTE_ORDER__ == __ORDER__LITTLE_ENDIAN__
-#define LITTLE_ENDIAN
-#endif
-
-#ifndef LITTLE_ENDIAN
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 /** Function to load a 64-bit value using the little-endian (LE) convention.
  * On a LE platform, this could be greatly simplified using a cast.
  */
@@ -218,7 +213,7 @@ static void xor64(UINT8 *x, UINT64 u)
         u >>= 8;
     }
 }
-#endif
+#endif /* __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__ */
 
 /*
    ================================================================
@@ -229,15 +224,15 @@ static void xor64(UINT8 *x, UINT64 u)
 #define ROL64(a, offset) ((((UINT64)a) << offset) ^ (((UINT64)a) >> (64 - offset)))
 #define i(x, y) ((x) + 5 * (y))
 
-#ifdef LITTLE_ENDIAN
-    #define readLane(x, y)          (((tKeccakLane *)state)[i(x, y)])
-    #define writeLane(x, y, lane)   (((tKeccakLane *)state)[i(x, y)]) = (lane)
-    #define XORLane(x, y, lane)     (((tKeccakLane *)state)[i(x, y)]) ^= (lane)
-#else
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     #define readLane(x, y)          load64((UINT8 *)state + sizeof(tKeccakLane) * i(x, y))
     #define writeLane(x, y, lane)   store64((UINT8 *)state + sizeof(tKeccakLane) * i(x, y), lane)
     #define XORLane(x, y, lane)     xor64((UINT8 *)state + sizeof(tKeccakLane) * i(x, y), lane)
-#endif
+#else /* __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__ */
+    #define readLane(x, y)          (((tKeccakLane *)state)[i(x, y)])
+    #define writeLane(x, y, lane)   (((tKeccakLane *)state)[i(x, y)]) = (lane)
+    #define XORLane(x, y, lane)     (((tKeccakLane *)state)[i(x, y)]) ^= (lane)
+#endif /* __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__ */
 
 /**
  * Function that computes the linear feedback shift register (LFSR) used to
@@ -331,9 +326,6 @@ static void KeccakF1600_StatePermute(void *state)
    ================================================================
  */
 
-#include <string.h>
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-
 static void Keccak(unsigned int rate, unsigned int capacity, const unsigned char *input,
                    unsigned long long int inputByteLen, unsigned char delimitedSuffix,
                    unsigned char *output, unsigned long long int outputByteLen)
@@ -424,7 +416,6 @@ void Keccak_update(keccak_state_t *ctx, const unsigned char *input,
 
         if (blockSize == ctx->rateInBytes) {
             KeccakF1600_StatePermute(ctx->state);
-            blockSize = 0;
             ctx->i = 0;
         }
     }

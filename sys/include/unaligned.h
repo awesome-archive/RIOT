@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2019 Kaspar Schleiser <kaspar@schleiser.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2019 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_unaligned unaligned memory access methods
@@ -34,9 +33,6 @@
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
  */
 
-#ifndef UNALIGNED_H
-#define UNALIGNED_H
-
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -48,6 +44,16 @@ typedef struct __attribute__((packed)) {
     uint16_t val;       /**< value */
 } uint16_una_t;
 
+/** @brief Unaligned access helper struct (uint32_t version) */
+typedef struct __attribute__((packed)) {
+    uint32_t val;       /**< value */
+} uint32_una_t;
+
+/** @brief Unaligned access helper struct (uint64_t version) */
+typedef struct __attribute__((packed)) {
+    uint64_t val;       /**< value */
+} uint64_una_t;
+
 /**
  * @brief    Get uint16_t from possibly unaligned pointer
  *
@@ -57,7 +63,33 @@ typedef struct __attribute__((packed)) {
  */
 static inline uint16_t unaligned_get_u16(const void *ptr)
 {
-    const uint16_una_t *tmp = ptr;
+    const uint16_una_t *tmp = (const uint16_una_t *)ptr;
+    return tmp->val;
+}
+
+/**
+ * @brief    Get uint32_t from possibly unaligned pointer
+ *
+ * @param[in]   ptr pointer to read from
+ *
+ * @returns value read from @p ptr
+ */
+static inline uint32_t unaligned_get_u32(const void *ptr)
+{
+    const uint32_una_t *tmp = (const uint32_una_t *)ptr;
+    return tmp->val;
+}
+
+/**
+ * @brief    Get uint64_t from possibly unaligned pointer
+ *
+ * @param[in]   ptr pointer to read from
+ *
+ * @returns value read from @p ptr
+ */
+static inline uint64_t unaligned_get_u64(const void *ptr)
+{
+    const uint64_una_t *tmp = (const uint64_una_t *)ptr;
     return tmp->val;
 }
 
@@ -66,4 +98,3 @@ static inline uint16_t unaligned_get_u16(const void *ptr)
 #endif
 
 /** @} */
-#endif /* UNALIGNED_H */

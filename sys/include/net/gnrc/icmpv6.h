@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for
- * more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_icmpv6  ICMPv6
@@ -23,9 +22,6 @@
  *
  * @todo build error messages
  */
-
-#ifndef NET_GNRC_ICMPV6_H
-#define NET_GNRC_ICMPV6_H
 
 #include "net/icmpv6.h"
 #include "net/gnrc/netif.h"
@@ -79,7 +75,6 @@ int gnrc_icmpv6_calc_csum(gnrc_pktsnip_t *hdr, gnrc_pktsnip_t *pseudo_hdr);
 }
 #endif
 
-#endif /* NET_GNRC_ICMPV6_H */
 /**
  * @}
  */

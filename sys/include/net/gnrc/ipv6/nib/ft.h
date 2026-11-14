@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_ipv6_nib_ft    Forwarding table
@@ -17,8 +16,6 @@
  *
  * @author  Martine Lenders <m.lenders@fu-berlin.de>
  */
-#ifndef NET_GNRC_IPV6_NIB_FT_H
-#define NET_GNRC_IPV6_NIB_FT_H
 
 #include <stdint.h>
 
@@ -81,7 +78,7 @@ int gnrc_ipv6_nib_ft_get(const ipv6_addr_t *dst, gnrc_pktsnip_t *pkt,
  */
 int gnrc_ipv6_nib_ft_add(const ipv6_addr_t *dst, unsigned dst_len,
                          const ipv6_addr_t *next_hop, unsigned iface,
-                         uint16_t lifetime);
+                         uint32_t lifetime);
 
 /**
  * @brief   Deletes a route from forwarding table.
@@ -112,7 +109,8 @@ void gnrc_ipv6_nib_ft_del(const ipv6_addr_t *dst, unsigned dst_len);
  *
  * The iteration over all forwarding table entries in the NIB includes all
  * entries added via @p gnrc_ipv6_nib_ft_add() and entries that are currently
- * in the Destination Cache, in the Prefix List, and in the Default Router List.
+ * in the Destination Cache, in the Prefix List (only if they're on-link),
+ * and in the Default Router List.
  *
  * Usage example:
  *
@@ -139,7 +137,6 @@ void gnrc_ipv6_nib_ft_del(const ipv6_addr_t *dst, unsigned dst_len);
 bool gnrc_ipv6_nib_ft_iter(const ipv6_addr_t *next_hop, unsigned iface,
                            void **state, gnrc_ipv6_nib_ft_t *fte);
 
-
 /**
  * @brief   Prints a forwarding table entry
  *
@@ -153,5 +150,4 @@ void gnrc_ipv6_nib_ft_print(const gnrc_ipv6_nib_ft_t *fte);
 }
 #endif
 
-#endif /* NET_GNRC_IPV6_NIB_FT_H */
 /** @} */

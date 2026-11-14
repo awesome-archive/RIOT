@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_uart_half_duplex half-duplex UART Driver
@@ -20,9 +19,6 @@
  *
  * @author      Loïc Dauphin <loic.dauphin@inria.fr>
  */
-
-#ifndef UART_HALF_DUPLEX_H
-#define UART_HALF_DUPLEX_H
 
 #include <stdlib.h>
 
@@ -90,7 +86,7 @@ enum {
  * @return     UART_HALF_DUPLEX_OK if everything is in order
  * @return     UART_HALF_DUPLEX_NODEV if invalid UART device was given
  * @return     UART_HALF_DUPLEX_NOBAUD if given baudrate is not applicable
- * @return     UART_HALF_DUPLEX_INTERR if an other internal error occured
+ * @return     UART_HALF_DUPLEX_INTERR if an other internal error occurred
  * @return     UART_HALF_DUPLEX_NOMODE if the given mode is not applicable
  * @return     UART_HALF_DUPLEX_NOBUFF if an invalid buffer was given
  */
@@ -140,5 +136,4 @@ size_t uart_half_duplex_recv(const uart_half_duplex_t *dev, size_t size);
 }
 #endif
 
-#endif /* UART_HALF_DUPLEX_H */
 /** @} */

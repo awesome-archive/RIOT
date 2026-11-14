@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 José Ignacio Alamos
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for
- * more details.
+ * SPDX-FileCopyrightText: 2016 José Ignacio Alamos
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_ppp Point-to-Point Protocol (PPP) Data Link Layer
@@ -23,14 +22,9 @@
  *              </a>
  */
 
-
-#ifndef NET_PPPTYPE_H
-#define NET_PPPTYPE_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 #define PPPTYPE_IPV6           (0x0057)     /**< IPv6 packet in PPP*/
 #define PPPTYPE_IPV4           (0x0021)     /**< IPv4 packet in PPP */
@@ -44,7 +38,6 @@ extern "C" {
 }
 #endif
 
-#endif /* NET_PPPTYPE_H */
 /**
  * @}
  */

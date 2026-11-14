@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -23,7 +20,7 @@
 #include "assert.h"
 #include "net/l2filter.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 static inline bool match(const l2filter_t *filter,
@@ -37,18 +34,22 @@ void l2filter_init(l2filter_t *list)
 {
     assert(list);
 
-    for (unsigned i = 0; i < L2FILTER_LISTSIZE; i++) {
+    for (unsigned i = 0; i < CONFIG_L2FILTER_LISTSIZE; i++) {
         list[i].addr_len = 0;
     }
 }
 
 int l2filter_add(l2filter_t *list, const void *addr, size_t addr_len)
 {
-    assert(list && addr && (addr_len <= L2FILTER_ADDR_MAXLEN));
+    assert(list && addr);
+    if (addr_len > CONFIG_L2FILTER_ADDR_MAXLEN) {
+        assert(0);
+        return -EINVAL;
+    }
 
     int res = -ENOMEM;
 
-    for (unsigned i = 0; i < L2FILTER_LISTSIZE; i++) {
+    for (unsigned i = 0; i < CONFIG_L2FILTER_LISTSIZE; i++) {
         if (list[i].addr_len == 0) {
             list[i].addr_len = addr_len;
             memcpy(list[i].addr, addr, addr_len);
@@ -62,11 +63,11 @@ int l2filter_add(l2filter_t *list, const void *addr, size_t addr_len)
 
 int l2filter_rm(l2filter_t *list, const void *addr, size_t addr_len)
 {
-    assert(list && addr && (addr_len <= L2FILTER_ADDR_MAXLEN));
+    assert(list && addr && (addr_len <= CONFIG_L2FILTER_ADDR_MAXLEN));
 
     int res = -ENOENT;
 
-    for (unsigned i = 0; i < L2FILTER_LISTSIZE; i++) {
+    for (unsigned i = 0; i < CONFIG_L2FILTER_LISTSIZE; i++) {
         if (match(&list[i], addr, addr_len)) {
             list[i].addr_len = 0;
             res = 0;
@@ -79,11 +80,11 @@ int l2filter_rm(l2filter_t *list, const void *addr, size_t addr_len)
 
 bool l2filter_pass(const l2filter_t *list, const void *addr, size_t addr_len)
 {
-    assert(list && addr && (addr_len <= L2FILTER_ADDR_MAXLEN));
+    assert(list && addr && (addr_len <= CONFIG_L2FILTER_ADDR_MAXLEN));
 
 #ifdef MODULE_L2FILTER_WHITELIST
     bool res = false;
-    for (unsigned i = 0; i < L2FILTER_LISTSIZE; i++) {
+    for (unsigned i = 0; i < CONFIG_L2FILTER_LISTSIZE; i++) {
         if (match(&list[i], addr, addr_len)) {
             DEBUG("[l2filter] whitelist: address match -> packet passes\n");
             res = true;
@@ -93,7 +94,7 @@ bool l2filter_pass(const l2filter_t *list, const void *addr, size_t addr_len)
     DEBUG("[l2filter] whitelist: no match -> packet dropped\n");
 #else
     bool res = true;
-    for (unsigned i = 0; i < L2FILTER_LISTSIZE; i++) {
+    for (unsigned i = 0; i < CONFIG_L2FILTER_LISTSIZE; i++) {
         if (match(&list[i], addr, addr_len)) {
             DEBUG("[l2filter] blacklist: address match -> packet dropped\n");
             res = false;

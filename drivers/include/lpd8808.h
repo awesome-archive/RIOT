@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_lpd8808 LPD8808 based LED Strip
@@ -26,9 +25,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef LPD8808_H
-#define LPD8808_H
 
 #include "color.h"
 #include "periph/gpio.h"
@@ -79,5 +75,4 @@ void lpd8808_load_rgb(const lpd8808_t *dev, color_rgb_t vals[]);
 }
 #endif
 
-#endif /* LPD8808_H */
 /** @} */

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -18,15 +15,14 @@
  * @}
  */
 
-
 #include <string.h>
 #include "crypto/modes/cbc.h"
 
-int cipher_encrypt_cbc(cipher_t* cipher, uint8_t iv[16],
-                       const uint8_t* input, size_t length, uint8_t* output)
+int cipher_encrypt_cbc(const cipher_t *cipher, uint8_t iv[16],
+                       const uint8_t *input, size_t length, uint8_t *output)
 {
     size_t offset = 0;
-    uint8_t block_size, input_block[CIPHER_MAX_BLOCK_SIZE] = {0},
+    uint8_t block_size, input_block[CIPHER_MAX_BLOCK_SIZE] = { 0 },
             *output_block_last;
 
     block_size = cipher_get_block_size(cipher);
@@ -53,14 +49,12 @@ int cipher_encrypt_cbc(cipher_t* cipher, uint8_t iv[16],
     return offset;
 }
 
-
-int cipher_decrypt_cbc(cipher_t* cipher, uint8_t iv[16],
-                       const uint8_t* input, size_t length, uint8_t* output)
+int cipher_decrypt_cbc(const cipher_t *cipher, uint8_t iv[16],
+                       const uint8_t *input, size_t length, uint8_t *output)
 {
     size_t offset = 0;
     const uint8_t *input_block, *input_block_last;
     uint8_t block_size;
-
 
     block_size = cipher_get_block_size(cipher);
     if (length % block_size != 0) {

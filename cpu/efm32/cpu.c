@@ -1,9 +1,7 @@
 /*
- * Copyright (C) 2015-2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015-2017 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2022 SSV Software Systems GmbH
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -15,27 +13,21 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @author      Bas Stottelaar <basstottelaar@gmail.com>
+ * @author      Juergen Fitschen <me@jue.yt>
  *
  * @}
  */
 
 #include "cpu.h"
+#include "kernel_init.h"
 #include "periph_conf.h"
 #include "periph/init.h"
+#include "stdio_base.h"
 
 #include "em_chip.h"
 #include "em_cmu.h"
+#include "em_dbg.h"
 #include "em_emu.h"
-
-/**
- * @brief   Default settings for CMU initialization.
- */
-#ifndef CMU_HFXOINIT
-#define CMU_HFXOINIT        CMU_HFXOINIT_DEFAULT
-#endif
-#ifndef CMU_LFXOINIT
-#define CMU_LFXOINIT        CMU_LFXOINIT_DEFAULT
-#endif
 
 /**
  * @brief   Default settings for EMU initialization
@@ -50,7 +42,9 @@
 #define EMU_EM4INIT         EMU_EM4INIT_DEFAULT
 #endif
 
-#ifdef _SILICON_LABS_32B_SERIES_1
+#ifndef RIOTBOOT
+
+#if defined(DCDC_PRESENT) && DCDC_COUNT > 0
 /**
  * @brief   Initialize integrated DC-DC regulator
  */
@@ -64,6 +58,18 @@ static void dcdc_init(void)
     EMU_DCDCInit(&init_dcdc);
 #endif
 }
+#endif
+
+#if (_SILICON_LABS_32B_SERIES < 2)
+
+/**
+ * @brief   Default settings for CMU initialization.
+ */
+#ifndef CMU_HFXOINIT
+#define CMU_HFXOINIT        CMU_HFXOINIT_DEFAULT
+#endif
+#ifndef CMU_LFXOINIT
+#define CMU_LFXOINIT        CMU_LFXOINIT_DEFAULT
 #endif
 
 /**
@@ -96,14 +102,21 @@ static void clk_init(void)
         CMU_OscillatorEnable(cmuOsc_HFRCO, false, false);
     }
 
-    /* initialize LFXO with board-specific parameters before switching */
-    if (CLOCK_LFA == cmuSelect_LFXO || CLOCK_LFB == cmuSelect_LFXO ||
-#ifdef _SILICON_LABS_32B_SERIES_1
-        CLOCK_LFE == cmuSelect_LFXO)
-#else
-        false)
+#if defined(_SILICON_LABS_32B_SERIES_1)
+    /* disable LFRCO comparator chopping and dynamic element matching
+     * else LFRCO has too much jitter for LEUART > 1800 baud */
+    CMU->LFRCOCTRL &= ~(CMU_LFRCOCTRL_ENCHOP | CMU_LFRCOCTRL_ENDEM);
 #endif
-    {
+
+    /* initialize LFXO with board-specific parameters before switching */
+#if defined(_SILICON_LABS_32B_SERIES_1)
+    if (CLOCK_LFA == cmuSelect_LFXO ||
+        CLOCK_LFB == cmuSelect_LFXO ||
+        CLOCK_LFE == cmuSelect_LFXO) {
+#else
+    if (CLOCK_LFA == cmuSelect_LFXO ||
+        CLOCK_LFB == cmuSelect_LFXO) {
+#endif
         CMU_LFXOInit_TypeDef init_lfxo = CMU_LFXOINIT;
 
         CMU_LFXOInit(&init_lfxo);
@@ -115,22 +128,54 @@ static void clk_init(void)
     /* set (and enable) the LFB clock source */
     CMU_ClockSelectSet(cmuClock_LFB, CLOCK_LFB);
 
-#ifdef _SILICON_LABS_32B_SERIES_1
+#if defined(_SILICON_LABS_32B_SERIES_1)
     /* set (and enable) the LFE clock source */
     CMU_ClockSelectSet(cmuClock_LFE, CLOCK_LFE);
 #endif
 
     /* disable the LFRCO if external crystal is used */
-    if (CLOCK_LFA == cmuSelect_LFXO && CLOCK_LFB == cmuSelect_LFXO &&
-#ifdef _SILICON_LABS_32B_SERIES_1
-        CLOCK_LFE == cmuSelect_LFXO)
+#if defined(_SILICON_LABS_32B_SERIES_1)
+    if (CLOCK_LFA == cmuSelect_LFXO &&
+        CLOCK_LFB == cmuSelect_LFXO &&
+        CLOCK_LFE == cmuSelect_LFXO) {
 #else
-        true)
+    if (CLOCK_LFA == cmuSelect_LFXO &&
+        CLOCK_LFB == cmuSelect_LFXO) {
 #endif
-    {
         CMU_OscillatorEnable(cmuOsc_LFRCO, false, false);
     }
 }
+
+#else /* (_SILICON_LABS_32B_SERIES >= 2) */
+
+static void clk_init(void)
+{
+    /* init oscillators */
+#ifdef CMU_HFXOINIT
+    CMU_HFXOInit_TypeDef init_hfxo = CMU_HFXOINIT;
+    CMU_HFXOInit(&init_hfxo);
+#endif
+#ifdef CMU_LFXOINIT
+    CMU_LFXOInit_TypeDef init_lfxo = CMU_LFXOINIT;
+    CMU_LFXOInit(&init_lfxo);
+#endif
+
+    /* setup clock prescalers */
+#if defined(CLK_DIV_NUMOF)
+    for (size_t i = 0; i < CLK_DIV_NUMOF; i++) {
+        CMU_ClockDivSet(clk_div_config[i].clk, clk_div_config[i].div);
+    }
+#endif
+
+    /* select clock sources */
+#if defined(CLK_MUX_NUMOF)
+    for (size_t i = 0; i < CLK_MUX_NUMOF; i++) {
+        CMU_ClockSelectSet(clk_mux_config[i].clk, clk_mux_config[i].src);
+    }
+#endif
+}
+
+#endif /* (_SILICON_LABS_32B_SERIES >= 2) */
 
 /**
  * @brief   Initialize sleep modes
@@ -145,23 +190,34 @@ static void pm_init(void)
 
     EMU_EM23Init(&init_em23);
 
-#ifdef _SILICON_LABS_32B_SERIES_1
+#if defined(_SILICON_LABS_32B_SERIES_1) || defined(_SILICON_LABS_32B_SERIES_2)
     /* initialize EM4 */
     EMU_EM4Init_TypeDef init_em4 = EMU_EM4INIT;
 
     EMU_EM4Init(&init_em4);
 #endif
+
+#if defined(DEVELHELP) && defined(EMU_CTRL_EM2DBGEN)
+    /* make sure to keep the debug unit active in develhelp */
+    DBG_EM2DebugEnable(true);
+#endif
 }
+
+#endif
 
 void cpu_init(void)
 {
+#ifndef RIOTBOOT
     /* apply errata that may be applicable (see em_chip.h) */
     CHIP_Init();
+#endif
 
     /* initialize the Cortex-M core */
     cortexm_init();
 
-#ifdef _SILICON_LABS_32B_SERIES_1
+#ifndef RIOTBOOT
+
+#if defined(DCDC_PRESENT) && DCDC_COUNT > 0
     /* initialize dc-dc */
     dcdc_init();
 #endif
@@ -172,6 +228,10 @@ void cpu_init(void)
     /* initialize power management interface */
     pm_init();
 
+    /* initialize stdio prior to periph_init() to allow use of DEBUG() there */
+    early_init();
+
     /* trigger static peripheral initialization */
     periph_init();
+#endif
 }

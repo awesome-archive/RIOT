@@ -1,11 +1,7 @@
 /*
- * Copyright (C) 2014 PHYTEC Messtechnik GmbH
- *               2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
- *
+ * SPDX-FileCopyrightText: 2014 PHYTEC Messtechnik GmbH
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -28,7 +24,7 @@
 #include "periph/i2c.h"
 #include "hdc1000.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 static int16_t temp_cached, hum_cached;
@@ -130,10 +126,9 @@ int hdc1000_read(const hdc1000_t *dev, int16_t *temp, int16_t *hum)
     if (hdc1000_trigger_conversion(dev) != HDC1000_OK) {
         return HDC1000_BUSERR;
     }
-    xtimer_usleep(HDC1000_CONVERSION_TIME);
+    xtimer_usleep(CONFIG_HDC1000_CONVERSION_TIME);
     return hdc1000_get_results(dev, temp, hum);
 }
-
 
 int hdc1000_read_cached(const hdc1000_t *dev, int16_t *temp, int16_t *hum)
 {

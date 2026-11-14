@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 UC Berkeley
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 UC Berkeley
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_pir
@@ -16,9 +15,6 @@
  * @author      Hyung-Sin Kim <hs.kim@cs.berkeley.edu>
  */
 
-#ifndef PIR_PARAMS_H
-#define PIR_PARAMS_H
-
 #include "board.h"
 #include "pir.h"
 #include "saul_reg.h"
@@ -28,22 +24,35 @@ extern "C" {
 #endif
 
 /**
- * @brief   Set default configuration parameters for the PIR driver
+ * @name    default configuration parameters for the PIR driver
  * @{
  */
 #ifndef PIR_PARAM_GPIO
+/**
+ * @brief   GPIO pin the PIR is connected to
+ */
 #define PIR_PARAM_GPIO             GPIO_PIN(0, 6)
 #endif
 #ifndef PIR_PARAM_ACTIVE_HIGH
+/**
+ * @brief   Signal polarity: 1 means high on active, 0 means low on active
+ */
 #define PIR_PARAM_ACTIVE_HIGH      1
 #endif
 
 #ifndef PIR_PARAMS
+/**
+ * @brief   The PIR configuration parameters
+ */
 #define PIR_PARAMS                 { .gpio = PIR_PARAM_GPIO, \
                                      .active_high = PIR_PARAM_ACTIVE_HIGH }
 #endif
+
 #ifndef PIR_SAUL_INFO
-#define PIR_SAUL_INFO              { .name = "pir" }
+/**
+ * @brief   The SAUL information the PIR devices get registered with
+ */
+#define PIR_SAUL_INFO              { .name = "PIR" }
 #endif
 /**@}*/
 
@@ -67,5 +76,4 @@ static const saul_reg_info_t pir_saul_info[] =
 }
 #endif
 
-#endif /* PIR_PARAMS_H */
 /** @} */

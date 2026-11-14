@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -22,9 +19,12 @@
 #include <string.h>
 
 #include "fmt.h"
+#include "timex.h"
+#include "ztimer.h"
+
 #include "rn2xx3_internal.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #define RESP_TIMEOUT_SEC            (5U)
@@ -51,22 +51,21 @@ static bool _wait_reply(rn2xx3_t *dev, uint8_t timeout)
     dev->resp_size = 0;
     dev->resp_buf[0] = 0;
 
-    xtimer_ticks64_t sent_time = xtimer_now64();
+    ztimer_now_t sent_time = ztimer_now(ZTIMER_MSEC);
 
-    xtimer_t resp_timer;
+    ztimer_t resp_timer;
     resp_timer.callback = isr_resp_timeout;
     resp_timer.arg = dev;
 
-    xtimer_set(&resp_timer, (uint32_t)timeout * US_PER_SEC);
+    ztimer_set(ZTIMER_MSEC, &resp_timer, (uint32_t)timeout * MS_PER_SEC);
 
     /* wait for results */
     while ((!dev->resp_done) &&
-           xtimer_less(xtimer_diff32_64(xtimer_now64(), sent_time),
-                                        xtimer_ticks_from_usec(timeout * US_PER_SEC))) {
+        ((int32_t)(sent_time + (timeout * MS_PER_SEC) - ztimer_now(ZTIMER_MSEC)) > 0)) {
         mutex_lock(&(dev->resp_lock));
     }
 
-    xtimer_remove(&resp_timer);
+    ztimer_remove(ZTIMER_MSEC, &resp_timer);
 
     if (dev->resp_done == 0) {
         DEBUG("[rn2xx3] response timeout\n");
@@ -100,7 +99,7 @@ void rn2xx3_set_internal_state(rn2xx3_t *dev, uint8_t state)
         return;
     }
 
-    if (ENABLE_DEBUG) {
+    if (IS_ACTIVE(ENABLE_DEBUG)) {
         printf("[rn2xx3] new state: ");
         switch(state) {
             case RN2XX3_INT_STATE_CMD:
@@ -178,22 +177,14 @@ int rn2xx3_write_cmd(rn2xx3_t *dev)
 
 int rn2xx3_write_cmd_no_wait(rn2xx3_t *dev)
 {
-    DEBUG("[rn2xx3] CMD: %s\n", dev->cmd_buf);
-
-    if (dev->int_state == RN2XX3_INT_STATE_SLEEP) {
-        DEBUG("[rn2xx3] ABORT: device is in sleep mode\n");
-        return RN2XX3_ERR_SLEEP_MODE;
-    }
+    DEBUG("[rn2xx3] CMD (NO WAIT): %s\n", dev->cmd_buf);
 
     mutex_lock(&(dev->cmd_lock));
     _uart_write_str(dev, dev->cmd_buf);
     _uart_write_str(dev, closing_seq);
-
-    DEBUG("[rn2xx3] RET: %s\n", dev->resp_buf);
-
     mutex_unlock(&(dev->cmd_lock));
 
-    return rn2xx3_process_response(dev);
+    return RN2XX3_OK;
 }
 
 int rn2xx3_wait_response(rn2xx3_t *dev)
@@ -228,9 +219,10 @@ void rn2xx3_cmd_start(rn2xx3_t *dev)
 
 void rn2xx3_cmd_append(rn2xx3_t *dev, const uint8_t *payload, uint8_t payload_len)
 {
-    char payload_str[2];
+    char payload_str[3] = { 0 };
     for (unsigned i = 0; i < payload_len; i++) {
         fmt_byte_hex(payload_str, payload[i]);
+        DEBUG("%s", payload_str);
         _uart_write_str(dev, payload_str);
     }
 }

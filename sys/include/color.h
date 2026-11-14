@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 - 2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2014-2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_color Color
@@ -20,9 +19,6 @@
  * @author      Simon Brummer <brummer.simon@googlemail.com>
  */
 
-#ifndef COLOR_H
-#define COLOR_H
-
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -30,13 +26,24 @@ extern "C" {
 #endif
 
 /**
- * @brief Data-structure describing a RGB color
+ * @brief Data-structure describing an RGB color
  */
 typedef struct {
     uint8_t r;          /**< red value      [0 - 255] */
     uint8_t g;          /**< green value    [0 - 255] */
     uint8_t b;          /**< blue value     [0 - 255] */
 } color_rgb_t;
+
+/**
+ * @brief Data-structure describing an RGBW color
+ */
+typedef struct {
+    uint8_t r;          /**< red value      [0 - 255] */
+    uint8_t g;          /**< green value    [0 - 255] */
+    uint8_t b;          /**< blue value     [0 - 255] */
+    uint8_t w;          /**< white value    [0 - 255] */
+} color_rgbw_t;
+
 
 /**
  * @brief RGBA color value
@@ -128,6 +135,45 @@ static inline void color_rgb_invert(const color_rgb_t *rgb, color_rgb_t *inv_rgb
 }
 
 /**
+ * @brief Shifts a given rgb color to change it's brightness
+ *
+ * @pre                 ((rgb != NULL) && (out != NULL))
+ *
+ * @param[in] rgb       Input rgb color, that should be shifted. Must be NOT NULL
+ * @param[out] out      Output rgb color, result of the shift. Must be NOT NULL
+ * @param[in] shift     Amount by which the color components should be shifted.
+ *                      May be positive (shift to left) or negative (shift to right).
+ */
+static inline void color_rgb_shift(const color_rgb_t *rgb, color_rgb_t *out, int8_t shift)
+{
+    if (shift > 0) {
+        out->r = rgb->r << shift;
+        out->g = rgb->g << shift;
+        out->b = rgb->b << shift;
+    } else {
+        out->r = rgb->r >> -shift;
+        out->g = rgb->g >> -shift;
+        out->b = rgb->b >> -shift;
+    }
+}
+
+/**
+ * @brief Change the brightness of a RGB color by multiplying it with a set factor.
+ *
+ * @pre                 ((rgb != NULL) && (out != NULL))
+ *
+ * @param[in] rgb       Input rgb color, that should be multiplied. Must be NOT NULL
+ * @param[out] out      Output rgb color. Must be NOT NULL
+ * @param[in] level     New brightness level. 255 = Full Brightness, 0 = Off.
+ */
+static inline void color_rgb_set_brightness(const color_rgb_t *rgb, color_rgb_t *out, uint8_t level)
+{
+    out->r = ((unsigned)rgb->r * level + 128) >> 8;
+    out->g = ((unsigned)rgb->g * level + 128) >> 8;
+    out->b = ((unsigned)rgb->b * level + 128) >> 8;
+}
+
+/**
  * @brief Calculate the complementary color of a given rgb color.
  *
  * @note                Complementary color calculation according to adobe illustator calculations.
@@ -144,5 +190,4 @@ void color_rgb_complementary(const color_rgb_t *rgb, color_rgb_t *comp_rgb);
 }
 #endif
 
-#endif /* COLOR_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_nrf52840dk
@@ -16,9 +15,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @author      Sebastian Meiling <s@mlng.net>
  */
-
-#ifndef BOARD_H
-#define BOARD_H
 
 #include "board_common.h"
 
@@ -60,6 +56,25 @@ extern "C" {
 /** @} */
 
 /**
+ * @name SPI NOR flash hardware configuration
+ *
+ * A Macronix MX25R6435F is present on the board
+ * @{
+ */
+#define NRF52840DK_NOR_PAGE_SIZE          (256)
+#define NRF52840DK_NOR_PAGES_PER_SECTOR   (16)
+#define NRF52840DK_NOR_SECTOR_COUNT       (2048)
+#define NRF52840DK_NOR_FLAGS              (SPI_NOR_F_SECT_4K | SPI_NOR_F_SECT_32K)
+#define NRF52840DK_NOR_SPI_DEV            SPI_DEV(1)
+#define NRF52840DK_NOR_SPI_CLK            SPI_CLK_10MHZ
+#define NRF52840DK_NOR_SPI_CS             GPIO_PIN(0, 17)
+#define NRF52840DK_NOR_SPI_MODE           SPI_MODE_0
+/** @} */
+
+/** Default MTD device */
+#define MTD_0 mtd_dev_get(0)
+
+/**
  * @name    Button pin configuration
  * @{
  */
@@ -77,5 +92,4 @@ extern "C" {
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

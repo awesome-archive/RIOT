@@ -1,16 +1,12 @@
 /*
- * Copyright (C) 2014-2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014-2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup    cpu_cortexm_common ARM Cortex-M common
- * @ingroup     cpu
- * @brief       Common implementations and headers for Cortex-M family based
- *              micro-controllers
+ * @ingroup     cpu_cortexm_common
  * @{
  *
  * @file
@@ -27,15 +23,10 @@
  * @todo        remove include irq.h once core was adjusted
  */
 
-#ifndef CPU_H
-#define CPU_H
-
-#include <stdio.h>
-
 #include "irq.h"
 #include "sched.h"
 #include "thread.h"
-#include "cpu_conf.h"
+#include "cpu_conf.h" /* IWYU pragma: export */
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,11 +58,6 @@ extern "C" {
 #define CORTEXM_SCB_CPACR_FPU_ACCESS_FULL         (0x00f00000)
 
 /**
- * @brief   Initialization of the CPU
- */
-void cpu_init(void);
-
-/**
  * @brief   Initialize Cortex-M specific core parts of the CPU
  *
  * @ref cortexm_init calls, in a default order, @ref cortexm_init_fpu,
@@ -99,7 +85,7 @@ void cortexm_init(void);
 static inline void cortexm_init_fpu(void)
 {
     /* initialize the FPU on Cortex-M4F CPUs */
-#if defined(CPU_ARCH_CORTEX_M4F) || defined(CPU_ARCH_CORTEX_M7)
+#if (defined(CPU_CORE_CORTEX_M33) || defined(CPU_CORE_CORTEX_M4F) || defined(CPU_CORE_CORTEX_M7)) && defined(MODULE_CORTEXM_FPU)
     /* give full access to the FPU */
     SCB->CPACR |= (uint32_t)CORTEXM_SCB_CPACR_FPU_ACCESS_FULL;
 #endif
@@ -132,13 +118,15 @@ void cortexm_init_misc(void);
 #endif /* defined(CPU_CORTEXM_INIT_SUBFUNCTIONS) || defined(DOXYGEN) */
 
 /**
- * @brief   Prints the current content of the link register (lr)
+ * @brief   Returns the current content of the link register (lr)
+ *
+ * @return  content of the link register (lr)
  */
-static inline void cpu_print_last_instruction(void)
+static inline uintptr_t cpu_get_caller_pc(void)
 {
-    uint32_t *lr_ptr;
+    uintptr_t lr_ptr;
     __asm__ __volatile__("mov %0, lr" : "=r"(lr_ptr));
-    printf("%p\n", (void*) lr_ptr);
+    return lr_ptr;
 }
 
 /**
@@ -169,10 +157,15 @@ static inline void cortexm_sleep(int deep)
     /* ensure that all memory accesses have completed and trigger sleeping */
     unsigned state = irq_disable();
     __DSB();
+#if CORTEXM_ISB_REQUIRED_AFTER_WFI
+    /* Some CPUs require an ISB after WFI to work around silicon bugs.
+     * The STM32L1 additionally fetches a 32-bit instruction directly following
+     * the WFI incorrectly on wake-up if any of the DBGMCU low-power debug bits
+     * is set, so a 16-bit NOP is placed in between. A single asm statement
+     * ensures that the compiler does not put anything else in there. */
+    __asm__ volatile ("wfi\n nop\n isb" ::: "memory");
+#else
     __WFI();
-#if defined(CPU_MODEL_STM32L152RE)
-    /* STM32L152RE crashes without this __NOP(). See #8518. */
-    __NOP();
 #endif
     irq_restore(state);
 }
@@ -198,8 +191,19 @@ static inline void cortexm_isr_end(void)
  */
 static inline void cpu_jump_to_image(uint32_t image_address)
 {
-    /* Disable IRQ */
-    __disable_irq();
+    /* On Cortex-M platforms, the flash begins with:
+     *
+     * 1. 4 byte pointer to stack to be used at startup
+     * 2. 4 byte pointer to the reset vector function
+     *
+     * On powerup, the CPU sets the stack pointer and starts executing the
+     * reset vector.
+     *
+     * We're doing the same here, but we'd like to start at image_address.
+     *
+     * This function must be called while executing from MSP (Master Stack
+     * Pointer).
+     */
 
     /* set MSP */
     __set_MSP(*(uint32_t*)image_address);
@@ -217,19 +221,31 @@ static inline void cpu_jump_to_image(uint32_t image_address)
     __asm("BX %0" :: "r" (destination_address));
 }
 
-/* The following register is only present for Cortex-M0+, -M3, -M4 and -M7 CPUs */
-#if defined(CPU_ARCH_CORTEX_M0PLUS) || defined(CPU_ARCH_CORTEX_M3) || \
-    defined(CPU_ARCH_CORTEX_M4) || defined(CPU_ARCH_CORTEX_M4F) || \
-    defined(CPU_ARCH_CORTEX_M7)
+/* The following register is only present for
+   Cortex-M0+, -M23, -M3, -M33, -M4 and M7 CPUs */
+#if defined(CPU_CORE_CORTEX_M0PLUS) || defined(CPU_CORE_CORTEX_M23) || \
+    defined(CPU_CORE_CORTEX_M3) || defined(CPU_CORE_CORTEX_M33) || \
+    defined(CPU_CORE_CORTEX_M4) || defined(CPU_CORE_CORTEX_M4F) || \
+    defined(CPU_CORE_CORTEX_M7)
 static inline uint32_t cpu_get_image_baseaddr(void)
 {
     return SCB->VTOR;
 }
 #endif
 
+/**
+ * @brief   Checks is memory address valid or not
+ *
+ * This function can be used to check for memory size,
+ * peripherals availability, etc.
+ *
+ * @param[in]	address     Address to check
+ * @return                  true if address is valid
+ */
+bool cpu_check_address(volatile const char *address);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CPU_H */
 /** @} */

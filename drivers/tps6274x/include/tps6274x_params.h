@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_tps6274x
@@ -15,9 +14,6 @@
  *
  * @author      Peter Kietzmann <peter.kietzmann@haw-hamburg.de>
  */
-
-#ifndef TPS6274X_PARAMS_H
-#define TPS6274X_PARAMS_H
 
 #include "board.h"
 #include "tps6274x.h"
@@ -53,5 +49,4 @@ static const tps6274x_params_t tps6274x_params[] =
 }
 #endif
 
-#endif /* TPS6274X_PARAMS_H */
 /** @} */

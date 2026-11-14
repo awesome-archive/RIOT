@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Kaspar Schleiser <kaspar@schleiser.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    core_mbox Mailboxes
@@ -19,11 +18,9 @@
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
  */
 
-#ifndef MBOX_H
-#define MBOX_H
-
-#include "list.h"
 #include "cib.h"
+#include "compiler_hints.h"
+#include "list.h"
 #include "msg.h"
 
 #ifdef __cplusplus
@@ -31,7 +28,9 @@ extern "C" {
 #endif
 
 /** Static initializer for mbox objects */
-#define MBOX_INIT(queue, queue_size) {{0}, {0}, CIB_INIT(queue_size), queue}
+#define MBOX_INIT(queue, queue_size) { \
+        { 0 }, { 0 }, CIB_INIT(queue_size), queue \
+}
 
 /**
  * @brief Mailbox struct definition
@@ -57,9 +56,12 @@ enum {
  * @param[in]   queue       array of msg_t used as queue
  * @param[in]   queue_size  number of msg_t objects in queue
  */
-static inline void mbox_init(mbox_t *mbox, msg_t *queue, unsigned int queue_size)
+ACCESS(write_only, 2, 3)
+static inline void mbox_init(mbox_t *mbox, msg_t *queue,
+                             unsigned int queue_size)
 {
     mbox_t m = MBOX_INIT(queue, queue_size);
+
     *mbox = m;
 }
 
@@ -155,9 +157,45 @@ static inline int mbox_try_get(mbox_t *mbox, msg_t *msg)
     return _mbox_get(mbox, msg, NON_BLOCKING);
 }
 
+/**
+ * @brief Get mbox queue size (capacity)
+ *
+ * @param[in] mbox  ptr to mailbox to operate on
+ *
+ * @return  size of mbox queue (or 0 if there's no queue)
+ */
+static inline size_t mbox_size(mbox_t *mbox)
+{
+    return mbox->cib.mask ? mbox->cib.mask + 1 : 0;
+}
+
+/**
+ * @brief Get messages available in mbox
+ *
+ * Returns the number of messages that can be retrieved without blocking.
+ *
+ * @param[in] mbox  ptr to mailbox to operate on
+ *
+ * @return  number of available messages
+ */
+static inline size_t mbox_avail(mbox_t *mbox)
+{
+    return cib_avail(&mbox->cib);
+}
+
+/**
+ * @brief   Unset's the mbox, effectively deinitializing and invalidating it.
+ *
+ * @param[in] mbox  ptr to mailbox to operate on
+ */
+static inline void mbox_unset(mbox_t *mbox)
+{
+    mbox->msg_array = NULL;
+    mbox->cib.mask = 0;
+}
+
 #ifdef __cplusplus
 }
 #endif
 
 /** @} */
-#endif /* MBOX_H */

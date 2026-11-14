@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014-2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014-2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_periph_hwrng HWRNG Abstraction
@@ -20,6 +19,16 @@
  * @note    Refer to your platforms MCU reference manual for information on the
  *          quality of the used (pseudo) random number generator!
  *
+ * # (Low-) Power Implications
+ *
+ * The HWRNG implementation **should** consume no additional power while no read
+ * operation is in progress. This means, that the HWRNG peripheral should be
+ * disabled (e.g. through peripheral clock gating) after the initialization and
+ * that it **should** only be turned on while hwrng_read() is active.
+ *
+ * If the implementation puts the active thread to sleep during hwrng_read(), it
+ * might need to block certain power modes on some platforms during this time.
+ *
  * @{
  * @file
  * @brief       Hardware random number generator driver interface
@@ -27,9 +36,6 @@
  * @author      Christian Mehlis <mehlis@inf.fu-berlin.de>
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef PERIPH_HWRNG_H
-#define PERIPH_HWRNG_H
 
 #include <stdint.h>
 
@@ -42,7 +48,7 @@ extern "C" {
  *
  * On some platforms, the random number generator needs some global
  * initialization before it can be used. This should happen in this function
- * if it would impose too much overhead to do this everytime the hwrng_read
+ * if it would impose too much overhead to do this every time the hwrng_read
  * function is called. The device should however be put into power-off mode
  * after initialization and will be powered on and of when hwrng_read is called.
  */
@@ -63,5 +69,4 @@ void hwrng_read(void *buf, unsigned int num);
 }
 #endif
 
-#endif /* PERIPH_HWRNG_H */
 /** @} */

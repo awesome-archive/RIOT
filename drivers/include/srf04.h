@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_srf04 srf04 ultra sonic range finder
@@ -17,9 +16,6 @@
  *
  * @author      Semjon Kerner <semjon.kerner@fu-berlin.de>
  */
-
-#ifndef SRF04_H
-#define SRF04_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -54,7 +50,7 @@ typedef struct {
  */
 typedef struct {
     srf04_params_t p;   /**< GPIO Ports of device */
-    int distance;       /**< raw time of flight distance */
+    int32_t distance;   /**< raw time of flight distance */
     uint32_t time;      /**< timestamp of trigger or echo */
 } srf04_t;
 
@@ -87,7 +83,7 @@ void srf04_trigger(const srf04_t *dev);
  * @return              SRF04_MEASURING if measurement is in progress
  * @return              SRF04_INVALID if no valid measurement is available
  */
-int srf04_read(const srf04_t* dev);
+int srf04_read(const srf04_t *dev);
 
 /**
  * @brief   Convenience function triggers a measurement and returns distance
@@ -100,11 +96,10 @@ int srf04_read(const srf04_t* dev);
  * @return              SRF04_MEASURING if measurement is in progress
  * @return              SRF04_INVALID if no valid measurement is available
  */
-int srf04_get_distance(const srf04_t* dev);
+int srf04_get_distance(const srf04_t *dev);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SRF04_H */
 /** @} */

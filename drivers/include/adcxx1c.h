@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup   drivers_adcxx1c ADCXX1C ADC device driver
@@ -22,9 +21,6 @@
  *
  * @author     Vincent Dupont <vincent@otakeys.com>
  */
-
-#ifndef ADCXX1C_H
-#define ADCXX1C_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,6 +81,14 @@ enum {
     ADCXX1C_NOI2C       = -1,       /**< I2C communication failed */
     ADCXX1C_NODEV       = -2,       /**< no ADCXX1C device found on the bus */
     ADCXX1C_NODATA      = -3        /**< no data available */
+};
+
+/**
+ * @brief   Alert values
+ */
+enum {
+    ADCXX1C_ALERT_UNDER_RANGE   = 1,    /**< Measured voltage fell below Vlow */
+    ADCXX1C_ALERT_OVER_RANGE    = 2,    /**< Measured voltage exceeded Vhigh */
 };
 
 /**
@@ -159,9 +163,18 @@ int adcxx1c_enable_alert(adcxx1c_t *dev, adcxx1c_cb_t cb, void *arg);
 int adcxx1c_set_alert_parameters(const adcxx1c_t *dev, int16_t low_limit,
                                  int16_t high_limit, int16_t hysteresis);
 
+/**
+ * @brief   Get alert source and clear it
+ *
+ * @param[in,out]   dev       device descriptor
+ *
+ * @return a combination of ADCXX1C_ALERT_OVER_RANGE and ADCXX1C_ALERT_UNDER_RANGE on success
+ * @return negative error code on error
+ */
+int adcxx1c_get_and_clear_alert(const adcxx1c_t *dev);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ADCXX1C_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_vcnl40x0
@@ -15,9 +14,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef VCNL40X0_PARAMS_H
-#define VCNL40X0_PARAMS_H
 
 #include "board.h"
 #include "vcnl40x0.h"
@@ -79,5 +75,4 @@ static const saul_reg_info_t vcnl40x0_saul_reg_info[] =
 }
 #endif
 
-#endif /* VCNL40X0_PARAMS_H */
 /** @} */

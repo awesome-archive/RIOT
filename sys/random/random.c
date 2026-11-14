@@ -1,33 +1,39 @@
-/**
- * Copyright (C) 2017 Kaspar Schleiser <kaspar@schleiser.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+/*
+ * SPDX-FileCopyrightText: 2017 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2019 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
- /**
- * @ingroup sys_random
+/**
+ * @ingroup     sys_random
  * @{
  * @file
  *
- * @brief PRNG seeding
+ * @brief       PRNG seeding
  *
- * @author Kaspar Schleiser <kaspar@schleiser.de>
+ * @author      Kaspar Schleiser <kaspar@schleiser.de>
+ * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @}
  */
 
 #include <stdint.h>
+#include <assert.h>
 
 #include "log.h"
-#include "luid.h"
-#include "periph/cpuid.h"
 #include "random.h"
+#include "bitarithm.h"
+
 #ifdef MODULE_PUF_SRAM
 #include "puf_sram.h"
 #endif
+#ifdef MODULE_PERIPH_HWRNG
+#include "periph/hwrng.h"
+#endif
+#ifdef MODULE_PERIPH_CPUID
+#include "luid.h"
+#endif
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 void auto_init_random(void)
@@ -39,6 +45,8 @@ void auto_init_random(void)
         LOG_WARNING("random: PUF SEED not fresh\n");
     }
     seed = puf_sram_seed;
+#elif defined (MODULE_PERIPH_HWRNG)
+    hwrng_read(&seed, 4);
 #elif defined (MODULE_PERIPH_CPUID)
     luid_get(&seed, 4);
 #else
@@ -49,9 +57,10 @@ void auto_init_random(void)
     random_init(seed);
 }
 
-void random_bytes(uint8_t *target, size_t n)
+void random_bytes(void *target, size_t n)
 {
     uint32_t random;
+    uint8_t *dst = target;
     uint8_t *random_pos = (uint8_t*)&random;
     unsigned _n = 0;
 
@@ -60,7 +69,7 @@ void random_bytes(uint8_t *target, size_t n)
             random = random_uint32();
             random_pos = (uint8_t *) &random;
         }
-        *target++ = *random_pos++;
+        *dst++ = *random_pos++;
     }
 }
 

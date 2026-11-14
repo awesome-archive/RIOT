@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 INRIA
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 INRIA
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_netstats Packet statistics per module
@@ -19,12 +18,26 @@
  */
 
 #include <stdint.h>
-
-#ifndef NET_NETSTATS_H
-#define NET_NETSTATS_H
+#include "cib.h"
+#include "net/l2util.h"
+#include "mutex.h"
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+/**
+ * @brief   The max number of entries in the peer stats table
+ */
+#ifndef NETSTATS_NB_SIZE
+#define NETSTATS_NB_SIZE        (8)
+#endif
+
+/**
+ * @brief   The CIB size for tx correlation
+ */
+#ifndef NETSTATS_NB_QUEUE_SIZE
+#define NETSTATS_NB_QUEUE_SIZE  (4)
 #endif
 
 /**
@@ -53,9 +66,66 @@ typedef struct {
     uint32_t rx_bytes;          /**< received bytes */
 } netstats_t;
 
+/**
+ * @brief       Stats per peer struct
+ */
+typedef struct {
+#if IS_USED(MODULE_NETSTATS_NEIGHBOR_TX_TIME) || DOXYGEN
+    uint32_t time_tx_avg;   /**< Average frame TX time in µs */
+#endif
+#if IS_USED(MODULE_NETSTATS_NEIGHBOR_ETX) || DOXYGEN
+    uint16_t etx;           /**< ETX of this peer */
+#endif
+#if IS_USED(MODULE_NETSTATS_NEIGHBOR_COUNT) || DOXYGEN
+    uint16_t tx_count;      /**< Number of sent frames to this peer */
+    uint16_t tx_fail;       /**< Number of sent frames that did not get ACKed */
+    uint16_t rx_count;      /**< Number of received frames */
+#endif
+    uint16_t last_updated;  /**< seconds timestamp of last update */
+    uint16_t last_halved;   /**< seconds timestamp of last halving */
+    uint8_t  l2_addr[L2UTIL_ADDR_MAX_LEN]; /**< Link layer address of the neighbor */
+    uint8_t  l2_addr_len;   /**< Length of netstats_nb::l2_addr */
+    uint8_t  freshness;     /**< Freshness counter */
+#if IS_USED(MODULE_NETSTATS_NEIGHBOR_RSSI) || DOXYGEN
+    uint8_t  rssi;          /**< Average RSSI of received frames in abs([dBm]) */
+#endif
+#if IS_USED(MODULE_NETSTATS_NEIGHBOR_LQI) || DOXYGEN
+    uint8_t  lqi;           /**< Average LQI of received frames */
+#endif
+} netstats_nb_t;
+
+/**
+ * @brief       L2 Peer Info struct
+ */
+typedef struct {
+    /**
+     * @brief CIB for the tx correlation
+     */
+    cib_t stats_idx;
+
+    /**
+     * @brief send/callback mac association array
+     */
+    netstats_nb_t *stats_queue[NETSTATS_NB_QUEUE_SIZE];
+
+    /**
+     * @brief TX timestamp of stats_queue entries
+     */
+    uint32_t stats_queue_time_tx[NETSTATS_NB_QUEUE_SIZE];
+
+    /**
+     * @brief Per neighbor statistics array
+     */
+    netstats_nb_t pstats[NETSTATS_NB_SIZE];
+
+    /**
+     * @brief Neighbor Table access lock
+     */
+    mutex_t lock;
+} netstats_nb_table_t;
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* NET_NETSTATS_H */
 /** @} */

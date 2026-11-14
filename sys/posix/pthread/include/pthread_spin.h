@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup pthread
@@ -16,9 +15,6 @@
  *          They will burn away the battery needlessly, and may not work because RIOT is tickless.
  *          Use irq_disable() and irq_restore() for shortterm locks instead.
  */
-
-#ifndef PTHREAD_SPIN_H
-#define PTHREAD_SPIN_H
 
 #ifdef __cplusplus
 #include <atomic>
@@ -42,7 +38,7 @@ extern "C" {
 #endif
 
 /**
- * @brief           Intializes a spinlock.
+ * @brief           Initializes a spinlock.
  * @warning         See the warning in pthread_spinlock_t.
  * @details         A zeroed out datum is initialized.
  * @param[in,out]   lock      Datum to initialize.
@@ -95,8 +91,6 @@ int pthread_spin_unlock(pthread_spinlock_t *lock);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* PTHREAD_SPIN_H */
 
 /**
  * @}

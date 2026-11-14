@@ -1,9 +1,6 @@
 /*
- * Copyright 2019 Otto-von-Guericke-Universität Magdeburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2019 Otto-von-Guericke-Universität Magdeburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -20,7 +17,8 @@
 #include <string.h>
 
 #include "ltc4150.h"
-#include "xtimer.h"
+#include "ztimer64.h"
+#include "timex.h"
 
 static void init_or_reset(ltc4150_dev_t *dev, uint64_t now_usec, void *arg);
 static void pulse(ltc4150_dev_t *dev, ltc4150_dir_t dir, uint64_t now_usec,
@@ -50,7 +48,7 @@ static void update_ringbuffer(ltc4150_last_minute_data_t *data,
         data->last_rotate_sec += 10;
         data->charged += data->buf_charged[data->ring_pos];
         data->discharged += data->buf_discharged[data->ring_pos];
-        if (++data->ring_pos >= sizeof(data->buf_charged)/sizeof(data->buf_charged[0])) {
+        if (++data->ring_pos >= ARRAY_SIZE(data->buf_charged)) {
             data->ring_pos = 0;
         }
         data->charged -= data->buf_charged[data->ring_pos];
@@ -87,7 +85,7 @@ int ltc4150_last_minute_charge(ltc4150_dev_t *dev,
     }
 
     gpio_irq_disable(dev->params.interrupt);
-    update_ringbuffer(d, xtimer_now_usec64());
+    update_ringbuffer(d, ztimer64_now(ZTIMER64_USEC));
     ltc4150_pulses2c(dev, charged, discharged, d->charged, d->discharged);
     gpio_irq_enable(dev->params.interrupt);
 

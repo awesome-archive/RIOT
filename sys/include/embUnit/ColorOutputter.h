@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Janos Kutscherauer <noshky@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Janos Kutscherauer <noshky@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @{
@@ -13,8 +12,6 @@
  *
  * @author Janos Kutscherauer <noshky@gmail.com>
  */
-#ifndef EMBUNIT_COLOROUTPUTTER_H
-#define EMBUNIT_COLOROUTPUTTER_H
 
 #include "Outputter.h"
 
@@ -41,5 +38,4 @@ void ColorOutputter_printStatistics(OutputterRef self, TestResultRef result);
 }
 #endif
 
-#endif /* EMBUNIT_COLOROUTPUTTER_H */
 /** @} */

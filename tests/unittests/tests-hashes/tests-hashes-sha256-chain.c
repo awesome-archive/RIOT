@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2016 Martin Landsmann <martin.landsmann@haw-hamburg.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Martin Landsmann <martin.landsmann@haw-hamburg.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
- /**
+/**
  * @ingroup     unittests
  * @{
  *
@@ -31,7 +28,7 @@
 
 static void test_sha256_hash_chain(void)
 {
-    const char strSeed[] = "My cool secret seed, you'll never guess it ;) 12345";
+    static const char strSeed[] = "My cool secret seed, you'll never guess it ;) 12345";
     static unsigned char tail_hash_chain_element[SHA256_DIGEST_LENGTH];
 
     /* we produce a sha256-chain of 257 elements */
@@ -69,7 +66,7 @@ static void test_sha256_hash_chain(void)
 
 static void test_sha256_hash_chain_with_waypoints(void)
 {
-    const char strSeed[] = "My cool secret seed, you'll never guess it ;P 123456!";
+    static const char strSeed[] = "My cool secret seed, you'll never guess it ;P 123456!";
     static unsigned char tail_hash_chain_element[SHA256_DIGEST_LENGTH];
 
     /* we produce a sha256-chain of 257 elements */
@@ -105,7 +102,7 @@ static void test_sha256_hash_chain_with_waypoints(void)
 
 static void test_sha256_hash_chain_store_whole(void)
 {
-    const char strSeed[] = "My cool secret seed, you'll never guess it ;P 123456!";
+    static const char strSeed[] = "My cool secret seed, you'll never guess it ;P 123456!";
     static unsigned char tail_hash_chain_element[SHA256_DIGEST_LENGTH];
 
     /* now we check storing the whole chain

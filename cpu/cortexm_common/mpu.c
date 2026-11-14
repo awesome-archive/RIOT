@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 Loci Controls Inc.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Loci Controls Inc.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -17,8 +14,6 @@
  *
  * @}
  */
-
-#include <assert.h>
 
 #include "cpu.h"
 #include "mpu.h"
@@ -59,17 +54,11 @@ bool mpu_enabled(void) {
 }
 
 int mpu_configure(uint_fast8_t region, uintptr_t base, uint_fast32_t attr) {
-/* Todo enable MPU support for Cortex-M23/M33 */
-#if __MPU_PRESENT && !defined(CPU_ARCH_CORTEX_M23)
-    assert(region < MPU_NUM_REGIONS);
-
+    /* Todo enable MPU support for Cortex-M23/M33 */
+#if __MPU_PRESENT && !defined(__ARM_ARCH_8M_MAIN__) && !defined(__ARM_ARCH_8M_BASE__)
     MPU->RNR  = region;
     MPU->RBAR = base & MPU_RBAR_ADDR_Msk;
     MPU->RASR = attr | MPU_RASR_ENABLE_Msk;
-
-    if (!mpu_enabled()) {
-        mpu_enable();
-    }
 
     return 0;
 #else

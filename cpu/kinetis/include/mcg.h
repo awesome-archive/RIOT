@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2015 PHYTEC Messtechnik GmbH
- * Copyright (C) 2017 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2015 PHYTEC Messtechnik GmbH
+ * SPDX-FileCopyrightText: 2017 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
+/* please doxygen by hiding dangling references */
+#if defined(MODULE_PERIPH_MCG) || defined(MODULE_PERIPH_MCG_LITE) || defined(DOXYGEN)
 /**
  * @defgroup    cpu_kinetis_mcg Kinetis MCG
  * @ingroup     cpu_kinetis
@@ -116,9 +117,7 @@
  * @author      Johann Fischer <j.fischer@phytec.de>
  * @author      Joakim Nohlgård <joakim.nohlgard@eistec.se>
  */
-
-#ifndef MCG_H
-#define MCG_H
+#endif /* MODULE_PERIPH_MCG */
 
 #include "periph_conf.h"
 
@@ -169,5 +168,3 @@ void kinetis_mcg_init(void);
 #endif
 
 /** @} */
-
-#endif /* MCG_H */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 INRIA
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 INRIA
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_packet Packet interface on device level
@@ -17,9 +16,6 @@
  *
  * @author  Oliver Hahm <oliver.hahm@inria.fr>
  */
-
-#ifndef NET_PACKET_H
-#define NET_PACKET_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,4 +41,3 @@ struct sockaddr_ll {
 /**
  * @}
  */
-#endif /* NET_PACKET_H */

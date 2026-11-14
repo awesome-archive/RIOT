@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2016 Andrew Moon (dedicated to the public domain)
- * Copyright (C) 2018 Freie Universität Berlin
- * Copyright (C) 2018 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Andrew Moon (dedicated to the public domain)
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2018 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     sys_crypto
@@ -25,8 +24,6 @@
  *
  * @see         https://tools.ietf.org/html/rfc8439#section-2.5
  */
-#ifndef CRYPTO_POLY1305_H
-#define CRYPTO_POLY1305_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,6 +31,8 @@ extern "C" {
 
 #include <stddef.h>
 #include <stdint.h>
+
+#include "compiler_hints.h"
 
 /**
  * @brief Poly1305 block size
@@ -66,6 +65,7 @@ void poly1305_init(poly1305_ctx_t *ctx, const uint8_t *key);
  * @param   data    ptr to the message
  * @param   len     length of the message
  */
+ACCESS(read_only, 2, 3)
 void poly1305_update(poly1305_ctx_t *ctx, const uint8_t *data, size_t len);
 
 /**
@@ -84,11 +84,11 @@ void poly1305_finish(poly1305_ctx_t *ctx, uint8_t *mac);
  * @param   len     length of the message
  * @param   key     32 byte key
  */
+ACCESS(read_only, 2, 3)
 void poly1305_auth(uint8_t *mac, const uint8_t *data, size_t len,
                    const uint8_t *key);
 
 #ifdef __cplusplus
 }
 #endif
-#endif /* CRYPTO_POLY1305_H */
 /** @} */

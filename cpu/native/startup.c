@@ -1,52 +1,44 @@
-/**
- * Native CPU entry code
- *
- * Copyright (C) 2013 Ludwig Knüpfer <ludwig.knuepfer@fu-berlin.de>
- *               2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
- *
- * @ingroup cpu_native
- * @{
- * @file
- * @author  Ludwig Knüpfer <ludwig.knuepfer@fu-berlin.de>
- * @author  Martine Lenders <m.lenders@fu-berlin.de>
- * @}
+/*
+ * SPDX-FileCopyrightText: 2013 Ludwig Knüpfer <ludwig.knuepfer@fu-berlin.de>
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+/**
+ * @file    Ludwig Knüpfer <ludwig.knuepfer@fu-berlin.de>
+ * @brief   Native CPU entry code
+ * @ingroup cpu_native
+ * @author  Martine Lenders <m.lenders@fu-berlin.de>
+ */
+
 #include <dlfcn.h>
-#else
-#include <dlfcn.h>
-#endif
-#include "byteorder.h"
 #include <assert.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <features.h>
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <err.h>
 #include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include "kernel_init.h"
-#include "cpu.h"
+#include "byteorder.h"
 #include "irq.h"
-
-#include "board_internal.h"
+#include "kernel_init.h"
 #include "native_internal.h"
+#include "periph/init.h"
+#include "periph/pm.h"
+#include "test_utils/expect.h"
 #include "tty_uart.h"
 
-#include "periph/init.h"
-
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
+#define DEBUG_STARTUP(...) DEBUG("[native] startup: " __VA_ARGS__)
 
 typedef enum {
     _STDIOTYPE_STDIO = 0,   /**< leave intact */
@@ -62,7 +54,6 @@ pid_t _native_pid;
 pid_t _native_id;
 unsigned _native_rng_seed = 0;
 int _native_rng_mode = 0;
-const char *_native_unix_socket_path = NULL;
 
 #ifdef MODULE_NETDEV_TAP
 #include "netdev_tap_params.h"
@@ -73,27 +64,59 @@ netdev_tap_params_t netdev_tap_params[NETDEV_TAP_MAX];
 #include "board.h"
 #include "mtd_native.h"
 #endif
-#ifdef MODULE_CAN_LINUX
+#ifdef MODULE_PERIPH_CAN
 #include "candev_linux.h"
 #endif
-
+#ifdef MODULE_PERIPH_SPIDEV_LINUX
+#include "spidev_linux.h"
+#endif
+#ifdef MODULE_PERIPH_GPIO_LINUX
+#include "gpiodev_linux.h"
+#endif
+#ifdef MODULE_NATIVE_CLI_EUI_PROVIDER
+#include "native_cli_eui_provider.h"
+#endif
 #ifdef MODULE_SOCKET_ZEP
 #include "socket_zep_params.h"
 
 socket_zep_params_t socket_zep_params[SOCKET_ZEP_MAX];
 #endif
+#ifdef MODULE_PERIPH_EEPROM
+#include "eeprom_native.h"
+extern char eeprom_file[EEPROM_FILEPATH_MAX_LEN];
+#endif
 
 static const char short_opts[] = ":hi:s:deEoc:"
+#ifdef MODULE_PERIPH_GPIO_LINUX
+    "g:"
+#endif
 #ifdef MODULE_MTD_NATIVE
     "m:"
 #endif
-#ifdef MODULE_CAN_LINUX
+#ifdef MODULE_PERIPH_CAN
     "n:"
 #endif
 #ifdef MODULE_SOCKET_ZEP
     "z:"
 #endif
+#ifdef MODULE_NATIVE_CLI_EUI_PROVIDER
+    "U:"
+#endif
+#ifdef MODULE_PERIPH_SPIDEV_LINUX
+    "p:"
+#endif
+#ifdef MODULE_NETDEV_TAP
+    "w:"
+#endif
     "";
+
+#if __GLIBC__
+/* glibc and Apple's libSystem pass argc, argv, and envp to init_fini handlers */
+# define _HAVE_INIT_FINIT_PROGRAM_ARGUMENTS 1
+#else
+/* otherwise, not guaranteed */
+# define _HAVE_INIT_FINIT_PROGRAM_ARGUMENTS 0
+#endif
 
 static const struct option long_opts[] = {
     { "help", no_argument, NULL, 'h' },
@@ -104,14 +127,26 @@ static const struct option long_opts[] = {
     { "stderr-noredirect", no_argument, NULL, 'E' },
     { "stdout-pipe", no_argument, NULL, 'o' },
     { "uart-tty", required_argument, NULL, 'c' },
+#ifdef MODULE_PERIPH_GPIO_LINUX
+    { "gpio", required_argument, NULL, 'g' },
+#endif
 #ifdef MODULE_MTD_NATIVE
     { "mtd", required_argument, NULL, 'm' },
 #endif
-#ifdef MODULE_CAN_LINUX
+#ifdef MODULE_PERIPH_CAN
     { "can", required_argument, NULL, 'n' },
 #endif
 #ifdef MODULE_SOCKET_ZEP
     { "zep", required_argument, NULL, 'z' },
+#endif
+#ifdef MODULE_NATIVE_CLI_EUI_PROVIDER
+    { "eui64", required_argument, NULL, 'U' },
+#endif
+#ifdef MODULE_PERIPH_SPIDEV_LINUX
+    { "spi", required_argument, NULL, 'p' },
+#endif
+#ifdef MODULE_PERIPH_EEPROM
+    { "eeprom", required_argument, NULL, 'M' },
 #endif
     { NULL, 0, NULL, '\0' },
 };
@@ -119,7 +154,7 @@ static const struct option long_opts[] = {
 /**
  * @brief   initialize _native_null_in_pipe to allow for reading from stdin
  *
- * @param[in] stdiotype _STDIOTYPE_STDIO to to just initialize pipe, any other
+ * @param[in] stdintype _STDIOTYPE_STDIO to to just initialize pipe, any other
  *                      value to also redirect stdin to that pipe
  */
 void _native_input(_stdiotype_t stdintype)
@@ -212,13 +247,14 @@ void daemonize(void)
 
 /**
  * Remove any -d options from an argument vector.
+ * This is needed to ensure that a rebooted RIOT that is already
+ * daemonized doesn't try to daemonize again.
  *
- * @param[in][out]  argv    an argument vector
+ * @param[in,out]   argv    an argument vector
  */
-static void filter_daemonize_argv(char **argv)
+static void _consume_daemonize_argv(char **argv)
 {
-    int idx = 0;
-    for (char **narg = argv; *narg != NULL; narg++, idx++) {
+    for (char **narg = argv; *narg != NULL; narg++) {
         if (strcmp("-d", narg[0]) == 0) {
             char **xarg = narg;
             do {
@@ -242,17 +278,29 @@ void usage_exit(int status)
         real_printf(" <tap interface %d>", i + 1);
     }
 #endif
-    real_printf(" [-i <id>] [-d] [-e|-E] [-o] [-c <tty>]\n");
+    real_printf(" [-i <id>] [-d] [-e|-E] [-o] [-c <tty>]");
+#ifdef MODULE_PERIPH_GPIO_LINUX
+    real_printf(" [-g <gpiochip>]");
+#endif
+    real_printf(" [-i <id>] [-d] [-e|-E] [-o] [-c <tty>]");
 #if defined(MODULE_SOCKET_ZEP) && (SOCKET_ZEP_MAX > 0)
-    real_printf(" -z [[<laddr>:<lport>,]<raddr>:<rport>]\n");
+    real_printf(" -z [[<laddr>:<lport>,]<raddr>:<rport>]");
     for (int i = 0; i < SOCKET_ZEP_MAX - 1; i++) {
         /* for further interfaces the local address must be different so we omit
          * the braces (marking them as optional) to be 100% clear on that */
-        real_printf(" -z <laddr>:<lport>,<raddr>:<rport>\n");
+        real_printf(" -z <laddr>:<lport>,<raddr>:<rport>");
     }
 #endif
+#ifdef MODULE_NATIVE_CLI_EUI_PROVIDER
+    real_printf(" [--eui64 <eui64> …]");
+#endif
+#ifdef MODULE_PERIPH_SPIDEV_LINUX
+    real_printf(" [-p <b>:<d>:<spidev>]");
+#endif
 
-    real_printf(" help: %s -h\n\n", _progname);
+    real_printf("\n\n");
+
+    real_printf("help: %s -h\n", _progname);
 
     real_printf("\nOptions:\n"
 "    -h, --help\n"
@@ -275,11 +323,24 @@ void usage_exit(int status)
 "    -c <tty>, --uart-tty=<tty>\n"
 "        specify TTY device for UART. This argument can be used multiple\n"
 "        times (up to UART_NUMOF)\n"
+#ifdef MODULE_PERIPH_GPIO_LINUX
+"    -g <gpio>, --gpio=<gpio>\n"
+"        specify gpiochip device for GPIO access.\n"
+"        This argument can be used multiple times.\n"
+"        Example: --gpio=/dev/gpiochip0 uses gpiochip0 for port 0\n"
+#endif
 #if defined(MODULE_SOCKET_ZEP) && (SOCKET_ZEP_MAX > 0)
 "    -z [<laddr>:<lport>,]<raddr>:<rport> --zep=[<laddr>:<lport>,]<raddr>:<rport>\n"
-"        provide a ZEP interface with local address and port (<laddr>, <lport>)\n"
-"        and remote address and port (default local: [::]:17754).\n"
+"        provide a ZEP interface with an (optional) local address and port\n"
+"        (<laddr>:<lport>) and a remote address and port (<raddr>:<rport>).\n"
+"        The ZEP interface connects to the remote address and may listen\n"
+"        on a local address.\n"
 "        Required to be provided SOCKET_ZEP_MAX times\n"
+#endif
+#ifdef MODULE_NATIVE_CLI_EUI_PROVIDER
+"    -U <eui64>, --eui64=<eui64>\n"
+"        provide a ZEP interface with EUI-64 (MAC address)\n"
+"        This argument can be provided multiple times\n"
 #endif
     );
 #ifdef MODULE_MTD_NATIVE
@@ -287,11 +348,31 @@ void usage_exit(int status)
 "    -m <mtd>, --mtd=<mtd>\n"
 "       specify the file name of mtd emulated device\n");
 #endif
-#if defined(MODULE_CAN_LINUX)
+#if defined(MODULE_PERIPH_CAN)
     real_printf(
 "    -n <ifnum>:<ifname>, --can <ifnum>:<ifname>\n"
 "        specify CAN interface <ifname> to use for CAN device #<ifnum>\n"
 "        max number of CAN device: %d\n", CAN_DLL_NUMOF);
+#endif
+#ifdef MODULE_PERIPH_SPIDEV_LINUX
+    real_printf(
+"    -p <b>:<d>:<spidev>, --spi=<b>:<d>:<spidev>\n"
+"        specify Linux SPI device to use for CS line d on bus b (in RIOT)\n"
+"        Example: --spi=0:1:/dev/spidev0.0 will assign the file spidev0.0 to\n"
+"                 SPI_DEV(0) and SPI_HWCS(1).\n"
+"        Supports up to %d buses with %d CS lines each.\n", SPI_NUMOF, SPI_MAXCS
+    );
+#endif
+#ifdef MODULE_PERIPH_EEPROM
+    real_printf(
+"    -M <eeprom> , --eeprom=<eeprom>\n"
+"        Specify the file path where the EEPROM content is stored\n"
+"        Example: --eeprom=/tmp/riot_native.eeprom\n");
+#endif
+#ifdef MODULE_NETDEV_TAP
+    real_printf(
+"    -w <tap>\n"
+"        Add a tap interface as a wireless interface\n");
 #endif
     real_exit(status);
 }
@@ -336,13 +417,16 @@ static void _zep_params_setup(char *zep_str, int zep)
 {
     char *save_ptr, *first_ep, *second_ep;
 
+    /* reboot uses execve() so we need to preserve argv */
+    zep_str = strdup(zep_str);
+
     if ((first_ep = strtok_r(zep_str, ",", &save_ptr)) == NULL) {
         usage_exit(EXIT_FAILURE);
     }
     second_ep = strtok_r(NULL, ",", &save_ptr);
     if (second_ep == NULL) {
-        socket_zep_params[zep].local_addr = SOCKET_ZEP_LOCAL_ADDR_DEFAULT;
-        socket_zep_params[zep].local_port = SOCKET_ZEP_PORT_DEFAULT;
+        socket_zep_params[zep].local_addr = NULL;
+        socket_zep_params[zep].local_port = NULL;
         _parse_ep_str(first_ep, &socket_zep_params[zep].remote_addr,
                       &socket_zep_params[zep].remote_port);
     }
@@ -353,6 +437,7 @@ static void _zep_params_setup(char *zep_str, int zep)
                       &socket_zep_params[zep].remote_port);
     }
 }
+
 #endif
 
 /** @brief Initialization function pointer type */
@@ -370,9 +455,62 @@ extern init_func_t __init_array_start;
 extern init_func_t __init_array_end;
 #endif
 
+static void _reset_handler(void)
+{
+    pm_reboot();
+}
+
 __attribute__((constructor)) static void startup(int argc, char **argv, char **envp)
 {
     _native_init_syscalls();
+
+    /* Passing argc, argv, and envp to init_fini handlers is a glibc
+     * extension. If we are not running glibc, we parse /proc/self/cmdline
+     * to populate argc and argv by hand */
+    if (!_HAVE_INIT_FINIT_PROGRAM_ARGUMENTS) {
+        const size_t bufsize = 4096;
+        const size_t argc_max = 32;
+        size_t cmdlen = 0;
+        char *cmdline = malloc(bufsize);
+        argv = calloc(argc_max, sizeof(char *));
+        argc = 0;
+        envp = NULL;
+        expect(cmdline != NULL);
+        int cmdfd = real_open("/proc/self/cmdline", O_RDONLY);
+        expect(cmdfd != -1);
+        ssize_t count;
+        do {
+            count = real_read(cmdfd, cmdline + cmdlen, bufsize - cmdlen);
+            if (count < 0) {
+                if ((errno == EWOULDBLOCK) || (errno == EAGAIN)) {
+                    continue;
+                }
+                expect(0);
+            }
+            cmdlen += count;
+        } while (count > 0);
+        real_close(cmdfd);
+        cmdline = realloc(cmdline, cmdlen);
+
+        char *argpos = cmdline;
+        while ((size_t)argc < argc_max) {
+            if (argpos == cmdline + cmdlen) {
+                argv[argc] = NULL;
+                break;
+            }
+            size_t len = strlen(argpos);
+
+            argv[argc++] = argpos;
+            argpos += len + 1;
+        }
+        expect((size_t)argc < argc_max);
+        argv = realloc(argv, sizeof(char *) * (argc + 1));
+    } else {
+        /* must be */
+        assert(argc > 0);
+        assert(argv);
+        assert(argv[0]);
+    }
 
     _native_argv = argv;
     _progname = argv[0];
@@ -382,6 +520,10 @@ __attribute__((constructor)) static void startup(int argc, char **argv, char **e
     _native_id = _native_pid;
 
     int c, opt_idx = 0, uart = 0;
+#ifdef MODULE_NETDEV_TAP
+    unsigned taps = 0;
+    memset(netdev_tap_params, 0, sizeof(netdev_tap_params));
+#endif
 #ifdef MODULE_SOCKET_ZEP
     unsigned zeps = 0;
 #endif
@@ -421,6 +563,13 @@ __attribute__((constructor)) static void startup(int argc, char **argv, char **e
                 }
                 force_stderr = true;
                 break;
+#ifdef MODULE_PERIPH_GPIO_LINUX
+            case 'g':
+                if (gpio_linux_setup(optarg) < 0) {
+                    usage_exit(EXIT_FAILURE);
+                }
+                break;
+#endif
             case 'o':
                 stdouttype = _STDIOTYPE_FILE;
                 break;
@@ -429,10 +578,10 @@ __attribute__((constructor)) static void startup(int argc, char **argv, char **e
                 break;
 #ifdef MODULE_MTD_NATIVE
             case 'm':
-                ((mtd_native_dev_t *)mtd0)->fname = strndup(optarg, PATH_MAX - 1);
+                ((mtd_native_dev_t *)mtd_dev_get(0))->fname = strndup(optarg, PATH_MAX - 1);
                 break;
 #endif
-#if defined(MODULE_CAN_LINUX)
+#if defined(MODULE_PERIPH_CAN)
             case 'n':{
                 int i;
                 i = atol(optarg);
@@ -446,7 +595,7 @@ __attribute__((constructor)) static void startup(int argc, char **argv, char **e
                     usage_exit(EXIT_FAILURE);
                 }
                 optarg++;
-                strncpy(candev_linux_conf[i].interface_name, optarg,
+                strncpy(candev_conf[i].interface_name, optarg,
                         CAN_MAX_SIZE_INTERFACE_NAME);
                 }
                 break;
@@ -456,19 +605,45 @@ __attribute__((constructor)) static void startup(int argc, char **argv, char **e
                 _zep_params_setup(optarg, zeps++);
                 break;
 #endif
+#ifdef MODULE_NATIVE_CLI_EUI_PROVIDER
+            case 'U':
+                native_cli_add_eui64(optarg);
+                break;
+#endif
+#ifdef MODULE_PERIPH_SPIDEV_LINUX
+            case 'p': {
+                    long bus = strtol(optarg, &optarg, 10);
+                    if (*optarg != ':') {
+                        usage_exit(EXIT_FAILURE);
+                    }
+                    long cs = strtol(++optarg, &optarg, 10);
+                    if (*optarg != ':') {
+                        usage_exit(EXIT_FAILURE);
+                    }
+                    if (spidev_linux_setup(bus, cs, ++optarg) < 0) {
+                        usage_exit(EXIT_FAILURE);
+                    }
+                }
+                break;
+#endif
+#ifdef MODULE_PERIPH_EEPROM
+            case 'M': {
+                strncpy(eeprom_file, optarg, EEPROM_FILEPATH_MAX_LEN);
+                break;
+            }
+#endif
+#ifdef MODULE_NETDEV_TAP
+            case 'w':
+                netdev_tap_params[taps].tap_name = &argv[optind - 1];
+                netdev_tap_params[taps].wired = false;
+                ++taps;
+                break;
+#endif
             default:
                 usage_exit(EXIT_FAILURE);
                 break;
         }
     }
-#ifdef MODULE_NETDEV_TAP
-    for (int i = 0; i < NETDEV_TAP_MAX; i++) {
-        if (argv[optind + i] == NULL) {
-            /* no tap parameter left */
-            usage_exit(EXIT_FAILURE);
-        }
-    }
-#endif
 #ifdef MODULE_SOCKET_ZEP
     if (zeps != SOCKET_ZEP_MAX) {
         /* not enough ZEPs given */
@@ -477,7 +652,7 @@ __attribute__((constructor)) static void startup(int argc, char **argv, char **e
 #endif
 
     if (dmn) {
-        filter_daemonize_argv(_native_argv);
+        _consume_daemonize_argv(_native_argv);
         if (stderrtype == _STDIOTYPE_STDIO) {
             stderrtype = _STDIOTYPE_NULL;
         }
@@ -505,41 +680,54 @@ __attribute__((constructor)) static void startup(int argc, char **argv, char **e
      * power off command.
      * We need all C++ global constructors and other initializers to run before
      * we enter the normal application code, which may depend on global objects
-     * having been initalized properly. Therefore, we iterate through the
+     * having been initialized properly. Therefore, we iterate through the
      * remainder of the init_array and call any constructors which have been
      * placed after startup in the initialization order.
      */
     init_func_t *init_array_ptr = &__init_array_start;
     DEBUG("__init_array_start: %p\n", (void *)init_array_ptr);
-    while (init_array_ptr != &__init_array_end) {
+    while (init_array_ptr < &__init_array_end) {
         /* Skip everything which has already been run */
         if ((*init_array_ptr) == startup) {
             /* Found ourselves, move on to calling the rest of the constructors */
-            DEBUG("%18p - myself\n", (void *)init_array_ptr);
+            DEBUG_STARTUP("%18p - myself\n", (void *)init_array_ptr);
             ++init_array_ptr;
             break;
         }
-        DEBUG("%18p - skip\n", (void *)init_array_ptr);
+        DEBUG_STARTUP("%18p - skip\n", (void *)init_array_ptr);
         ++init_array_ptr;
     }
-    while (init_array_ptr != &__init_array_end) {
+    while (init_array_ptr < &__init_array_end) {
         /* call all remaining constructors */
-        DEBUG("%18p - call\n", (void *)init_array_ptr);
+        DEBUG_STARTUP("%18p - call\n", (void *)init_array_ptr);
         (*init_array_ptr)(argc, argv, envp);
         ++init_array_ptr;
     }
-    DEBUG("done, __init_array_end: %p\n", (void *)init_array_ptr);
+    DEBUG_STARTUP("done, __init_array_end: %p\n", (void *)init_array_ptr);
 
     native_cpu_init();
     native_interrupt_init();
 #ifdef MODULE_NETDEV_TAP
-    for (int i = 0; i < NETDEV_TAP_MAX; i++) {
-        netdev_tap_params[i].tap_name = &argv[optind + i];
+    for (unsigned i = 0; taps < NETDEV_TAP_MAX; ++taps, ++i) {
+        if (argv[optind + i] == NULL) {
+            break;
+        }
+        netdev_tap_params[taps].tap_name = &argv[optind + i];
+        netdev_tap_params[taps].wired = true;
     }
+#endif
+
+#ifdef MODULE_PERIPH_EEPROM
+    eeprom_native_read();
 #endif
 
     periph_init();
     board_init();
+
+    native_register_interrupt(SIGUSR1, _reset_handler);
+
+    /* initialize stdio after signal setup */
+    early_init();
 
     puts("RIOT native hardware initialization complete.\n");
     irq_enable();

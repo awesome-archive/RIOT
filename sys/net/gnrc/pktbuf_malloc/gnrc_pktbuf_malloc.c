@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -33,12 +30,16 @@
 #include "net/gnrc/nettype.h"
 #include "net/gnrc/pkt.h"
 
-#define ENABLE_DEBUG (0)
+#include "pktbuf_internal.h"
+
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
-static mutex_t _mutex = MUTEX_INIT;
+#ifdef MODULE_FUZZING
+extern gnrc_pktsnip_t *gnrc_pktbuf_fuzzptr;
+#endif
 
-#ifdef TEST_SUITES
+#if defined(TEST_SUITES) || defined(MODULE_FUZZING)
 static unsigned mallocs;
 
 static inline void *_malloc(size_t size)
@@ -50,6 +51,15 @@ static inline void *_malloc(size_t size)
 static inline void _free(void *ptr)
 {
     if (ptr != NULL) {
+        /* The fuzzing module is only enabled when building a fuzzing
+         * application from the fuzzing/ subdirectory. If _free is
+         * called on the crafted fuzzing packet, the setup assumes that
+         * input processing has completed and the application terminates. */
+#if defined(MODULE_FUZZING) && !defined(MODULE_GNRC_SOCK)
+        if (ptr == gnrc_pktbuf_fuzzptr) {
+           exit(EXIT_SUCCESS);
+        }
+#endif
         mallocs--;
         free(ptr);
     }
@@ -88,14 +98,14 @@ gnrc_pktsnip_t *gnrc_pktbuf_add(gnrc_pktsnip_t *next, const void *data, size_t s
 {
     gnrc_pktsnip_t *pkt;
 
-    if (size > GNRC_PKTBUF_SIZE) {
-        DEBUG("pktbuf: size (%u) > GNRC_PKTBUF_SIZE (%u)\n",
-              (unsigned)size, GNRC_PKTBUF_SIZE);
+    if (size > CONFIG_GNRC_PKTBUF_SIZE) {
+        DEBUG("pktbuf: size (%u) > CONFIG_GNRC_PKTBUF_SIZE (%u)\n",
+              (unsigned)size, CONFIG_GNRC_PKTBUF_SIZE);
         return NULL;
     }
-    mutex_lock(&_mutex);
+    mutex_lock(&gnrc_pktbuf_mutex);
     pkt = _create_snip(next, data, size, type);
-    mutex_unlock(&_mutex);
+    mutex_unlock(&gnrc_pktbuf_mutex);
     return pkt;
 }
 
@@ -105,9 +115,9 @@ static gnrc_pktsnip_t *_mark(gnrc_pktsnip_t *pkt, size_t size, gnrc_nettype_t ty
     void *header_data, *payload;
 
     if ((size == 0) || (pkt == NULL) || (size > pkt->size) || (pkt->data == NULL)) {
-        DEBUG("pktbuf: size == 0 (was %u) or pkt == NULL (was %p) or "
-              "size > pkt->size (was %u) or pkt->data == NULL (was %p)\n",
-              (unsigned)size, (void *)pkt, (pkt ? (unsigned)pkt->size : 0),
+        DEBUG("pktbuf: size == 0 (was %" PRIuSIZE ") or pkt == NULL (was %p) or "
+              "size > pkt->size (was %" PRIuSIZE ") or pkt->data == NULL (was %p)\n",
+              size, (void *)pkt, (pkt ? pkt->size : 0),
               (pkt ? pkt->data : NULL));
         return NULL;
     }
@@ -149,9 +159,9 @@ gnrc_pktsnip_t *gnrc_pktbuf_mark(gnrc_pktsnip_t *pkt, size_t size, gnrc_nettype_
 {
     gnrc_pktsnip_t *new;
 
-    mutex_lock(&_mutex);
+    mutex_lock(&gnrc_pktbuf_mutex);
     new = _mark(pkt, size, type);
-    mutex_unlock(&_mutex);
+    mutex_unlock(&gnrc_pktbuf_mutex);
     return new;
 }
 
@@ -187,53 +197,28 @@ int gnrc_pktbuf_realloc_data(gnrc_pktsnip_t *pkt, size_t size)
 {
     int res;
 
-    mutex_lock(&_mutex);
+    mutex_lock(&gnrc_pktbuf_mutex);
     res = _realloc_data(pkt, size);
-    mutex_unlock(&_mutex);
+    mutex_unlock(&gnrc_pktbuf_mutex);
     return res;
 }
 
 void gnrc_pktbuf_hold(gnrc_pktsnip_t *pkt, unsigned int num)
 {
-    mutex_lock(&_mutex);
+    mutex_lock(&gnrc_pktbuf_mutex);
     while (pkt) {
+        assert(pkt->users + num <= 0xff);
         pkt->users += num;
         pkt = pkt->next;
     }
-    mutex_unlock(&_mutex);
-}
-
-static void _release_error_locked(gnrc_pktsnip_t *pkt, uint32_t err)
-{
-    while (pkt) {
-        gnrc_pktsnip_t *tmp;
-        tmp = pkt->next;
-        if (pkt->users == 1) {
-            pkt->users = 0; /* not necessary but to be on the safe side */
-            _free(pkt->data);
-            _free(pkt);
-        }
-        else {
-            pkt->users--;
-        }
-        DEBUG("pktbuf: report status code %" PRIu32 "\n", err);
-        gnrc_neterr_report(pkt, err);
-        pkt = tmp;
-    }
-}
-
-void gnrc_pktbuf_release_error(gnrc_pktsnip_t *pkt, uint32_t err)
-{
-    mutex_lock(&_mutex);
-    _release_error_locked(pkt, err);
-    mutex_unlock(&_mutex);
+    mutex_unlock(&gnrc_pktbuf_mutex);
 }
 
 gnrc_pktsnip_t *gnrc_pktbuf_start_write(gnrc_pktsnip_t *pkt)
 {
-    mutex_lock(&_mutex);
-    if ((pkt == NULL) || (pkt->size == 0)) {
-        mutex_unlock(&_mutex);
+    mutex_lock(&gnrc_pktbuf_mutex);
+    if (pkt == NULL) {
+        mutex_unlock(&gnrc_pktbuf_mutex);
         return NULL;
     }
     if (pkt->users > 1) {
@@ -242,10 +227,10 @@ gnrc_pktsnip_t *gnrc_pktbuf_start_write(gnrc_pktsnip_t *pkt)
         if (new != NULL) {
             pkt->users--;
         }
-        mutex_unlock(&_mutex);
+        mutex_unlock(&gnrc_pktbuf_mutex);
         return new;
     }
-    mutex_unlock(&_mutex);
+    mutex_unlock(&gnrc_pktbuf_mutex);
     return pkt;
 }
 
@@ -289,60 +274,27 @@ static gnrc_pktsnip_t *_create_snip(gnrc_pktsnip_t *next, const void *data, size
         }
     }
     _set_pktsnip(pkt, next, _data, size, type);
-    if (data != NULL) {
+    /* If size == 0, _data is NULL. The call `memcpy(NULL, non-NULL, 0)` looks
+     * harmless (as copying no data to NULL should be fine), but is in fact
+     * undefined behavior. We test here explicitly to ensure correctness. */
+    if ((data != NULL) && (_data != NULL)) {
         memcpy(_data, data, size);
     }
     return pkt;
 }
 
-gnrc_pktsnip_t *gnrc_pktbuf_duplicate_upto(gnrc_pktsnip_t *pkt, gnrc_nettype_t type)
+void gnrc_pktbuf_free_internal(void *data, size_t size)
 {
-    mutex_lock(&_mutex);
+    (void)size;
+    _free(data);
+}
 
-    bool is_shared = pkt->users > 1;
-    size_t size = gnrc_pkt_len_upto(pkt, type);
-
-    DEBUG("ipv6_ext: duplicating %d octets\n", (int) size);
-
-    gnrc_pktsnip_t *tmp;
-    gnrc_pktsnip_t *target = gnrc_pktsnip_search_type(pkt, type);
-    gnrc_pktsnip_t *next = (target == NULL) ? NULL : target->next;
-    gnrc_pktsnip_t *new = _create_snip(next, NULL, size, type);
-
-    if (new == NULL) {
-        mutex_unlock(&_mutex);
-
-        return NULL;
-    }
-
-    /* copy payloads */
-    for (tmp = pkt; tmp != NULL; tmp = tmp->next) {
-        uint8_t *dest = ((uint8_t *)new->data) + (size - tmp->size);
-
-        memcpy(dest, tmp->data, tmp->size);
-
-        size -= tmp->size;
-
-        if (tmp->type == type) {
-            break;
-        }
-    }
-
-    /* decrements reference counters */
-
-    if (target != NULL) {
-        target->next = NULL;
-    }
-
-    _release_error_locked(pkt, GNRC_NETERR_SUCCESS);
-
-    if (is_shared && (target != NULL)) {
-        target->next = next;
-    }
-
-    mutex_unlock(&_mutex);
-
-    return new;
+bool gnrc_pktbuf_contains(void *ptr)
+{
+    (void)ptr;
+    /* tracking the memory areas malloced is to expensive, so this function
+     * only is useful with gnrc_pktbuf_static */
+    return true;
 }
 
 /** @} */

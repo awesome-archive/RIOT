@@ -1,24 +1,24 @@
 /*
- * Copyright (C) 2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_seeduino_arch-pro
  * @{
  *
  * @file
- * @brief       Peripheral MCU configuration for the Seeeduino Archo Pro board
+ * @brief       Peripheral MCU configuration for the Seeeduino Arch Pro board
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @author      Bas Stottelaar <basstottelaar@gmail.com>
  */
 
-#ifndef PERIPH_CONF_H
-#define PERIPH_CONF_H
+#include "mii.h"
+#include "periph_cpu.h"
+#include "vendor/conf.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,7 +29,6 @@ extern "C" {
  * @{
  */
 #define TIMER_NUMOF         (1U)
-#define TIMER_0_EN          1
 #define TIMER_IRQ_PRIO      1
 
 /* Timer 0 configuration */
@@ -48,47 +47,53 @@ extern "C" {
  * @name    UART configuration
  * @{
  */
-#define UART_NUMOF          (2U)
-#define UART_0_EN           1
-#define UART_1_EN           1
+static const uart_conf_t uart_config[] = {
+    {
+        .dev = (LPC_UART_TypeDef*)LPC_UART0,
+        .irq_rx = UART0_IRQn,
+        .clk_offset = 3,
+        .pinsel = 0,
+        .pinsel_shift = 2,
+        .pinsel_af = 1,
+    },
+    {
+        .dev = (LPC_UART_TypeDef*)LPC_UART3,
+        .irq_rx = UART3_IRQn,
+        .clk_offset = 25,
+        .pinsel = 0,
+        .pinsel_shift = 0,
+        .pinsel_af = 2
+    }
+};
+
 #define UART_IRQ_PRIO       1
 
-/* UART 0 device configuration */
-#define UART_0_DEV          LPC_UART0
-#define UART_0_CLKSEL()     (LPC_SC->PCLKSEL0 &= ~(0x3 << 6))       /* PCLK := CCLK / 4 */
-#define UART_0_CLKEN()      (LPC_SC->PCONP |= (1 << 3))
-#define UART_0_CLKDIS()     (LPC_SC->PCONP &= ~(1 << 3))
-#define UART_0_IRQ          UART0_IRQn
 #define UART_0_ISR          isr_uart0
-/* UART 0 pin configuration */
-#define UART_0_TX_PINSEL    (LPC_PINCON->PINSEL0)
-#define UART_0_RX_PINSEL    (LPC_PINCON->PINSEL0)
-#define UART_0_TX_PINMODE   (LPC_PINCON->PINMODE0)
-#define UART_0_RX_PINMODE   (LPC_PINCON->PINMODE0)
-#define UART_0_TX_PIN       (3)
-#define UART_0_RX_PIN       (2)
-#define UART_0_AF           (1)
-
-/* UART 1 device configuration */
-#define UART_1_DEV          LPC_UART3
-#define UART_1_CLKSEL()     (LPC_SC->PCLKSEL1 &= ~(0x3 << 18))      /* PCLK := CCLK / 4 */
-#define UART_1_CLKEN()      (LPC_SC->PCONP |= (1 << 25))
-#define UART_1_CLKDIS()     (LPC_SC->PCONP &= ~(1 << 25))
-#define UART_1_IRQ          UART3_IRQn
 #define UART_1_ISR          isr_uart3
-/* UART 1 pin configuration */
-#define UART_1_TX_PINSEL    (LPC_PINCON->PINSEL0)
-#define UART_1_RX_PINSEL    (LPC_PINCON->PINSEL0)
-#define UART_1_TX_PINMODE   (LPC_PINCON->PINMODE0)
-#define UART_1_RX_PINMODE   (LPC_PINCON->PINMODE0)
-#define UART_1_RX_PIN       (0)
-#define UART_1_TX_PIN       (1)
-#define UART_1_AF           (2)
+
+#define UART_NUMOF          ARRAY_SIZE(uart_config)
+
+/** @} */
+
+/**
+ * @name    Ethernet configuration
+ *
+ * The Seeeduino Arch Pro wires the LPC1768 EMAC to a TI DP83848 PHY at MIIM
+ * address 1. The 50 MHz RMII reference clock is supplied by an external
+ * oscillator whose enable line is driven by P1.27. A dedicated reset line for
+ * the PHY is available at P1.28.
+ * @{
+ */
+static const eth_conf_t eth_config = {
+    .phy_en_pin = GPIO_PIN(1, 27),
+    .phy_rst_pin = GPIO_PIN(1, 28),
+    .speed = MII_BMCR_SPEED_100 | MII_BMCR_FULL_DPLX,
+    .phy_addr = 1, /* TI DP83848 */
+};
 /** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERIPH_CONF_H */
 /** @} */

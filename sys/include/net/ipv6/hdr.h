@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_ipv6_hdr    IPv6 header
@@ -17,8 +16,6 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_IPV6_HDR_H
-#define NET_IPV6_HDR_H
 
 #include <stdint.h>
 
@@ -217,7 +214,6 @@ static inline uint8_t ipv6_hdr_get_tc_ecn(const ipv6_hdr_t *hdr)
     return (((hdr->v_tc_fl.u8[0]) & 0x0c) >> 2);
 }
 
-
 /**
  * @brief   Gets the value of the Differentiated Service Codepoint (DSCP) part
  *          of the traffic class field of @p hdr
@@ -248,7 +244,8 @@ static inline void ipv6_hdr_set_fl(ipv6_hdr_t *hdr, uint32_t fl)
 {
     hdr->v_tc_fl.u8[1] &= 0xf0;
     hdr->v_tc_fl.u8[1] |= (0x0f & (byteorder_htonl(fl).u8[1]));
-    hdr->v_tc_fl.u16[1] = byteorder_htonl(fl).u16[1];
+    hdr->v_tc_fl.u8[2] = byteorder_htonl(fl).u8[2];
+    hdr->v_tc_fl.u8[3] = byteorder_htonl(fl).u8[3];
 }
 
 /**
@@ -304,5 +301,4 @@ void ipv6_hdr_print(ipv6_hdr_t *hdr);
 }
 #endif
 
-#endif /* NET_IPV6_HDR_H */
 /** @} */

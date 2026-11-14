@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2014 PHYTEC Messtechnik GmbH
- *               2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 PHYTEC Messtechnik GmbH
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_mpl3115a2 MPL3115A2 Pressure Sensor
@@ -28,9 +27,6 @@
  * @author      Sebastian Meiling <s@mlng.net>
  */
 
-#ifndef MPL3115A2_H
-#define MPL3115A2_H
-
 #include <stdint.h>
 #include <stdbool.h>
 #include "periph/i2c.h"
@@ -50,12 +46,10 @@ enum {
     MPL3115A2_ERROR_CNF,        /**< Device configuration failed */
 };
 
-#ifndef MPL3115A2_I2C_ADDRESS
 /**
  * @brief   MPL3115A2 Default Address
  */
 #define MPL3115A2_I2C_ADDRESS   (0x60)
-#endif
 
 /**
  * @name    Oversample Ratio configuration
@@ -74,14 +68,20 @@ enum {
 #define MPL3115A2_OS_RATIO_DEFAULT  MPL3115A2_OS_RATIO_16 /**< Default Ratio */
 /** @} */
 
-#ifndef MPL3115A2_CONVERSION_TIME
+/**
+ * @defgroup drivers_mpl3115a2_config     MPL3115A2 Pressure Sensor driver compile configuration
+ * @ingroup config_drivers_sensors
+ * @{
+ */
 /**
  * @brief   Maximum Conversion Time in microseconds [us]
  *
  * @note    Conversion time is: ((oversampling ratio * 4) + 2) * 1000 us
  */
+#ifndef MPL3115A2_CONVERSION_TIME
 #define MPL3115A2_CONVERSION_TIME   (514000UL)
 #endif
+/** @} */
 
 /**
  * @brief   Configuration parameters
@@ -180,5 +180,4 @@ int mpl3115a2_read_temp(const mpl3115a2_t *dev, int16_t *temp);
 }
 #endif
 
-#endif /* MPL3115A2_H */
 /** @} */

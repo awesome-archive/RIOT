@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2015 PHYTEC Messtechnik GmbH
- * Copyright (C) 2015 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2015 PHYTEC Messtechnik GmbH
+ * SPDX-FileCopyrightText: 2015 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -27,13 +24,19 @@
 #include "cpu_conf.h"
 #include "periph_conf.h"
 
-#ifndef KINETIS_WDOG_ADVANCED
 /**
  * Attempts to determine the type of the WDOG,
  * using the WDOG_STCTRLH_CLKSRC_MASK field.
  */
+#ifndef KINETIS_WDOG_ADVANCED_MK
 #ifdef WDOG_STCTRLH_CLKSRC_MASK
-#define KINETIS_WDOG_ADVANCED    1
+#  define KINETIS_WDOG_ADVANCED_MK    1
+#endif
+#endif
+
+#ifndef KINETIS_WDOG_ADVANCED_EA
+#ifdef WDOG_CS1_STOP_MASK
+#  define KINETIS_WDOG_ADVANCED_EA    1
 #endif
 #endif
 
@@ -61,7 +64,7 @@
  */
 void wdog_disable(void)
 {
-#if KINETIS_WDOG_ADVANCED
+#if KINETIS_WDOG_ADVANCED_MK
     /* unlock and disable the WDOG */
     WDOG->UNLOCK = (uint16_t)0xc520;
     WDOG->UNLOCK = (uint16_t)0xd928;
@@ -69,6 +72,9 @@ void wdog_disable(void)
                                | WDOG_STCTRLH_STOPEN_MASK
                                | WDOG_STCTRLH_ALLOWUPDATE_MASK
                                | WDOG_STCTRLH_CLKSRC_MASK);
+#elif KINETIS_WDOG_ADVANCED_EA
+    extern void SystemDisableWatchdog(void);
+    SystemDisableWatchdog();
 #else
     /* disable the COP WDOG */
     SIM->COPC = (uint32_t)0x00u;

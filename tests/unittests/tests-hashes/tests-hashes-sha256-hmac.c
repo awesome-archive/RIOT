@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2016 Martin Landsmann <martin.landsmann@haw-hamburg.de>
- * Copyright 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Martin Landsmann <martin.landsmann@haw-hamburg.de>
+ * SPDX-FileCopyrightText: 2016 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #include <limits.h>
@@ -50,7 +47,7 @@ static void test_hashes_hmac_sha256_hash_sequence(void)
                  "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad", hmac));
 
     /* use a real message */
-    const unsigned char str[] = "The quick brown fox jumps over the lazy dog";
+    static const unsigned char str[] = "The quick brown fox jumps over the lazy dog";
     key[0] = 'k';
     key[1] = 'e';
     key[2] = 'y';
@@ -61,14 +58,14 @@ static void test_hashes_hmac_sha256_hash_sequence(void)
 }
 
 /*
-        The followig testcases are taken from:
+        The following testcases are taken from:
         https://tools.ietf.org/html/rfc4868#section-2.7.1
 */
 
 static void test_hashes_hmac_sha256_hash_PRF1(void)
 {
     /* Test Case PRF-1: */
-    const unsigned char strPRF1[] = "Hi There";
+    static const unsigned char strPRF1[] = "Hi There";
     unsigned char key[20];
     static unsigned char hmac[SHA256_DIGEST_LENGTH];
     memset(key, 0x0b, sizeof(key));
@@ -81,7 +78,7 @@ static void test_hashes_hmac_sha256_hash_PRF1(void)
 static void test_hashes_hmac_sha256_hash_PRF2(void)
 {
     /* Test Case PRF-2: */
-    const unsigned char strPRF2[] = "what do ya want for nothing?";
+    static const unsigned char strPRF2[] = "what do ya want for nothing?";
     unsigned char key[4] = {'J', 'e', 'f', 'e'};
     static unsigned char hmac[SHA256_DIGEST_LENGTH];
 
@@ -128,7 +125,7 @@ static void test_hashes_hmac_sha256_hash_PRF4(void)
 static void test_hashes_hmac_sha256_hash_PRF5(void)
 {
     /* Test Case PRF-5: */
-    const unsigned char strPRF5[] = "Test Using Larger Than Block-Size Key - Hash Key First";
+    static const unsigned char strPRF5[] = "Test Using Larger Than Block-Size Key - Hash Key First";
     unsigned char longKey[131];
     static unsigned char hmac[SHA256_DIGEST_LENGTH];
     memset(longKey, 0xaa, sizeof(longKey));
@@ -141,9 +138,11 @@ static void test_hashes_hmac_sha256_hash_PRF5(void)
 static void test_hashes_hmac_sha256_hash_PRF6(void)
 {
     /* Test Case PRF-6: */
-    const unsigned char strPRF6[] = "This is a test using a larger than block-size key and a "
-                           "larger than block-size data. The key needs to be hashed "
-                           "before being used by the HMAC algorithm.";
+    static const unsigned char strPRF6[] =
+        "This is a test using a larger than block-size key and a "
+        "larger than block-size data. The key needs to be hashed "
+        "before being used by the HMAC algorithm.";
+
     unsigned char longKey[131];
     static unsigned char hmac[SHA256_DIGEST_LENGTH];
     memset(longKey, 0xaa, sizeof(longKey));
@@ -172,7 +171,7 @@ static void test_hashes_hmac_sha256_ite_hash_sequence(void)
                  "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad", hmac));
 
     /* use a real message */
-    const unsigned char str[] = "The quick brown fox jumps over the lazy dog";
+    static const unsigned char str[] = "The quick brown fox jumps over the lazy dog";
     key[0] = 'k';
     key[1] = 'e';
     key[2] = 'y';
@@ -186,7 +185,7 @@ static void test_hashes_hmac_sha256_ite_hash_sequence(void)
 }
 
 /*
-        The followig testcases are taken from:
+        The following testcases are taken from:
         https://tools.ietf.org/html/rfc4868#section-2.7.1
 */
 
@@ -194,7 +193,7 @@ static void test_hashes_hmac_sha256_ite_hash_PRF1(void)
 {
     /* Test Case PRF-1: */
     hmac_context_t ctx;
-    const unsigned char strPRF1[] = "Hi There";
+    static const unsigned char strPRF1[] = "Hi There";
     unsigned char key[20];
     static unsigned char hmac[SHA256_DIGEST_LENGTH];
     memset(key, 0x0b, sizeof(key));
@@ -211,7 +210,7 @@ static void test_hashes_hmac_sha256_ite_hash_PRF2(void)
 {
     /* Test Case PRF-2: */
     hmac_context_t ctx;
-    const unsigned char strPRF2[] = "what do ya want for nothing?";
+    static const unsigned char strPRF2[] = "what do ya want for nothing?";
     unsigned char key[4] = {'J', 'e', 'f', 'e'};
     static unsigned char hmac[SHA256_DIGEST_LENGTH];
 
@@ -270,7 +269,7 @@ static void test_hashes_hmac_sha256_ite_hash_PRF5(void)
 {
     /* Test Case PRF-5: */
     hmac_context_t ctx;
-    const unsigned char strPRF5[] = "Test Using Larger Than Block-Size Key - Hash Key First";
+    static const unsigned char strPRF5[] = "Test Using Larger Than Block-Size Key - Hash Key First";
     unsigned char longKey[131];
     static unsigned char hmac[SHA256_DIGEST_LENGTH];
     memset(longKey, 0xaa, sizeof(longKey));
@@ -287,9 +286,11 @@ static void test_hashes_hmac_sha256_ite_hash_PRF6(void)
 {
     /* Test Case PRF-6: */
     hmac_context_t ctx;
-    const unsigned char strPRF6[] = "This is a test using a larger than block-size key and a "
-                           "larger than block-size data. The key needs to be hashed "
-                           "before being used by the HMAC algorithm.";
+    static const unsigned char strPRF6[] =
+        "This is a test using a larger than block-size key and a "
+        "larger than block-size data. The key needs to be hashed "
+        "before being used by the HMAC algorithm.";
+
     unsigned char longKey[131];
     static unsigned char hmac[SHA256_DIGEST_LENGTH];
     memset(longKey, 0xaa, sizeof(longKey));
@@ -308,9 +309,12 @@ static void test_hashes_hmac_sha256_ite_hash_PRF6_split(void)
 {
     /* Test Case PRF-6: */
     hmac_context_t ctx;
-    const unsigned char strPRF6_1[] = "This is a test using a larger than block-size key and a ";
-    const unsigned char strPRF6_2[] = "larger than block-size data. The key needs to be hashed ";
-    const unsigned char strPRF6_3[] = "before being used by the HMAC algorithm.";
+    static const unsigned char strPRF6_1[] =
+        "This is a test using a larger than block-size key and a ";
+    static const unsigned char strPRF6_2[] =
+        "larger than block-size data. The key needs to be hashed ";
+    static const unsigned char strPRF6_3[] =
+        "before being used by the HMAC algorithm.";
 
     unsigned char longKey[131];
     static unsigned char hmac[SHA256_DIGEST_LENGTH];
@@ -326,6 +330,24 @@ static void test_hashes_hmac_sha256_ite_hash_PRF6_split(void)
 
     TEST_ASSERT(compare_str_vs_digest(
                  "9b09ffa71b942fcb27635fbcd5b0e944bfdc63644f0713938a7f51535c3a35e2", hmac));
+}
+
+static void test_hashes_hmac_sha256_wipe(void)
+{
+    hmac_context_t ctx;
+    unsigned char key[20];
+    static unsigned char hmac[SHA256_DIGEST_LENGTH];
+    static const hmac_context_t zeros;
+
+    memset(key, 0x0b, sizeof(key));
+
+    hmac_sha256_init(&ctx, key, sizeof(key));
+    hmac_sha256_update(&ctx, "Hi There", 8);
+    hmac_sha256_final(&ctx, hmac);
+
+    TEST_ASSERT(compare_str_vs_digest(
+                 "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7", hmac));
+    TEST_ASSERT(memcmp(&ctx, &zeros, sizeof(ctx)) == 0);
 }
 
 Test *tests_hashes_sha256_hmac_tests(void)
@@ -346,6 +368,7 @@ Test *tests_hashes_sha256_hmac_tests(void)
         new_TestFixture(test_hashes_hmac_sha256_ite_hash_PRF5),
         new_TestFixture(test_hashes_hmac_sha256_ite_hash_PRF6),
         new_TestFixture(test_hashes_hmac_sha256_ite_hash_PRF6_split),
+        new_TestFixture(test_hashes_hmac_sha256_wipe),
     };
 
     EMB_UNIT_TESTCALLER(hashes_sha256_tests, NULL, NULL,

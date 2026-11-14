@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_analog_util Analog data conversion utilities
@@ -17,9 +16,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef ANALOG_UTIL_H
-#define ANALOG_UTIL_H
 
 #include <stdint.h>
 
@@ -46,7 +42,7 @@ int32_t adc_util_map(int sample, adc_res_t res, int32_t min, int32_t max);
 
 /**
  * @brief   Map a sampled ADC value to a given range (using floating point
- *          arithmetics)
+ *          arithmetic)
  *
  * @see adc_util_map
  *
@@ -90,5 +86,4 @@ uint16_t dac_util_mapf(float value, float min, float max);
 }
 #endif
 
-#endif /* ANALOG_UTIL_H */
 /** @} */

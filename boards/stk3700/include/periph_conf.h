@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015-2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015-2020 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_stk3700
@@ -17,21 +16,14 @@
  * @author      Bas Stottelaar <basstottelaar@gmail.com>
  */
 
-#ifndef PERIPH_CONF_H
-#define PERIPH_CONF_H
-
 #include "cpu.h"
 #include "periph_cpu.h"
 #include "em_cmu.h"
+#include "usbdev_cfg_otg_fs.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @brief   Internal macro to calculate *_NUMOF based on config.
- */
-#define PERIPH_NUMOF(config)    (sizeof(config) / sizeof(config[0]))
 
 /**
  * @name    Clock configuration
@@ -77,8 +69,8 @@ static const adc_chan_conf_t adc_channel_config[] = {
     }
 };
 
-#define ADC_DEV_NUMOF       PERIPH_NUMOF(adc_config)
-#define ADC_NUMOF           PERIPH_NUMOF(adc_channel_config)
+#define ADC_DEV_NUMOF       ARRAY_SIZE(adc_config)
+#define ADC_NUMOF           ARRAY_SIZE(adc_channel_config)
 /** @} */
 
 /**
@@ -88,6 +80,7 @@ static const adc_chan_conf_t adc_channel_config[] = {
 static const dac_conf_t dac_config[] = {
     {
         .dev = DAC0,
+        .ref = dacRefVDD,
         .cmu = cmuClock_DAC0,
     }
 };
@@ -96,12 +89,11 @@ static const dac_chan_conf_t dac_channel_config[] = {
     {
         .dev = 0,
         .index = 1,
-        .ref = dacRefVDD,
     }
 };
 
-#define DAC_DEV_NUMOF       PERIPH_NUMOF(dac_config)
-#define DAC_NUMOF           PERIPH_NUMOF(dac_channel_config)
+#define DAC_DEV_NUMOF       ARRAY_SIZE(dac_config)
+#define DAC_NUMOF           ARRAY_SIZE(dac_channel_config)
 /** @} */
 
 /**
@@ -114,22 +106,24 @@ static const i2c_conf_t i2c_config[] = {
         .sda_pin = GPIO_PIN(PD, 6),
         .scl_pin = GPIO_PIN(PD, 7),
         .loc = I2C_ROUTE_LOCATION_LOC1,
+        .speed = I2C_SPEED_NORMAL,
         .cmu = cmuClock_I2C0,
         .irq = I2C0_IRQn,
-        .speed = I2C_SPEED_NORMAL
+        .use_internal_pull_ups = true
     },
     {
         .dev = I2C1,
         .sda_pin = GPIO_PIN(PC, 4),
         .scl_pin = GPIO_PIN(PC, 5),
         .loc = I2C_ROUTE_LOCATION_LOC0,
+        .speed = I2C_SPEED_NORMAL,
         .cmu = cmuClock_I2C1,
         .irq = I2C1_IRQn,
-        .speed = I2C_SPEED_NORMAL
+        .use_internal_pull_ups = true
     }
 };
 
-#define I2C_NUMOF           PERIPH_NUMOF(i2c_config)
+#define I2C_NUMOF           ARRAY_SIZE(i2c_config)
 #define I2C_0_ISR           isr_i2c0
 #define I2C_1_ISR           isr_i2c1
 /** @} */
@@ -156,25 +150,17 @@ static const pwm_conf_t pwm_config[] = {
     }
 };
 
-#define PWM_DEV_NUMOF       PERIPH_NUMOF(pwm_config)
-#define PWM_NUMOF           PERIPH_NUMOF(pwm_channel_config)
-/** @} */
-
-/**
- * @name    RTC configuration
- * @{
- */
-#define RTC_NUMOF           (1U)
+#define PWM_DEV_NUMOF       ARRAY_SIZE(pwm_config)
+#define PWM_NUMOF           ARRAY_SIZE(pwm_channel_config)
 /** @} */
 
 /**
  * @name    RTT configuration
  * @{
  */
-#define RTT_NUMOF           (1U)
-
-#define RTT_MAX_VALUE       (0xFFFFFF)
-#define RTT_FREQUENCY       (1U)
+#ifndef RTT_FREQUENCY
+#define RTT_FREQUENCY       (1U)              /* in Hz */
+#endif
 /** @} */
 
 /**
@@ -202,7 +188,7 @@ static const spi_dev_t spi_config[] = {
     }
 };
 
-#define SPI_NUMOF           PERIPH_NUMOF(spi_config)
+#define SPI_NUMOF           ARRAY_SIZE(spi_config)
 /** @} */
 
 /**
@@ -213,20 +199,34 @@ static const spi_dev_t spi_config[] = {
  */
 static const timer_conf_t timer_config[] = {
     {
-        {
+        .prescaler = {
             .dev = TIMER0,
             .cmu = cmuClock_TIMER0
         },
-        {
+        .timer = {
             .dev = TIMER1,
             .cmu = cmuClock_TIMER1
         },
-        .irq = TIMER1_IRQn
+        .irq = TIMER1_IRQn,
+        .channel_numof = 3
+    },
+    {
+        .prescaler = {
+            .dev = NULL,
+            .cmu = cmuClock_LETIMER0
+        },
+        .timer = {
+            .dev = LETIMER0,
+            .cmu = cmuClock_LETIMER0
+        },
+        .irq = LETIMER0_IRQn,
+        .channel_numof = 2
     }
 };
 
-#define TIMER_NUMOF         PERIPH_NUMOF(timer_config)
+#define TIMER_NUMOF         ARRAY_SIZE(timer_config)
 #define TIMER_0_ISR         isr_timer1
+#define TIMER_1_ISR         isr_letimer0
 /** @} */
 
 /**
@@ -239,45 +239,26 @@ static const uart_conf_t uart_config[] = {
         .rx_pin = GPIO_PIN(PE, 1),
         .tx_pin = GPIO_PIN(PE, 0),
         .loc = UART_ROUTE_LOCATION_LOC1,
-#if EFM32_UART_MODES
-        .mode = UART_MODE_8N1,
-#endif
         .cmu = cmuClock_UART0,
         .irq = UART0_RX_IRQn
-    },
-    {
-        .dev = USART1,
-        .rx_pin = GPIO_PIN(PD, 1),
-        .tx_pin = GPIO_PIN(PD, 0),
-        .loc = USART_ROUTE_LOCATION_LOC1,
-#if EFM32_UART_MODES
-        .mode = UART_MODE_8N1,
-#endif
-        .cmu = cmuClock_USART1,
-        .irq = USART1_RX_IRQn
     },
     {
         .dev = LEUART0,
         .rx_pin = GPIO_PIN(PD, 5),
         .tx_pin = GPIO_PIN(PD, 4),
         .loc = LEUART_ROUTE_LOCATION_LOC0,
-#if EFM32_UART_MODES
-        .mode = UART_MODE_8N1,
-#endif
         .cmu = cmuClock_LEUART0,
         .irq = LEUART0_IRQn
     }
 };
 
-#define UART_NUMOF          PERIPH_NUMOF(uart_config)
+#define UART_NUMOF          ARRAY_SIZE(uart_config)
 #define UART_0_ISR_RX       isr_uart0_rx
-#define UART_1_ISR_RX       isr_usart1_rx
-#define UART_2_ISR_RX       isr_leuart0
+#define UART_1_ISR_RX       isr_leuart0
 /** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERIPH_CONF_H */
 /** @} */

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -52,7 +49,7 @@ static const constfs_file_t _files[] = {
 
 static const constfs_t fs_data = {
     .files = _files,
-    .nfiles = sizeof(_files) / sizeof(_files[0]),
+    .nfiles = ARRAY_SIZE(_files),
 };
 
 static vfs_mount_t _test_vfs_mount_invalid_mount = {
@@ -72,7 +69,7 @@ static void test_vfs_mount_umount(void)
     int res;
     res = vfs_mount(&_test_vfs_mount);
     TEST_ASSERT_EQUAL_INT(0, res);
-    res = vfs_umount(&_test_vfs_mount);
+    res = vfs_umount(&_test_vfs_mount, false);
     TEST_ASSERT_EQUAL_INT(0, res);
 }
 
@@ -89,9 +86,9 @@ static void test_vfs_mount__invalid(void)
 static void test_vfs_umount__invalid_mount(void)
 {
     int res;
-    res = vfs_umount(NULL);
+    res = vfs_umount(NULL, false);
     TEST_ASSERT(res < 0);
-    res = vfs_umount(&_test_vfs_mount);
+    res = vfs_umount(&_test_vfs_mount, false);
     TEST_ASSERT(res < 0);
 }
 
@@ -124,7 +121,7 @@ static void test_vfs_constfs_open(void)
         TEST_ASSERT_EQUAL_INT(0, res);
     }
 
-    res = vfs_umount(&_test_vfs_mount);
+    res = vfs_umount(&_test_vfs_mount, false);
     TEST_ASSERT_EQUAL_INT(0, res);
 }
 
@@ -151,7 +148,8 @@ static void test_vfs_constfs_read_lseek(void)
     TEST_ASSERT_EQUAL_INT(sizeof(str_data) / 2, pos);
     nbytes = vfs_read(fd, strbuf, sizeof(strbuf));
     TEST_ASSERT_EQUAL_INT((sizeof(str_data) + 1) / 2, nbytes); /* + 1 for rounding up */
-    TEST_ASSERT_EQUAL_STRING((const char *)&str_data[sizeof(str_data) / 2], (const char *)&strbuf[0]);
+    TEST_ASSERT_EQUAL_STRING((const char *)&str_data[sizeof(str_data) / 2],
+                             (const char *)&strbuf[0]);
 
     /* lseek to near the end */
     memset(strbuf, '\0', sizeof(strbuf));
@@ -159,7 +157,8 @@ static void test_vfs_constfs_read_lseek(void)
     TEST_ASSERT_EQUAL_INT(sizeof(str_data) - 1, pos);
     nbytes = vfs_read(fd, strbuf, sizeof(strbuf));
     TEST_ASSERT_EQUAL_INT(1, nbytes);
-    TEST_ASSERT_EQUAL_STRING((const char *)&str_data[sizeof(str_data) - 1], (const char *)&strbuf[0]);
+    TEST_ASSERT_EQUAL_STRING((const char *)&str_data[sizeof(str_data) - 1],
+                             (const char *)&strbuf[0]);
 
     res = vfs_fcntl(fd, F_GETFL, 0);
     TEST_ASSERT_EQUAL_INT(O_RDONLY, res);
@@ -167,11 +166,11 @@ static void test_vfs_constfs_read_lseek(void)
     res = vfs_close(fd);
     TEST_ASSERT_EQUAL_INT(0, res);
 
-    res = vfs_umount(&_test_vfs_mount);
+    res = vfs_umount(&_test_vfs_mount, false);
     TEST_ASSERT_EQUAL_INT(0, res);
 }
 
-#if MODULE_NEWLIB || defined(BOARD_NATIVE)
+#if MODULE_NEWLIB || MODULE_PICOLIBC || defined(CPU_NATIVE)
 static void test_vfs_constfs__posix(void)
 {
     int res;
@@ -197,7 +196,7 @@ static void test_vfs_constfs__posix(void)
     res = close(fd);
     TEST_ASSERT_EQUAL_INT(0, res);
 
-    res = vfs_umount(&_test_vfs_mount);
+    res = vfs_umount(&_test_vfs_mount, false);
     TEST_ASSERT_EQUAL_INT(0, res);
 }
 #endif
@@ -210,7 +209,7 @@ Test *tests_vfs_mount_constfs_tests(void)
         new_TestFixture(test_vfs_umount__invalid_mount),
         new_TestFixture(test_vfs_constfs_open),
         new_TestFixture(test_vfs_constfs_read_lseek),
-#if MODULE_NEWLIB || defined(BOARD_NATIVE)
+#if MODULE_NEWLIB || MODULE_PICOLIBC || defined(CPU_NATIVE)
         new_TestFixture(test_vfs_constfs__posix),
 #endif
     };

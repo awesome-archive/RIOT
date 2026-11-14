@@ -1,15 +1,12 @@
 /*
- * Copyright (C) 2017 Baptiste Clenet <bapclenet@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Baptiste Clenet <bapclenet@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup    boards_samr30-xpro Atmel SAM R30 Xplained Pro
- * @ingroup     boards
- * @brief       Support for the Atmel SAM R30 Xplained Pro board.
+ * @ingroup     boards_samr30-xpro
  * @{
  *
  * @file
@@ -18,10 +15,8 @@
  * @author      Baptiste Clenet <bapclenet@gmail.com>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include "cpu.h"
+#include "periph/gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,19 +57,42 @@ extern "C" {
  * @name    BTN0 (SW0 Button) pin definitions
  * @{
  */
-#define BTN0_PORT                   PORT->Group[0]
 #define BTN0_PIN                    GPIO_PIN(PA, 28)
 #define BTN0_MODE                   GPIO_IN_PU
 /** @} */
 
 /**
- * @brief   Initialize board specific hardware, including clock, LEDs and std-IO
+ * @name    Antenna configuration pin interface
+ * @{
  */
-void board_init(void);
+#define RFCTL1_PIN                  GPIO_PIN(PA, 9)
+#define RFCTL2_PIN                  GPIO_PIN(PA, 12)
+/** @} */
+
+/**
+ * @brief   Antenna configuration values
+ */
+enum {
+    RFCTL_ANTENNA_BOARD,
+    RFCTL_ANTENNA_EXT,
+};
+
+/**
+ * @name    Default antenna configuration
+ * @{
+ */
+#ifndef RFCTL_ANTENNA_DEFAULT
+#define RFCTL_ANTENNA_DEFAULT      RFCTL_ANTENNA_BOARD
+#endif
+/** @} */
+
+/**
+ * @brief   Set antenna switch
+ */
+void board_antenna_config(uint8_t antenna);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

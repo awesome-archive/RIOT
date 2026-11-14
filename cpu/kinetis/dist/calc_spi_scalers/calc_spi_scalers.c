@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2014 Hamburg University of Applied Sciences
- *               2014 PHYTEC Messtechnik GmbH
- *               2015 Eistec AB
- *               2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Hamburg University of Applied Sciences
+ * SPDX-FileCopyrightText: 2014 PHYTEC Messtechnik GmbH
+ * SPDX-FileCopyrightText: 2015 Eistec AB
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -27,6 +24,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define ARRAY_SIZE(a) (sizeof((a)) / sizeof((a)[0]))
 
 /**
  * @brief Targeted SPI bus speed values (pre-defined by RIOT)
@@ -172,7 +171,6 @@ static long find_closest_delay_scalers(const uint32_t module_clock, const long t
     return closest_frequency;
 }
 
-
 int main(int argc, char **argv)
 {
     uint32_t modclk;
@@ -192,10 +190,9 @@ int main(int argc, char **argv)
     printf("\nCalculating SPI clock scalers for a module clock of: %iHz\n\n",
             (int)modclk);
 
-
     puts("static const uint32_t spi_clk_config[] = {");
 
-    for (i = 0; i < (sizeof(targets) / sizeof(targets[0])); i++) {
+    for (i = 0; i < ARRAY_SIZE(targets); i++) {
         uint8_t tmp, ptmp;
         long res;
         /* bus clock */
@@ -229,7 +226,7 @@ int main(int argc, char **argv)
         }
         printf("        SPI_CTAR_PDT(%i) | SPI_CTAR_DT(%i)\n", (int)ptmp, (int)tmp);
 
-        if (i == (sizeof(targets) / sizeof(targets[0])) - 1) {
+        if (i == ARRAY_SIZE(targets) - 1) {
             puts("    )");
         }
         else {

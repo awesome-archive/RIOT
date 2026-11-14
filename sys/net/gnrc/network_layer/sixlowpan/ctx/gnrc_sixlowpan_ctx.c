@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -17,9 +14,14 @@
 
 #include "mutex.h"
 #include "net/gnrc/sixlowpan/ctx.h"
+#if IS_USED(MODULE_ZTIMER_MSEC)
+#include "ztimer.h"
+#include "timex.h"
+#else
 #include "xtimer.h"
+#endif
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 static gnrc_sixlowpan_ctx_t _ctxs[GNRC_SIXLOWPAN_CTX_SIZE];
@@ -57,15 +59,15 @@ gnrc_sixlowpan_ctx_t *gnrc_sixlowpan_ctx_lookup_addr(const ipv6_addr_t *addr)
 
     mutex_unlock(&_ctx_mutex);
 
-#if ENABLE_DEBUG
-    if (res != NULL) {
-        DEBUG("6lo ctx: found context (%u, %s/%" PRIu8 ") ",
-              (res->flags_id & GNRC_SIXLOWPAN_CTX_FLAGS_CID_MASK),
-              ipv6_addr_to_str(ipv6str, &res->prefix, sizeof(ipv6str)),
-              res->prefix_len);
-        DEBUG("for address %s\n", ipv6_addr_to_str(ipv6str, addr, sizeof(ipv6str)));
+    if (IS_ACTIVE(ENABLE_DEBUG)) {
+        if (res != NULL) {
+            DEBUG("6lo ctx: found context (%u, %s/%" PRIu8 ") ",
+                (res->flags_id & GNRC_SIXLOWPAN_CTX_FLAGS_CID_MASK),
+                ipv6_addr_to_str(ipv6str, &res->prefix, sizeof(ipv6str)),
+                res->prefix_len);
+            DEBUG("for address %s\n", ipv6_addr_to_str(ipv6str, addr, sizeof(ipv6str)));
+        }
     }
-#endif
 
     return res;
 }
@@ -131,7 +133,11 @@ gnrc_sixlowpan_ctx_t *gnrc_sixlowpan_ctx_update(uint8_t id, const ipv6_addr_t *p
 
 static uint32_t _current_minute(void)
 {
-    return xtimer_now_usec() / (US_PER_SEC * 60);
+#if IS_USED(MODULE_ZTIMER_MSEC)
+    return ztimer_now(ZTIMER_MSEC) / (MS_PER_SEC * SEC_PER_MIN);
+#else
+    return xtimer_now_usec() / (US_PER_SEC * SEC_PER_MIN);
+#endif
 }
 
 static void _update_lifetime(uint8_t id)

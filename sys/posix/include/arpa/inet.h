@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2013-15 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2013-2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @addtogroup  posix_sockets
@@ -20,8 +19,6 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef ARPA_INET_H
-#define ARPA_INET_H
 
 #include "net/af.h"
 #include "sys/bytes.h"
@@ -59,7 +56,7 @@ extern "C" {
  * @return  NULL, if @p size was smaller than needed
  * @return  NULL, if @p src or @p dst was NULL
  */
-const char *inet_ntop(int af, const void *restrict src, char *restrict dst,
+const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
                       socklen_t size);
 
 /**
@@ -85,4 +82,3 @@ int inet_pton(int af, const char *src, void *dst);
 /**
  * @}
  */
-#endif /* ARPA_INET_H */

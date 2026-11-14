@@ -1,11 +1,7 @@
 /*
- * Copyright (C) 2014 PHYTEC Messtechnik GmbH
- *               2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
- *
+ * SPDX-FileCopyrightText: 2014 PHYTEC Messtechnik GmbH
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -22,6 +18,7 @@
  * @}
  */
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -32,11 +29,11 @@
 #include "mpl3115a2.h"
 #include "mpl3115a2_reg.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    0
 #include "debug.h"
 
-#define BUS                 (dev->params.i2c)
-#define ADDR                (dev->params.addr)
+#define BUS             (dev->params.i2c)
+#define ADDR            (dev->params.addr)
 
 int mpl3115a2_init(mpl3115a2_t *dev, const mpl3115a2_params_t *params)
 {

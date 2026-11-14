@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_saul_reg SAUL registry
@@ -20,9 +19,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef SAUL_REG_H
-#define SAUL_REG_H
 
 #include <stdint.h>
 
@@ -70,17 +66,7 @@ extern saul_reg_t *saul_reg;
 int saul_reg_add(saul_reg_t *dev);
 
 /**
- * @brief   Unregister a device from the SAUL registry
- *
- * @param[in] dev       pointer to a registry entry
- *
- * @return      0 on success
- * @return      -ENODEV if device was not found in the registry
- */
-int saul_reg_rm(saul_reg_t *dev);
-
-/**
- * @brief   Find a device by it's position in the registry
+ * @brief   Find a device by its position in the registry
  *
  * @param[in] pos       position to look up
  *
@@ -90,9 +76,9 @@ int saul_reg_rm(saul_reg_t *dev);
 saul_reg_t *saul_reg_find_nth(int pos);
 
 /**
- * @brief   Find the first device of the given type in the registry
+ * @brief   Find the first device by its type in the registry
  *
- * @param[in] type      device type to look for
+ * @param[in] type      the device type to look for
  *
  * @return      pointer to the first device matching the given type
  * @return      NULL if no device of that type could be found
@@ -100,7 +86,7 @@ saul_reg_t *saul_reg_find_nth(int pos);
 saul_reg_t *saul_reg_find_type(uint8_t type);
 
 /**
- * @brief   Find a device by its name
+ * @brief   Find the first device by its name in the registry
  *
  * @param[in] name      the name to look for
  *
@@ -108,6 +94,17 @@ saul_reg_t *saul_reg_find_type(uint8_t type);
  * @return      NULL if no device with that name could be found
  */
 saul_reg_t *saul_reg_find_name(const char *name);
+
+/**
+ * @brief   Find the first device by its type and name in the registry
+ *
+ * @param[in] type      the device type to look for
+ * @param[in] name      the name to look for
+ *
+ * @return      pointer to the first device matching the given type and name
+ * @return      NULL if no device with that type and name could be found
+ */
+saul_reg_t *saul_reg_find_type_and_name(uint8_t type, const char *name);
 
 /**
  * @brief   Read data from the given device
@@ -133,11 +130,10 @@ int saul_reg_read(saul_reg_t *dev, phydat_t *res);
  * @return      -ENOTSUP if read operation is not supported by the device
  * @return      -ECANCELED on device errors
  */
-int saul_reg_write(saul_reg_t *dev, phydat_t *data);
+int saul_reg_write(saul_reg_t *dev, const phydat_t *data);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SAUL_REG_H */
 /** @} */

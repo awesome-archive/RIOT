@@ -33,15 +33,15 @@
   .extern  sched_active_thread
   .extern  sched_context_switch_request
   .extern  sched_run
-  .extern  DEBUG_Routine
 
 /* Public functions declared in this file */
   .global  arm_irq_handler
   .global  cpu_switch_context_exit
   .global  task_return
-  .global  ctx_switch
+  .global  ctx_switch_from_swi
+  .global  ctx_switch_from_irq
 
-ctx_switch:
+ctx_switch_from_swi:
     /* Save return address on stack */
     stmfd   sp!, {lr}
 
@@ -49,7 +49,7 @@ ctx_switch:
     mov     lr, #NOINT|SVCMODE
     msr     CPSR_c, lr
 
-ctx_switch2:
+ctx_switch_from_irq:
     /* get stack pointer from user mode into lr */
     stmfd   sp, {sp}^
     sub     sp, sp, #4
@@ -102,6 +102,10 @@ task_return:
 
     /* Restore all registers, PC & cpsr */
     ldmfd   r0, {r0-lr}^
+    /* According to ARM Architecture Reference Manual DDI 0100I,
+     * ldms which affect banked registers must be followed by a nop.
+     */
+    nop
 
     /* return to task */
     movs pc, lr
@@ -157,4 +161,4 @@ switch_context_int:
     /* recover general purpose registers */
     ldmfd  sp!, {r0-r12}
 
-    b ctx_switch2
+    b ctx_switch_from_irq

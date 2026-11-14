@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2014 Hamburg University of Applied Sciences
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2014 Hamburg University of Applied Sciences
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -19,17 +16,12 @@
 #include "mutex.h"
 #include "periph/gpio.h"
 #include "periph/spi.h"
-#include "xtimer.h"
+#include "ztimer.h"
 #include "thread.h"
 #include "msg.h"
 
-
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
-
-#define DELAY_CS_TOGGLE_TICKS       (xtimer_ticks_from_usec(DELAY_CS_TOGGLE_US))
-#define DELAY_AFTER_FUNC_TICKS      (xtimer_ticks_from_usec(DELAY_AFTER_FUNC_US))
-#define DELAY_CHANGE_TXRX_TICKS     (xtimer_ticks_from_usec(DELAY_CHANGE_TXRX_US))
 
 #define SPI_MODE            SPI_MODE_0
 #define SPI_CLK             SPI_CLK_400KHZ
@@ -40,11 +32,11 @@ int nrf24l01p_read_reg(const nrf24l01p_t *dev, char reg, char *answer)
     spi_acquire(dev->spi, dev->cs, SPI_MODE, SPI_CLK);
     *answer = (char)spi_transfer_reg(dev->spi, dev->cs,
                                      (CMD_R_REGISTER | (REGISTER_MASK & reg)),
-                                     CMD_NOP);
+                                     CMD_NOOP);
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
     return 0;
 }
 
@@ -57,16 +49,15 @@ int nrf24l01p_write_reg(const nrf24l01p_t *dev, char reg, char write)
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
     return 0;
 }
-
 
 int nrf24l01p_init(nrf24l01p_t *dev, spi_t spi, gpio_t ce, gpio_t cs, gpio_t irq)
 {
     int status;
-    static const char INITIAL_TX_ADDRESS[] =  {0xe7, 0xe7, 0xe7, 0xe7, 0xe7,};
-    static const char INITIAL_RX_ADDRESS[] =  {0xe7, 0xe7, 0xe7, 0xe7, 0xe7,};
+    static const uint8_t INITIAL_TX_ADDRESS[] =  {0xe7, 0xe7, 0xe7, 0xe7, 0xe7,};
+    static const uint8_t INITIAL_RX_ADDRESS[] =  {0xe7, 0xe7, 0xe7, 0xe7, 0xe7,};
 
     dev->spi = spi;
     dev->ce = ce;
@@ -83,14 +74,13 @@ int nrf24l01p_init(nrf24l01p_t *dev, spi_t spi, gpio_t ce, gpio_t cs, gpio_t irq
     /* Init IRQ pin */
     gpio_init_int(dev->irq, GPIO_IN_PU, GPIO_FALLING, nrf24l01p_rx_cb, dev);
 
-    /* Test the SPI connection */
-    if (spi_acquire(dev->spi, dev->cs, SPI_MODE, SPI_CLK) != SPI_OK) {
-        DEBUG("error: unable to acquire SPI bus with given params\n");
-        return -1;
+    /* Test the SPI connection, if assertions are on */
+    if (!IS_ACTIVE(NDEBUG)) {
+        spi_acquire(dev->spi, dev->cs, SPI_MODE, SPI_CLK);
+        spi_release(dev->spi);
     }
-    spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
 
     /* Flush TX FIFIO */
     status = nrf24l01p_flush_tx_fifo(dev);
@@ -106,7 +96,7 @@ int nrf24l01p_init(nrf24l01p_t *dev, spi_t spi, gpio_t ce, gpio_t cs, gpio_t irq
         return status;
     }
 
-    /* Setup adress width */
+    /* Setup address width */
     status = nrf24l01p_set_address_width(dev, NRF24L01P_AW_5BYTE);
 
     if (status < 0) {
@@ -148,7 +138,7 @@ int nrf24l01p_init(nrf24l01p_t *dev, spi_t spi, gpio_t ce, gpio_t cs, gpio_t irq
         return status;
     }
 
-    /* Set RX Adress */
+    /* Set RX Address */
     status = nrf24l01p_set_rx_address(dev, NRF24L01P_PIPE0, INITIAL_RX_ADDRESS, INITIAL_ADDRESS_WIDTH);
 
     if (status < 0) {
@@ -194,7 +184,7 @@ int nrf24l01p_on(const nrf24l01p_t *dev)
     nrf24l01p_read_reg(dev, REG_CONFIG, &read);
     status = nrf24l01p_write_reg(dev, REG_CONFIG, (read | PWR_UP));
 
-    xtimer_usleep(DELAY_CHANGE_PWR_MODE_US);
+    ztimer_sleep(ZTIMER_USEC, DELAY_CHANGE_PWR_MODE_US);
 
     return status;
 }
@@ -207,7 +197,7 @@ int nrf24l01p_off(const nrf24l01p_t *dev)
     nrf24l01p_read_reg(dev, REG_CONFIG, &read);
     status = nrf24l01p_write_reg(dev, REG_CONFIG, (read & ~PWR_UP));
 
-    xtimer_usleep(DELAY_CHANGE_PWR_MODE_US);
+    ztimer_sleep(ZTIMER_USEC, DELAY_CHANGE_PWR_MODE_US);
 
     return status;
 }
@@ -215,10 +205,10 @@ int nrf24l01p_off(const nrf24l01p_t *dev)
 void nrf24l01p_transmit(const nrf24l01p_t *dev)
 {
     gpio_set(dev->ce);
-    xtimer_usleep(DELAY_CE_HIGH_US); /* at least 10 us high */
+    ztimer_sleep(ZTIMER_USEC, DELAY_CE_HIGH_US); /* at least 10 us high */
     gpio_clear(dev->ce);
 
-    xtimer_spin(DELAY_CHANGE_TXRX_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_CHANGE_TXRX_US);
 }
 
 int nrf24l01p_read_payload(const nrf24l01p_t *dev, char *answer, unsigned int size)
@@ -226,7 +216,7 @@ int nrf24l01p_read_payload(const nrf24l01p_t *dev, char *answer, unsigned int si
     /* Acquire exclusive access to the bus. */
     spi_acquire(dev->spi, dev->cs, SPI_MODE, SPI_CLK);
     spi_transfer_regs(dev->spi, dev->cs, CMD_R_RX_PAYLOAD, NULL, answer, size);
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
@@ -257,12 +247,12 @@ void nrf24l01p_get_id(const nrf24l01p_t *dev, unsigned int *pid)
 void nrf24l01p_start(const nrf24l01p_t *dev)
 {
     gpio_set(dev->ce);
-    xtimer_usleep(DELAY_CE_START_US);
+    ztimer_sleep(ZTIMER_USEC, DELAY_CE_START_US);
 }
 
 void nrf24l01p_stop(const nrf24l01p_t *dev)
 {
-    xtimer_spin(DELAY_CS_TOGGLE_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_CS_TOGGLE_US);
     gpio_clear(dev->ce);
 }
 
@@ -276,10 +266,9 @@ int nrf24l01p_preload(const nrf24l01p_t *dev, char *data, unsigned int size)
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
     return 0;
 }
-
 
 int nrf24l01p_set_channel(const nrf24l01p_t *dev, uint8_t chan)
 {
@@ -295,7 +284,7 @@ int nrf24l01p_set_address_width(const nrf24l01p_t *dev, nrf24l01p_aw_t aw)
     char aw_setup;
     nrf24l01p_read_reg(dev, REG_SETUP_AW, &aw_setup);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
 
     switch (aw) {
         case NRF24L01P_AW_3BYTE:
@@ -361,9 +350,7 @@ int nrf24l01p_set_payload_width(const nrf24l01p_t *dev,
     return nrf24l01p_write_reg(dev, pipe_pw_address, width);
 }
 
-
-
-int nrf24l01p_set_tx_address(const nrf24l01p_t *dev, const char *saddr, unsigned int length)
+int nrf24l01p_set_tx_address(const nrf24l01p_t *dev, const uint8_t *saddr, unsigned int length)
 {
     /* Acquire exclusive access to the bus. */
     spi_acquire(dev->spi, dev->cs, SPI_MODE, SPI_CLK);
@@ -373,7 +360,7 @@ int nrf24l01p_set_tx_address(const nrf24l01p_t *dev, const char *saddr, unsigned
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
 
     return (int)length;
 }
@@ -400,7 +387,7 @@ int nrf24l01p_set_tx_address_long(const nrf24l01p_t *dev, uint64_t saddr, unsign
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
     return (int)length;
 }
 
@@ -417,7 +404,7 @@ uint64_t nrf24l01p_get_tx_address_long(const nrf24l01p_t *dev)
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
 
     for (int i = 0; i < INITIAL_ADDRESS_WIDTH; i++) {
         saddr_64 |= (((uint64_t) addr_array[i]) << (8 * (INITIAL_ADDRESS_WIDTH - i - 1)));
@@ -426,8 +413,7 @@ uint64_t nrf24l01p_get_tx_address_long(const nrf24l01p_t *dev)
     return saddr_64;
 }
 
-
-int nrf24l01p_set_rx_address(const nrf24l01p_t *dev, nrf24l01p_rx_pipe_t pipe, const char *saddr, unsigned int length)
+int nrf24l01p_set_rx_address(const nrf24l01p_t *dev, nrf24l01p_rx_pipe_t pipe, const uint8_t *saddr, unsigned int length)
 {
     char pipe_addr;
 
@@ -468,7 +454,7 @@ int nrf24l01p_set_rx_address(const nrf24l01p_t *dev, nrf24l01p_rx_pipe_t pipe, c
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
 
     /* Enable this pipe */
     nrf24l01p_enable_pipe(dev, pipe);
@@ -477,7 +463,7 @@ int nrf24l01p_set_rx_address(const nrf24l01p_t *dev, nrf24l01p_rx_pipe_t pipe, c
 
 int nrf24l01p_set_rx_address_long(const nrf24l01p_t *dev, nrf24l01p_rx_pipe_t pipe, uint64_t saddr, unsigned int length)
 {
-    char buf[length];
+    uint8_t buf[length];
 
     if (length <= INITIAL_ADDRESS_WIDTH) {
         for (unsigned int i = 0; i < length; i++) {
@@ -491,7 +477,6 @@ int nrf24l01p_set_rx_address_long(const nrf24l01p_t *dev, nrf24l01p_rx_pipe_t pi
 
     return nrf24l01p_set_rx_address(dev, pipe, buf, length);
 }
-
 
 uint64_t nrf24l01p_get_rx_address_long(const nrf24l01p_t *dev, nrf24l01p_rx_pipe_t pipe)
 {
@@ -537,7 +522,7 @@ uint64_t nrf24l01p_get_rx_address_long(const nrf24l01p_t *dev, nrf24l01p_rx_pipe
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
 
     for (int i = 0; i < INITIAL_ADDRESS_WIDTH; i++) {
         saddr_64 |= (((uint64_t) addr_array[i]) << (8 * (INITIAL_ADDRESS_WIDTH - i - 1)));
@@ -545,7 +530,6 @@ uint64_t nrf24l01p_get_rx_address_long(const nrf24l01p_t *dev, nrf24l01p_rx_pipe
 
     return saddr_64;
 }
-
 
 int nrf24l01p_set_datarate(const nrf24l01p_t *dev, nrf24l01p_dr_t dr)
 {
@@ -581,11 +565,11 @@ int nrf24l01p_get_status(const nrf24l01p_t *dev)
 
     /* Acquire exclusive access to the bus. */
     spi_acquire(dev->spi, dev->cs, SPI_MODE, SPI_CLK);
-    status = spi_transfer_byte(dev->spi, dev->cs, false, CMD_NOP);
+    status = spi_transfer_byte(dev->spi, dev->cs, false, CMD_NOOP);
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
 
     return (int)status;
 }
@@ -618,32 +602,14 @@ int nrf24l01p_set_power(const nrf24l01p_t *dev, int pwr)
     return nrf24l01p_write_reg(dev, REG_RF_SETUP, rf_setup);
 }
 
+static const int8_t _nrf24l01p_power_map[4] = { -18, -12, -6, 0 };
+
 int nrf24l01p_get_power(const nrf24l01p_t *dev)
 {
     char rf_setup;
-    int pwr;
-
     nrf24l01p_read_reg(dev, REG_RF_SETUP, &rf_setup);
-
-    if ((rf_setup & 0x6) == 0) {
-        pwr = -18;
-    }
-
-    if ((rf_setup & 0x6) == 2) {
-        pwr = -12;
-    }
-
-    if ((rf_setup & 0x6) == 4) {
-        pwr = -6;
-    }
-
-    if ((rf_setup & 0x6) == 6) {
-        pwr = 0;
-    }
-
-    return pwr;
+    return _nrf24l01p_power_map[(rf_setup & 0x6) >> 1];
 }
-
 
 int nrf24l01p_set_txmode(const nrf24l01p_t *dev)
 {
@@ -660,7 +626,7 @@ int nrf24l01p_set_txmode(const nrf24l01p_t *dev)
     conf &= ~(PRIM_RX);
     status = nrf24l01p_write_reg(dev, REG_CONFIG, conf);
 
-    xtimer_usleep(DELAY_CHANGE_TXRX_US);
+    ztimer_sleep(ZTIMER_USEC, DELAY_CHANGE_TXRX_US);
 
     return status;
 }
@@ -681,11 +647,10 @@ int nrf24l01p_set_rxmode(const nrf24l01p_t *dev)
 
     nrf24l01p_start(dev);
 
-    xtimer_usleep(DELAY_CHANGE_TXRX_US);
+    ztimer_sleep(ZTIMER_USEC, DELAY_CHANGE_TXRX_US);
 
     return status;
 }
-
 
 int nrf24l01p_reset_interrupts(const nrf24l01p_t *dev, char intrs)
 {
@@ -913,7 +878,6 @@ int nrf24l01p_disable_all_auto_ack(const nrf24l01p_t *dev)
     return nrf24l01p_write_reg(dev, REG_EN_AA, 0x00);
 }
 
-
 int nrf24l01p_flush_tx_fifo(const nrf24l01p_t *dev)
 {
     /* Acquire exclusive access to the bus. */
@@ -922,7 +886,7 @@ int nrf24l01p_flush_tx_fifo(const nrf24l01p_t *dev)
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
 
     return 0;
 }
@@ -935,7 +899,7 @@ int nrf24l01p_flush_rx_fifo(const nrf24l01p_t *dev)
     /* Release the bus for other threads. */
     spi_release(dev->spi);
 
-    xtimer_spin(DELAY_AFTER_FUNC_TICKS);
+    ztimer_spin(ZTIMER_USEC, DELAY_AFTER_FUNC_US);
 
     return 0;
 }

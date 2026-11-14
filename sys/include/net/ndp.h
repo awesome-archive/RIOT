@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_ndp IPv6 neighbor discovery
@@ -17,8 +16,6 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_NDP_H
-#define NET_NDP_H
 
 #include <stdint.h>
 
@@ -88,6 +85,7 @@ extern "C" {
 #define NDP_OPT_PI                  (3)     /**< prefix information option */
 #define NDP_OPT_RH                  (4)     /**< redirected option */
 #define NDP_OPT_MTU                 (5)     /**< MTU option */
+#define NDP_OPT_RI                  (24)    /**< Route Information Option */
 #define NDP_OPT_RDNSS               (25)    /**< recursive DNS server option */
 #define NDP_OPT_AR                  (33)    /**< address registration option */
 #define NDP_OPT_6CTX                (34)    /**< 6LoWPAN context option */
@@ -101,6 +99,17 @@ extern "C" {
 #define NDP_OPT_PI_FLAGS_MASK       (0xc0)
 #define NDP_OPT_PI_FLAGS_L          (0x80)  /**< on-link */
 #define NDP_OPT_PI_FLAGS_A          (0x40)  /**< autonomous address configuration */
+/** @} */
+
+/**
+ * @{
+ * @name    Flags for route information option
+ */
+#define NDP_OPT_RI_FLAGS_MASK       (0x18)
+#define NDP_OPT_RI_FLAGS_PRF_NONE   (0x10)  /**< ignore preference */
+#define NDP_OPT_RI_FLAGS_PRF_NEG    (0x18)  /**< negative preference */
+#define NDP_OPT_RI_FLAGS_PRF_ZERO   (0x0)   /**< zero preference */
+#define NDP_OPT_RI_FLAGS_PRF_POS    (0x8)   /**< positive preference */
 /** @} */
 
 /**
@@ -192,6 +201,18 @@ extern "C" {
 #define NDP_MIN_RANDOM_FACTOR       (500U)      /**< MIN_RANDOM_FACTOR (x 1000) */
 #define NDP_MAX_RANDOM_FACTOR       (1500U)     /**< MAX_RANDOM_FACTOR (x 1000) */
 /** @} */
+
+/**
+ * @brief   Hop-limit required for most NDP messages to ensure link-local
+ *          communication
+ *
+ * @see     [RFC 4861, section 4.1](https://tools.ietf.org/html/rfc4861#section-4.1)
+ * @see     [RFC 4861, section 4.2](https://tools.ietf.org/html/rfc4861#section-4.2)
+ * @see     [RFC 4861, section 4.3](https://tools.ietf.org/html/rfc4861#section-4.3)
+ * @see     [RFC 4861, section 4.4](https://tools.ietf.org/html/rfc4861#section-4.4)
+ * @see     [RFC 4861, section 4.5](https://tools.ietf.org/html/rfc4861#section-4.5)
+ */
+#define NDP_HOP_LIMIT               (255U)
 
 /**
  * @brief   Router solicitation message format.
@@ -297,6 +318,21 @@ typedef struct __attribute__((packed)) {
 } ndp_opt_pi_t;
 
 /**
+ * @brief   Route information option format
+ * @extends ndp_opt_t
+ *
+ * @see     [RFC 4191, section 2.3](https://tools.ietf.org/html/rfc4191#section-2.3)
+ */
+typedef struct __attribute__((packed)) {
+    uint8_t type;                   /**< option type */
+    uint8_t len;                    /**< length in units of 8 octets */
+    uint8_t prefix_len;             /**< prefix length */
+    uint8_t flags;                  /**< flags */
+    network_uint32_t route_ltime;   /**< route lifetime */
+    ipv6_addr_t prefix;             /**< prefix */
+} ndp_opt_ri_t;
+
+/**
  * @brief   Redirected header option format
  * @extends ndp_opt_t
  *
@@ -322,8 +358,25 @@ typedef struct __attribute__((packed)) {
 } ndp_opt_mtu_t;
 
 /**
- * @brief   Recursive DNS server option format
+ * @brief   Recursive DNS server option format without payload
  * @extends ndp_opt_t
+ *
+ * @see     [RFC 8106, section 5.1](https://tools.ietf.org/html/rfc8106#section-5.1)
+ * @see     ndp_opt_rdnss_impl_t
+ */
+typedef struct __attribute__((packed)) {
+    uint8_t type;           /**< option type */
+    uint8_t len;            /**< length in units of 8 octets */
+    network_uint16_t resv;  /**< reserved field */
+    network_uint32_t ltime; /**< lifetime in seconds */
+} ndp_opt_rdnss_t;
+
+#ifndef __cplusplus
+/**
+ * @brief   Recursive DNS server option format with payload
+ * @extends ndp_opt_rdnss_t
+ * @details Auxiliary struct that contains a zero-length array as convenience
+ *          pointer to the addresses. Only for use in C, invalid in ISO-C++.
  *
  * @see     [RFC 8106, section 5.1](https://tools.ietf.org/html/rfc8106#section-5.1)
  */
@@ -333,11 +386,11 @@ typedef struct __attribute__((packed)) {
     network_uint16_t resv;  /**< reserved field */
     network_uint32_t ltime; /**< lifetime in seconds */
     ipv6_addr_t addrs[];    /**< addresses of IPv6 recursive DNS servers */
-} ndp_opt_rdnss_t;
+} ndp_opt_rdnss_impl_t;
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* NET_NDP_H */
 /** @} */

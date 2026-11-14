@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_vcnl40x0
@@ -14,11 +13,7 @@
  * @brief       Internal addresses, registers, constants for the VCNL40X0 devices.
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
- * @}
  */
-
-#ifndef VCNL40X0_INTERNALS_H
-#define VCNL40X0_INTERNALS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -135,5 +130,4 @@ extern "C" {
 }
 #endif
 
-#endif /* VCNL40X0_INTERNALS_H */
 /** @} */

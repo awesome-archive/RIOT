@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Kaspar Schleiser <kaspar@schleiser.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -17,65 +14,62 @@
  * @}
  */
 
+#include "irq.h"
 #include "tsrb.h"
-
-static void _push(tsrb_t *rb, char c)
-{
-    rb->buf[rb->writes++ & (rb->size - 1)] = c;
-}
-
-static char _pop(tsrb_t *rb)
-{
-    return rb->buf[rb->reads++ & (rb->size - 1)];
-}
+#include "turb.h"
 
 int tsrb_get_one(tsrb_t *rb)
 {
-    if (!tsrb_empty(rb)) {
-        return _pop(rb);
-    }
-    else {
-        return -1;
-    }
+    unsigned irq_state = irq_disable();
+    int retval = turb_get_one(rb);
+    irq_restore(irq_state);
+    return retval;
 }
 
-int tsrb_get(tsrb_t *rb, char *dst, size_t n)
+int tsrb_peek_one(tsrb_t *rb)
 {
-    size_t tmp = n;
-    while (tmp && !tsrb_empty(rb)) {
-        *dst++ = _pop(rb);
-        tmp--;
-    }
-    return (n - tmp);
+    unsigned irq_state = irq_disable();
+    int retval = turb_peek_one(rb);
+    irq_restore(irq_state);
+    return retval;
+}
+
+int tsrb_get(tsrb_t *rb, uint8_t *dst, size_t n)
+{
+    unsigned irq_state = irq_disable();
+    int cnt = turb_get(rb, dst, n);
+    irq_restore(irq_state);
+    return cnt;
+}
+
+int tsrb_peek(tsrb_t *rb, uint8_t *dst, size_t n)
+{
+    unsigned irq_state = irq_disable();
+    int idx = turb_peek(rb, dst, n);
+    irq_restore(irq_state);
+    return idx;
 }
 
 int tsrb_drop(tsrb_t *rb, size_t n)
 {
-    size_t tmp = n;
-    while (tmp && !tsrb_empty(rb)) {
-        _pop(rb);
-        tmp--;
-    }
-    return (n - tmp);
+    unsigned irq_state = irq_disable();
+    int cnt = turb_drop(rb, n);
+    irq_restore(irq_state);
+    return cnt;
 }
 
-int tsrb_add_one(tsrb_t *rb, char c)
+int tsrb_add_one(tsrb_t *rb, uint8_t c)
 {
-    if (!tsrb_full(rb)) {
-        _push(rb, c);
-        return 0;
-    }
-    else {
-        return -1;
-    }
+    unsigned irq_state = irq_disable();
+    int retval = turb_add_one(rb, c);
+    irq_restore(irq_state);
+    return retval;
 }
 
-int tsrb_add(tsrb_t *rb, const char *src, size_t n)
+int tsrb_add(tsrb_t *rb, const uint8_t *src, size_t n)
 {
-    size_t tmp = n;
-    while (tmp && !tsrb_full(rb)) {
-        _push(rb, *src++);
-        tmp--;
-    }
-    return (n - tmp);
+    unsigned irq_state = irq_disable();
+    int cnt = turb_add(rb, src, n);
+    irq_restore(irq_state);
+    return cnt;
 }

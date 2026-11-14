@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_periph_eeprom EEPROM driver
@@ -18,9 +17,6 @@
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  *
  */
-
-#ifndef PERIPH_EEPROM_H
-#define PERIPH_EEPROM_H
 
 #include <stdint.h>
 
@@ -57,12 +53,12 @@ uint8_t eeprom_read_byte(uint32_t pos);
  * EEPROM.
  *
  * @param[in]  pos      start position in eeprom
- * @param[out] data     output byte array to write to
+ * @param[out] data     output memory location to write to
  * @param[in]  len      the number of bytes to read
  *
  * @return  the number of bytes read
  */
-size_t eeprom_read(uint32_t pos, uint8_t *data, size_t len);
+size_t eeprom_read(uint32_t pos, void *data, size_t len);
 
 /**
  * @brief   Write a byte at the given position
@@ -79,12 +75,12 @@ void eeprom_write_byte(uint32_t pos, uint8_t data);
  * EEPROM.
  *
  * @param[in] pos       start position in eeprom
- * @param[in] data      input byte array to read into
+ * @param[in] data      input memory location to read into
  * @param[in] len       the number of bytes to read
  *
  * @return the number of bytes written
  */
-size_t eeprom_write(uint32_t pos, const uint8_t *data, size_t len);
+size_t eeprom_write(uint32_t pos, const void *data, size_t len);
 
 /**
  * @brief   Set @p len bytes from the given position @p pos with value @p val
@@ -120,5 +116,4 @@ size_t eeprom_erase(void);
 }
 #endif
 
-#endif /* PERIPH_EEPROM_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_sixlowpan_ctx    Contexts for 6LoWPAN address compression
@@ -23,13 +22,13 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_GNRC_SIXLOWPAN_CTX_H
-#define NET_GNRC_SIXLOWPAN_CTX_H
 
 #include <inttypes.h>
 #include <stdbool.h>
 
 #include "net/ipv6/addr.h"
+#include "timex.h"
+#include "modules.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,7 +112,6 @@ gnrc_sixlowpan_ctx_t *gnrc_sixlowpan_ctx_update(uint8_t id, const ipv6_addr_t *p
                                                 uint8_t prefix_len, uint16_t ltime,
                                                 bool comp);
 
-#ifdef MODULE_GNRC_SIXLOWPAN_CTX
 /**
  * @brief   Removes context.
  *
@@ -121,9 +119,72 @@ gnrc_sixlowpan_ctx_t *gnrc_sixlowpan_ctx_update(uint8_t id, const ipv6_addr_t *p
  */
 static inline void gnrc_sixlowpan_ctx_remove(uint8_t id)
 {
-    gnrc_sixlowpan_ctx_lookup_id(id)->prefix_len = 0;
+    if (IS_USED(MODULE_GNRC_SIXLOWPAN_CTX)) {
+        gnrc_sixlowpan_ctx_lookup_id(id)->prefix_len = 0;
+    }
 }
-#endif
+
+/**
+ * @brief   Check if a prefix matches a compression context
+ *
+ * @param[in] ctx        The compression context
+ * @param[in] prefix     IPv6 prefix
+ * @param[in] prefix_len Length of the IPv6 prefix
+ *
+ * @return    true if the prefix matches the compression context.
+ */
+static inline bool gnrc_sixlowpan_ctx_match(const gnrc_sixlowpan_ctx_t *ctx,
+                                            const ipv6_addr_t *prefix, uint8_t prefix_len)
+{
+    return (ctx != NULL) &&
+           (ctx->prefix_len == prefix_len) &&
+           (ipv6_addr_match_prefix(&ctx->prefix, prefix) >= prefix_len);
+}
+
+/**
+ * @brief   Create or update a compression context
+ *
+ * @param[in] prefix     IPv6 prefix of the compression context
+ * @param[in] prefix_len Length of the IPv6 prefix
+ * @param[in] valid      Lifetime of the prefix in seconds
+ *
+ * @return    true if a new compression context was created or an existing context
+ *                 was updated.
+ *            false if no new context could be added
+ */
+static inline bool gnrc_sixlowpan_ctx_update_6ctx(const ipv6_addr_t *prefix, uint8_t prefix_len,
+                                                  uint32_t valid)
+{
+    if (!IS_USED(MODULE_GNRC_SIXLOWPAN_CTX)) {
+        return false;
+    }
+
+    gnrc_sixlowpan_ctx_t *ctx = gnrc_sixlowpan_ctx_lookup_addr(prefix);
+    uint8_t cid = 0;
+
+    if (!gnrc_sixlowpan_ctx_match(ctx, prefix, prefix_len)) {
+        /* While the context is a prefix match, the defined prefix within the
+         * context does not match => use new context */
+        ctx = NULL;
+    }
+    else {
+        cid = ctx->flags_id & GNRC_SIXLOWPAN_CTX_FLAGS_CID_MASK;
+    }
+    /* find first free context ID */
+    if (ctx == NULL) {
+        while (((ctx = gnrc_sixlowpan_ctx_lookup_id(cid)) != NULL) &&
+               !gnrc_sixlowpan_ctx_match(ctx, prefix, prefix_len)) {
+            cid++;
+        }
+    }
+    if (cid < GNRC_SIXLOWPAN_CTX_SIZE) {
+        return gnrc_sixlowpan_ctx_update(cid, (ipv6_addr_t *)prefix, prefix_len,
+                                         valid / (60 * MS_PER_SEC),
+                                         true);
+    }
+
+    return false;
+}
 
 #ifdef TEST_SUITES
 /**
@@ -136,5 +197,4 @@ void gnrc_sixlowpan_ctx_reset(void);
 }
 #endif
 
-#endif /* NET_GNRC_SIXLOWPAN_CTX_H */
 /** @} */

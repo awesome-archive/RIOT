@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_ipv6_nib_pl    Prefix list
@@ -13,15 +12,17 @@
  * @{
  *
  * @file
- * @brief   Prefix list defintions
+ * @brief   Prefix list definitions
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_GNRC_IPV6_NIB_PL_H
-#define NET_GNRC_IPV6_NIB_PL_H
 
 #include <stdint.h>
+#include "modules.h"
 
+#if IS_USED(MODULE_EVTIMER)
+#include "evtimer.h"
+#endif
 #include "net/ipv6/addr.h"
 
 #ifdef __cplusplus
@@ -65,9 +66,9 @@ typedef struct {
  *                          be greater then @p valid_ltime.
  *
  * @return  0, on success.
- * @return  -EINVAL, if @p pfx was fe80::` or multicast,
- *          @p pfx_len was == 0, the first @p pfx_len bits of @ pfx were 0,
- *          or if pref_ltime > valid_ltime.
+ * @return  -EINVAL, if @p pfx was `fe80::` or multicast,
+ *          @p pfx_len was == 0, the first @p pfx_len bits of @p pfx were 0,
+ *          or if @p pref_ltime > @p valid_ltime.
  * @return  -ENOMEM, if no space was left in the prefix list.
  */
 int gnrc_ipv6_nib_pl_set(unsigned iface,
@@ -122,6 +123,45 @@ void gnrc_ipv6_nib_pl_del(unsigned iface,
 bool gnrc_ipv6_nib_pl_iter(unsigned iface, void **state,
                            gnrc_ipv6_nib_pl_t *ple);
 
+#if IS_USED(MODULE_EVTIMER) || defined(DOXYGEN)
+/**
+ * @brief   Provides the time in milliseconds for which the prefix list
+ *          entry is valid
+ *
+ * @param[in] ple   A prefix list entry.
+ *
+ * @return  The time in milliseconds for which the prefix list entry is valid.
+ *          UINT32_MAX if it is valid forever.
+ */
+static inline uint32_t gnrc_ipv6_nib_pl_valid_offset(const gnrc_ipv6_nib_pl_t *ple)
+{
+
+    return (ple->valid_until == UINT32_MAX)
+        ? UINT32_MAX
+        : (ple->valid_until - evtimer_now_msec());
+}
+
+/**
+ * @brief   Provides the time in milliseconds for which the prefix list
+ *          entry is preferred
+ *
+ * A prefix for which the preference expired is deprecated (see [RFC 4862]
+ * (https://tools.ietf.org/html/rfc4862))
+ *
+ * @param[in] ple   A prefix list entry.
+ *
+ * @return  The time in milliseconds for which the prefix list entry is
+ *          preferred. UINT32_MAX if it is preferred forever.
+ */
+static inline uint32_t gnrc_ipv6_nib_pl_pref_offset(const gnrc_ipv6_nib_pl_t *ple)
+{
+
+    return (ple->pref_until == UINT32_MAX)
+        ? UINT32_MAX
+        : (ple->pref_until - evtimer_now_msec());
+}
+#endif
+
 /**
  * @brief   Prints a prefix list entry
  *
@@ -135,5 +175,4 @@ void gnrc_ipv6_nib_pl_print(gnrc_ipv6_nib_pl_t *ple);
 }
 #endif
 
-#endif /* NET_GNRC_IPV6_NIB_PL_H */
 /** @} */

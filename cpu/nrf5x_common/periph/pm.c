@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2017 Kaspar Schleiser <kaspar@schleiser.de>
- *               2014-2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2014-2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -23,16 +20,30 @@
 
 #include "cpu.h"
 
+#if defined(CPU_FAM_NRF53) || defined(CPU_FAM_NRF9160)
+#  ifdef NRF_TRUSTZONE_NONSECURE
+#    define NRF_POWER NRF_POWER_NS
+#  else
+#    define NRF_POWER NRF_POWER_S
+#  endif
+#endif
+
+/* Workaround inconsistency between nRF9160 / nRF53 headers */
+#ifdef REGULATORS_SYSTEMOFF_SYSTEMOFF_Enable
+#define REGULATORS_SYSTEMOFF_SYSTEMOFF_Enter REGULATORS_SYSTEMOFF_SYSTEMOFF_Enable
+#endif
+
 void pm_off(void)
 {
-#ifdef CPU_FAM_NRF51
+#if defined(REGULATORS_SYSTEMOFF_SYSTEMOFF_Enter)
+    NRF_REGULATORS_S->SYSTEMOFF = REGULATORS_SYSTEMOFF_SYSTEMOFF_Enter;
+#elif defined(CPU_FAM_NRF51)
     NRF_POWER->RAMON = 0;
 #else
-    for (int i = 0; i < 8; i++) {
+    for (unsigned int i = 0; i < ARRAY_SIZE(NRF_POWER->RAM); i++) {
         NRF_POWER->RAM[i].POWERCLR = (POWER_RAM_POWERCLR_S1RETENTION_Msk |
                                       POWER_RAM_POWERCLR_S0RETENTION_Msk);
     }
 #endif
-    NRF_POWER->SYSTEMOFF = 1;
-    while(1) {}
+    while (1) {}
 }

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Bas Stottelaar <basstottelaar@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2017 Bas Stottelaar <basstottelaar@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -17,6 +14,8 @@
  *
  * @}
  */
+
+#include <assert.h>
 
 #include "cpu.h"
 #include "periph/gpio.h"
@@ -90,7 +89,7 @@ int gpio_init(gpio_t pin, gpio_mode_t mode)
     return 0;
 }
 
-int gpio_read(gpio_t pin)
+bool gpio_read(gpio_t pin)
 {
     LPC_GPIO_TypeDef *base = _base(pin);
 
@@ -118,7 +117,7 @@ void gpio_toggle(gpio_t pin)
     base->FIOPIN ^= (1 << _pin(pin));
 }
 
-void gpio_write(gpio_t pin, int value)
+void gpio_write(gpio_t pin, bool value)
 {
     LPC_GPIO_TypeDef *base = _base(pin);
 
@@ -231,7 +230,7 @@ void isr_eint3(void)
 
     /* invoke all handlers */
     for (int i = 0; i < NUMOF_IRQS; i++) {
-        if (status & (1 << i)) {
+        if (status & ((uint32_t)1 << i)) {
             isr_ctx[i].cb(isr_ctx[i].arg);
 
             LPC_GPIOINT->IO0IntClr |= (1 << i);

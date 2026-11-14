@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_cc2420 CC2420 radio driver
@@ -14,12 +13,13 @@
  * @file
  * @brief       Interface definition for the CC2420 driver
  *
+ * @warning The CC2420 driver is deprecated and will be removed after the
+ *          2027.04 Release! If you are still using it actively, please
+ *          notify the maintainers.
+ *
  * @author      Thomas Eichinger <thomas.eichinger@fu-berlin.de>
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef CC2420_H
-#define CC2420_H
 
 #include <stdint.h>
 
@@ -44,7 +44,7 @@ extern "C" {
   */
 #define CC2420_CHAN_MIN         (IEEE802154_CHANNEL_MIN)
 #define CC2420_CHAN_MAX         (IEEE802154_CHANNEL_MAX)
-#define CC2420_CHAN_DEFAULT     (IEEE802154_DEFAULT_CHANNEL)
+#define CC2420_CHAN_DEFAULT     (CONFIG_IEEE802154_DEFAULT_CHANNEL)
 /** @} */
 
 /**
@@ -53,7 +53,7 @@ extern "C" {
  */
 #define CC2420_TXPOWER_MIN      (-25)
 #define CC2420_TXPOWER_MAX      (0)
-#define CC2420_TXPOWER_DEFAULT  (IEEE802154_DEFAULT_TXPOWER)
+#define CC2420_TXPOWER_DEFAULT  (CONFIG_IEEE802154_DEFAULT_TXPOWER)
 /** @} */
 
 /**
@@ -101,11 +101,10 @@ typedef struct {
  *
  * @param[out] dev          device descriptor
  * @param[in]  params       device parameters
- *
- * @return                  0 on success
- * @return                  -1 on error
+ * @param[in]  index        index of @p params in a global parameter struct array.
+ *                          If initialized manually, pass a unique identifier instead.
  */
-void cc2420_setup(cc2420_t *dev, const cc2420_params_t *params);
+void cc2420_setup(cc2420_t *dev, const cc2420_params_t *params, uint8_t index);
 
 /**
  * @brief   Initialize a given CC2420 device
@@ -157,8 +156,6 @@ void cc2420_set_addr_short(cc2420_t *dev, const uint8_t *addr);
  *
  * @param[in]  dev           device to read from
  * @param[out] addr_long     buffer to save the read address
- *
- * @return                  the currently set (8-byte) long address
  */
 void cc2420_get_addr_long(cc2420_t *dev, uint8_t *addr_long);
 
@@ -300,5 +297,4 @@ int cc2420_rx(cc2420_t *dev, uint8_t *buf, size_t max_len, void *info);
 }
 #endif
 
-#endif /* CC2420_H */
 /** @} */

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- * Copyright (C) 2015 PHYTEC Messtechnik GmbH
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2015 PHYTEC Messtechnik GmbH
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_pba-d-01-kw2x
@@ -17,9 +16,6 @@
  * @author      Johann Fischer <j.fischer@phytec.de>
  * @author      Sebastian Meiling <s@mlng.net>
  */
-
-#ifndef BOARD_H
-#define BOARD_H
 
 #include "cpu.h"
 #include "periph_conf.h"
@@ -58,7 +54,6 @@ extern "C"
  * @name Macro for button S1/S2.
  * @{
  */
-#define BTN0_PORT           PORTD
 #define BTN0_PIN            GPIO_PIN(PORT_D, 1)
 #define BTN0_MODE           GPIO_IN_PU
 /** @} */
@@ -82,17 +77,20 @@ extern "C"
 #define KW2XRF_PARAM_SPI_CLK       (SPI_CLK_10MHZ)
 #define KW2XRF_PARAM_CS            GPIO_PIN(KW2XDRF_PORT, KW2XDRF_PCS0_PIN)
 #define KW2XRF_PARAM_INT           GPIO_PIN(KW2XDRF_PORT, KW2XDRF_IRQ_PIN)
+#define KW2XRF_PARAM_RESET         GPIO_PIN(KW2XDRF_IRQ_PIN, KW2XDRF_RST_PIN)
 #define KW2XRF_SHARED_SPI          (0)
 /** @}*/
 
 /**
- * @brief Initialize board specific hardware, including clock, LEDs and std-IO
+ * @name TMP006 configuration
+ *
+ * @{
  */
-void board_init(void);
+#define TMP00X_PARAM_ADDR          (0x41)
+/** @}*/
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2014-2016 Freie Universität Berlin
- *               2015 Zolertia SL
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014-2016 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2015 Zolertia SL
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_remote-pa
@@ -19,10 +18,10 @@
  * @author      Sebastian Meiling <s@mlng.net>
  */
 
-#ifndef PERIPH_CONF_H
-#define PERIPH_CONF_H
-
-#include "periph_common.h"
+#include "periph_cpu.h"
+#include "cfg_clk_default.h"
+#include "cfg_timer_default.h"
+#include "cfg_uart_default.h"
 
 #ifdef __cplusplus
  extern "C" {
@@ -42,7 +41,7 @@ static const i2c_conf_t i2c_config[] = {
     },
 };
 
-#define I2C_NUMOF               (sizeof(i2c_config) / sizeof(i2c_config[0]))
+#define I2C_NUMOF               ARRAY_SIZE(i2c_config)
 /** @} */
 
 /**
@@ -61,12 +60,12 @@ static const spi_conf_t spi_config[] = {
         .num      = 1,
         .mosi_pin = GPIO_PIN(2, 7),
         .miso_pin = GPIO_PIN(0, 4),
-        .sck_pin  = GPIO_PIN(1 ,5),
-        .cs_pin   = GPIO_UNDEF
+        .sck_pin  = GPIO_PIN(1, 5),
+        .cs_pin   = SPI_CS_UNDEF,
     }
 };
 
-#define SPI_NUMOF           (sizeof(spi_config) / sizeof(spi_config[0]))
+#define SPI_NUMOF           ARRAY_SIZE(spi_config)
 /** @} */
 
 /**
@@ -80,12 +79,11 @@ static const adc_conf_t adc_config[] = {
     GPIO_PIN(0, 7), /**< GPIO_PA7 = ADC3_PIN */
 };
 
-#define ADC_NUMOF           (sizeof(adc_config) / sizeof(adc_config[0]))
+#define ADC_NUMOF           ARRAY_SIZE(adc_config)
 /** @} */
 
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
 
-#endif /* PERIPH_CONF_H */
 /** @} */

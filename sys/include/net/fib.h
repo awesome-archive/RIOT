@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2014  Martin Landsmann <Martin.Landsmann@HAW-Hamburg.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Martin Landsmann <Martin.Landsmann@HAW-Hamburg.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_fib Forwarding Information Base (FIB)
  * @ingroup     net
  * @brief       FIB implementation
  *
+ * This module is unused by RIOT's networking stacks, see @ref net_gnrc_ipv6_nib_ft
+ * instead.
  * @{
  *
  * @file
@@ -22,13 +23,10 @@
  * @author      Oliver Hahm <oliver.hahm@inria.fr>
  */
 
-#ifndef NET_FIB_H
-#define NET_FIB_H
-
 #include <stdint.h>
 
 #include "net/fib/table.h"
-#include "kernel_types.h"
+#include "sched.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -423,7 +421,6 @@ int fib_sr_entry_overwrite(fib_table_t *table, fib_sr_t *fib_sr,
 int fib_sr_entry_get_address(fib_table_t *table, fib_sr_t *fib_sr, fib_sr_entry_t *sr_path_entry,
                              uint8_t *addr, size_t *addr_size);
 
-
 /**
 * @brief copies a source route to the given destination
 *
@@ -513,5 +510,4 @@ int fib_devel_get_lifetime(fib_table_t *table, uint64_t *lifetime, uint8_t *dst,
 }
 #endif
 
-#endif /* NET_FIB_H */
 /** @} */

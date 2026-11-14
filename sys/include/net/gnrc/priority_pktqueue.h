@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2015 Daniel Krebs
- *               2016 INRIA
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Daniel Krebs
+ * SPDX-FileCopyrightText: 2016 INRIA
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_priority_pktqueue Priority packet queue for GNRC
@@ -19,9 +18,6 @@
  * @author      Daniel Krebs <github@daniel-krebs.net>
  * @author      Shuguo Zhuo <shuguo.zhuo@inria.fr>
  */
-
-#ifndef NET_GNRC_PRIORITY_PKTQUEUE_H
-#define NET_GNRC_PRIORITY_PKTQUEUE_H
 
 #include <stdint.h>
 
@@ -135,5 +131,4 @@ void gnrc_priority_pktqueue_push(gnrc_priority_pktqueue_t *queue,
 }
 #endif
 
-#endif /* NET_GNRC_PRIORITY_PKTQUEUE_H */
 /** @} */

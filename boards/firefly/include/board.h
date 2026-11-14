@@ -1,14 +1,12 @@
 /*
- * Copyright (C) 2017 DAI Labor Technische Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2017 DAI Labor Technische Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup    boards_firefly Firefly Board
- * @ingroup     boards
+ * @ingroup     boards_firefly
  * @brief       Support for the Firefly board
  * @{
  *
@@ -17,9 +15,6 @@
  *
  * @author      Anon Mall <anon.mall@gt-arc.com>
  */
-
-#ifndef BOARD_H
-#define BOARD_H
 
 #include "cpu.h"
 #include "board_common.h"
@@ -73,14 +68,8 @@ extern "C" {
 #define CC1200_GPD2_GPIO    GPIO_PIN(PORT_B, 0)
 /** @} */
 
-/**
- * @brief Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
-
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
 
-#endif /* BOARD_H */
 /** @} */

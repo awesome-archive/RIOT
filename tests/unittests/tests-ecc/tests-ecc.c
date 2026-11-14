@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Lucas Jenß
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Lucas Jenß
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -22,7 +19,6 @@
 #include "ecc/hamming256.h"
 #include "ecc/golay2412.h"
 #include "ecc/repetition.h"
-
 
 /* source for random bytes: https://www.random.org/bytes */
 unsigned char data_in[] =                        { 201, 240, 154,   5, 227,  60, 116, 192, 214 };
@@ -172,11 +168,12 @@ static void test_repetition_message_decode_fail(void)
 {
     unsigned char result[sizeof(data_in)];
 
-    /* adding a second error to the first symbol leads to an
-     * uncorrectable sequence */
-    msg_enc_rep_1_err_per_symbol[0] ^= (1L << 6);
+    /* add an additional bit error to the second repetition of the first
+     * symbol, so that the majority vote fails (sizeof(data_in) is the first
+     * byte of the second repetition, clearing bit 3 turns 201 into 193) */
+    msg_enc_rep_1_err_per_symbol[sizeof(data_in)] ^= (1L << 3);
 
-    golay2412_decode(sizeof(result), &msg_enc_rep_1_err_per_symbol[0], &result[0]);
+    repetition_decode(sizeof(result), &msg_enc_rep_1_err_per_symbol[0], &result[0]);
 
     TEST_ASSERT(memcmp(&data_in, &result, sizeof(data_in)));
 }

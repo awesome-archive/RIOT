@@ -1,32 +1,15 @@
 /*
- * Copyright (C) 2017 Gilles DOFFE <gdoffe@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Gilles DOFFE <g.doffe@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
- * @ingroup     cpu_native
- * @ingroup     drivers_periph_qdec
- * @{
- *
  * @file
- * @brief       Low-level QDEC driver implementation
- *
- * @author      Gilles DOFFE <gilles.doffe@gmail.com>
- *
- * @}
+ * @ingroup cpu_native
+ * @ingroup drivers_periph_qdec
+ * @brief   Low-level QDEC driver implementation
+ * @author  Gilles DOFFE <g.doffe@gmail.com>
  */
-
-#ifdef __MACH__
-#include <mach/clock.h>
-#include <mach/mach_init.h>
-#include <mach/mach_port.h>
-#include <mach/mach_host.h>
-/* Both OS X and RIOT typedef thread_t. timer.c does not use either thread_t. */
-#define thread_t riot_thread_t
-#endif
 
 #include <time.h>
 #include <sys/time.h>
@@ -44,7 +27,7 @@
 #include "periph/qdec.h"
 #include "periph/gpio.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #ifdef QDEC_NUMOF
@@ -80,9 +63,7 @@ int32_t qdec_init(qdec_t qdec, qdec_mode_t mode, qdec_cb_t cb, void *arg)
     }
 
     /* Initialize qdec channels */
-    for (uint8_t i = 0; i < QDEC_NUMOF; i++) {
-        qdecs[qdec] = 0;
-    }
+    qdecs[qdec] = 0;
 
     /* Reset counter and start qdec */
     qdec_start(qdec);

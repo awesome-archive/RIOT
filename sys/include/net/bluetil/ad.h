@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018-2019 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup    net_bluetil_ad BLE Advertising Data (AD) Processing
- * @ingroup     net
+ * @defgroup    ble_bluetil_ad BLE Advertising Data (AD) Processing
+ * @ingroup     ble_bluetil
  * @brief       Generic BLE advertising and scan request data processing
  *
  * This module provides functionality for user friendly reading and writing of
@@ -23,9 +22,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef NET_BLUETIL_AD_H
-#define NET_BLUETIL_AD_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -96,6 +92,20 @@ void bluetil_ad_init(bluetil_ad_t *ad, void *buf, size_t pos, size_t size);
  */
 int bluetil_ad_find(const bluetil_ad_t *ad,
                     uint8_t type, bluetil_ad_data_t *data);
+
+/**
+ * @brief   Find a specific field and compare its value against the given data
+ *
+ * @param[in] ad        advertising data descriptor
+ * @param[in] type      field to search for
+ * @param[in] val       data to compare against
+ * @param[in] val_len   size of @p val in byte
+ *
+ * @return  true if the field was found and its data is equal to the given data
+ * @return  false if the field was not found or the data is not equal
+ */
+int bluetil_ad_find_and_cmp(const bluetil_ad_t *ad, uint8_t type,
+                            const void *val, size_t val_len);
 
 /**
  * @brief   Find the given field and copy its payload into a string
@@ -191,5 +201,4 @@ static inline int bluetil_ad_init_with_flags(bluetil_ad_t *ad,
 }
 #endif
 
-#endif /* NET_BLUETIL_AD_H */
 /** @} */

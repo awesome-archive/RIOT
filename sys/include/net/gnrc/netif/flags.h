@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup net_gnrc_netif
@@ -15,8 +14,6 @@
  *
  * @author  Martine Lenders <m.lenders@fu-berlin.de>
  */
-#ifndef NET_GNRC_NETIF_FLAGS_H
-#define NET_GNRC_NETIF_FLAGS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,9 +24,9 @@ extern "C" {
  * @anchor  net_gnrc_netif_aac
  */
 enum {
-    GNRC_NETIF_AAC_NONE = 0,    /**< no configuration */
-    GNRC_NETIF_AAC_AUTO,        /**< Use some automatic bootstrapping (e.g. SLAAC with IPv6) */
-    GNRC_NETIF_AAC_DHCP,        /**< Use DHCP(v6) */
+    GNRC_NETIF_AAC_NONE = 0x00, /**< no configuration */
+    GNRC_NETIF_AAC_AUTO = 0x01, /**< Use some automatic bootstrapping (e.g. SLAAC with IPv6) */
+    GNRC_NETIF_AAC_DHCP = 0x02, /**< Use DHCP(v6) */
     /* extend if needed */
 };
 
@@ -82,7 +79,7 @@ enum {
 #define GNRC_NETIF_FLAGS_IPV6_ADV_RETRANS_TIMER    (0x00000040U)
 
 /**
- * @brief   If gnrc_netif_t::ipv6::aac_mode == GNRC_NETIF_AAC_DHCP then this
+ * @brief   If gnrc_netif_t::ipv6::aac_mode & GNRC_NETIF_AAC_DHCP then this
  *          flag indicates that other configuration information is available via
  *          DHCPv6 (e.g. DNS-related information)
  *
@@ -119,14 +116,37 @@ enum {
 #define GNRC_NETIF_FLAGS_6LO_BACKBONE              (0x00000800U)
 
 /**
+ * @brief   This interface represents a 6Lo node (6LN) according to RFC 6775
+ *
+ * @see [RFC 6775, section 2](https://tools.ietf.org/html/rfc6775#section-2)
+ */
+#define GNRC_NETIF_FLAGS_6LN                       (0x00001000U)
+
+/**
+ * @brief   6Lo is activated for this interface
+ *
+ * @note    Most devices supporting 6Lo actually *require* 6Lo so this flag
+ *          should not be configurable for them. As a consequence, this flag
+ *          **must** only be changed by a @ref NETOPT_6LO message to the
+ *          interface.
+ */
+#define GNRC_NETIF_FLAGS_6LO                       (0x00002000U)
+
+/**
  * @brief   Network interface is configured in raw mode
  */
 #define GNRC_NETIF_FLAGS_RAWMODE                   (0x00010000U)
+
+/**
+ * @brief   Used when module gnrc_netif_pktq is used to indicate that
+ *          @ref gnrc_netif_t::tx_pkt is from the packet queue.
+ */
+#define GNRC_NETIF_FLAGS_TX_FROM_PKTQUEUE          (0x00020000U)
+
 /** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* NET_GNRC_NETIF_FLAGS_H */
 /** @} */

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -26,15 +23,15 @@
 #include "periph/i2c.h"
 #include "periph/gpio.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    0
 #include "debug.h"
 
 #define MAX_VAL         0x7fff
 
-#define DEV_I2C      (dev->params.i2c)
-#define DEV_ADDR     (dev->params.addr)
-#define DEV_MODE     (dev->params.mode)
-#define DEV_SCALE    (dev->params.scale)
+#define DEV_I2C         (dev->params.i2c)
+#define DEV_ADDR        (dev->params.addr)
+#define DEV_MODE        (dev->params.mode)
+#define DEV_SCALE       (dev->params.scale)
 
 int l3g4200d_init(l3g4200d_t *dev, const l3g4200d_params_t *params)
 {

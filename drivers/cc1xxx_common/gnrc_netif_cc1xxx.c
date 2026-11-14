@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2016-17 Freie Universität Berlin
- *               2018 Otto-von-Guericke-Universität Magdeburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016-2017 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2018 Otto-von-Guericke-Universität Magdeburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -26,9 +23,10 @@
 
 #include "assert.h"
 #include "net/gnrc.h"
+#include "luid.h"
 #include "cc1xxx_common.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #define BCAST  (GNRC_NETIF_HDR_FLAGS_BROADCAST | GNRC_NETIF_HDR_FLAGS_MULTICAST)
@@ -86,7 +84,7 @@ static gnrc_pktsnip_t *cc1xxx_adpt_recv(gnrc_netif_t *netif)
         return NULL;
     }
     netif_hdr = (gnrc_netif_hdr_t *)hdr->data;
-    netif_hdr->if_pid = netif->pid;
+    gnrc_netif_hdr_set_netif(netif_hdr, netif);
     netif_hdr->rssi = rx_info.rssi;
     netif_hdr->lqi = rx_info.lqi;
     if (l2hdr.dest_addr == CC1XXX_BCAST_ADDR) {
@@ -96,7 +94,12 @@ static gnrc_pktsnip_t *cc1xxx_adpt_recv(gnrc_netif_t *netif)
     DEBUG("[cc1xxx-gnrc] recv: successfully parsed packet\n");
 
     /* and append the netif header */
-    LL_APPEND(payload, hdr);
+    payload = gnrc_pkt_append(payload, hdr);
+
+#ifdef MODULE_NETSTATS_L2
+    netif->stats.rx_count++;
+    netif->stats.rx_bytes += pktlen;
+#endif
 
     return payload;
 }
@@ -114,14 +117,16 @@ static int cc1xxx_adpt_send(gnrc_netif_t *netif, gnrc_pktsnip_t *pkt)
 
     /* get the payload size and the dst address details */
     size = gnrc_pkt_len(pkt->next);
-    DEBUG("[cc1xxx-gnrc] send: payload of packet is %i\n", (int)size);
+    DEBUG("[cc1xxx-gnrc] send: payload of packet is %" PRIuSIZE "\n", size);
     netif_hdr = (gnrc_netif_hdr_t *)pkt->data;
-
 
     l2hdr.src_addr = cc1xxx_dev->addr;
     if (netif_hdr->flags & BCAST) {
         l2hdr.dest_addr = CC1XXX_BCAST_ADDR;
         DEBUG("[cc1xxx-gnrc] send: preparing to send broadcast\n");
+#ifdef MODULE_NETSTATS_L2
+        netif->stats.tx_mcast_count++;
+#endif
     }
     else {
         /* check that destination address is valid */
@@ -130,6 +135,9 @@ static int cc1xxx_adpt_send(gnrc_netif_t *netif, gnrc_pktsnip_t *pkt)
         l2hdr.dest_addr = addr[0];
         DEBUG("[cc1xxx-gnrc] send: preparing to send unicast %02x --> %02x\n",
               (int)l2hdr.src_addr, (int)l2hdr.dest_addr);
+#ifdef MODULE_NETSTATS_L2
+        netif->stats.tx_unicast_count++;
+#endif
     }
 
     /* now let's send out the stuff */
@@ -139,14 +147,6 @@ static int cc1xxx_adpt_send(gnrc_netif_t *netif, gnrc_pktsnip_t *pkt)
         .iol_len = sizeof(l2hdr),
     };
 
-#ifdef MODULE_NETSTATS_L2
-    if (netif_hdr->flags & BCAST) {
-        netif->dev->stats.tx_mcast_count++;
-    }
-    else {
-        netif->dev->stats.tx_unicast_count++;
-    }
-#endif
     DEBUG("[cc1xxx-gnrc] send: triggering the drivers send function\n");
     res = netif->dev->driver->send(netif->dev, &iolist);
 
@@ -156,16 +156,25 @@ static int cc1xxx_adpt_send(gnrc_netif_t *netif, gnrc_pktsnip_t *pkt)
 }
 
 static const gnrc_netif_ops_t cc1xxx_netif_ops = {
+    .init = gnrc_netif_default_init,
     .send = cc1xxx_adpt_send,
     .recv = cc1xxx_adpt_recv,
     .get = gnrc_netif_get_from_netdev,
     .set = gnrc_netif_set_from_netdev,
 };
 
-gnrc_netif_t *gnrc_netif_cc1xxx_create(char *stack, int stacksize,
-                                       char priority, char *name,
-                                       netdev_t *dev)
+int gnrc_netif_cc1xxx_create(gnrc_netif_t *netif, char *stack, int stacksize,
+                             char priority, char *name, netdev_t *dev)
 {
-    return gnrc_netif_create(stack, stacksize, priority, name,
+    return gnrc_netif_create(netif, stack, stacksize, priority, name,
                              dev, &cc1xxx_netif_ops);
+}
+
+void __attribute__((weak)) cc1xxx_eui_get(const netdev_t *netdev, uint8_t *eui)
+{
+    (void)netdev;
+    do {
+        luid_get(eui, 1);
+    }
+    while (*eui == CC1XXX_BCAST_ADDR);
 }

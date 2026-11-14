@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     cpu_esp_common_esp_now
@@ -17,10 +16,12 @@
  * @author      Timo Rothenpieler <timo.rothenpieler@uni-bremen.de>
  */
 
-#ifndef ESP_NOW_NETDEV_H
-#define ESP_NOW_NETDEV_H
-
 #include "net/netdev.h"
+#include "mutex.h"
+#include "net/ethernet/hdr.h"
+#ifdef MODULE_GNRC
+#include "net/gnrc/nettype.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,7 +62,7 @@ extern "C" {
 extern const netdev_driver_t esp_now_driver;
 
 /**
- * @brief   Header with neccesary flags for ESP-NOW packets
+ * @brief   Header with necessary flags for ESP-NOW packets
  */
 typedef struct __attribute__((packed))
 {
@@ -94,20 +95,27 @@ typedef struct
 
     mutex_t dev_lock;                /**< device is already in use */
 
-    uint8_t scan_event;              /**< ESP-NOW peers have to be scannged */
+    uint8_t scan_event;              /**< ESP-NOW peers have to be scanned */
 
 } esp_now_netdev_t;
 
 /**
- * @brief netdev <-> esp_npw glue code initialization function
+ * @brief   ESP-NOW netdev initialization function
  *
- * @return          NULL on error, pointer to esp_now_netdev on success
+ * @return  NULL on error, pointer to esp_now_netdev on success
  */
 esp_now_netdev_t *netdev_esp_now_setup(void);
+
+/**
+ * @brief   Set the channel used by ESP-NOW netdev
+ *
+ * @param   channel Channel to be used
+ * @return  ESP_OK on success, an ESP error code otherwise
+ */
+int esp_now_set_channel(uint8_t channel);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ESP_NOW_NETDEV_H */
 /** @} */

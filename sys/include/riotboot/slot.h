@@ -1,15 +1,14 @@
 /*
- * Copyright (C) 2018 Kaspar Schleiser <kaspar@schleiser.de>
- *                    Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2018 Inria
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup    sys_riotboot_slot   Helpers to manipulate partitions (slots)
- *                              on internal flash
+ * @defgroup    sys_riotboot_slot   Helpers to manipulate partitions (slots) on internal flash
  * @ingroup     sys
  * @{
  *
@@ -22,12 +21,11 @@
  * @}
  */
 
-#ifndef RIOTBOOT_SLOT_H
-#define RIOTBOOT_SLOT_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stddef.h>
 
 #include "riotboot/hdr.h"
 
@@ -37,6 +35,13 @@ extern "C" {
  * @returns nr of currently active slot
  */
 int riotboot_slot_current(void);
+
+/**
+ * @brief  Get currently not running image slot
+ *
+ * @returns nr of currently inactive slot
+ */
+int riotboot_slot_other(void);
 
 /**
  * @brief  Get jump-to address of image slot
@@ -64,6 +69,20 @@ void riotboot_slot_jump(unsigned slot);
 const riotboot_hdr_t *riotboot_slot_get_hdr(unsigned slot);
 
 /**
+ * @brief  Get header from currently running image slot
+ *
+ * @returns header of current image
+ */
+static inline const riotboot_hdr_t *riotboot_slot_get_current_hdr(void)
+{
+    int slot = riotboot_slot_current();
+    if (slot < 0) {
+        return NULL;
+    }
+    return riotboot_slot_get_hdr(slot);
+}
+
+/**
  * @brief  Validate slot
  *
  * @param[in] slot    slot nr to work on
@@ -87,10 +106,38 @@ static inline void riotboot_slot_print_hdr(unsigned slot)
 }
 
 /**
+ * @brief Get the offset (in flash, in bytes) for a given slot.
+ */
+size_t riotboot_slot_offset(unsigned slot);
+
+/**
  * @brief  Dump the addresses of all configured slots
  *
  */
 void riotboot_slot_dump_addrs(void);
+
+/**
+ * @brief  Get the size of a slot
+ *
+ * @param[in]   slot    slot nr to get the size from
+ *
+ * @returns             The slot size in bytes
+ */
+static inline size_t riotboot_slot_size(unsigned slot)
+{
+    switch (slot) {
+#if NUM_SLOTS >= 1
+    case 0:
+        return SLOT0_LEN;
+#endif
+#if NUM_SLOTS == 2
+    case 1:
+        return SLOT1_LEN;
+#endif
+    default:
+        return 0;
+    }
+}
 
 /**
  * @brief   Number of configured firmware slots (incl. bootloader slot)
@@ -100,10 +147,8 @@ extern const unsigned riotboot_slot_numof;
 /**
  * @brief   Storage for header pointers of the configured slots
  */
-extern const riotboot_hdr_t * const riotboot_slots[];
+extern const riotboot_hdr_t *const riotboot_slots[];
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* RIOTBOOT_SLOT_H */

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2015 Rakendra Thapa <rakendrathapa@gmail.com>
- * Copyright (C) 2017 Marc Poulhiès <dkm@kataplop.net>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Rakendra Thapa <rakendrathapa@gmail.com>
+ * SPDX-FileCopyrightText: 2017 Marc Poulhiès <dkm@kataplop.net>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup         cpu_lm4f120
@@ -17,10 +16,6 @@
  * @author          Rakendra Thapa <rakendrathapa@gmail.com>
  * @author          Marc Poulhiès <dkm@kataplop.net>
  */
-
-#ifndef PERIPH_CPU_H
-#define PERIPH_CPU_H
-
 
 #include "cpu.h"
 
@@ -34,7 +29,7 @@ extern "C" {
  */
 #define HAVE_GPIO_T
 typedef uint32_t gpio_t;
-#define GPIO_PIN(x,y) ((gpio_t)((x<<4) | y))
+#define GPIO_PIN(x, y) ((gpio_t)((x<<4) | y))
 /** @} */
 
 #ifndef DOXYGEN
@@ -107,6 +102,18 @@ typedef enum {
 #endif /* ndef DOXYGEN */
 
 /**
+ * @brief   Define timer configuration values
+ */
+typedef struct {
+    uint32_t dev;       /**< Address of timer base */
+    uint32_t max;       /**< Max tick value of timer */
+    int irqn;           /**< Number of the higher timer IRQ channel */
+    uint32_t sysctl;    /**< Address of timer system control */
+    uint32_t intbase;   /**< Interrupt base of timer */
+    int channels;       /**< Number of channels for the timer */
+} timer_conf_t;
+
+/**
  * @brief   Override SPI hardware chip select macro
  *
  * As of now, we do not support HW CS, so we always set it to a fixed value
@@ -142,6 +149,7 @@ typedef struct {
 #define PERIPH_SPI_NEEDS_INIT_CS 1
 /** @} */
 
+#ifndef DOXYGEN
 /**
  * @brief   Override SPI clock speed values
  * @{
@@ -169,10 +177,10 @@ typedef enum {
     SPI_MODE_3 = SSI_FRF_MOTO_MODE_0,       /**< CPOL=1, CPHA=1 */
 } spi_mode_t;
 /** @} */
+#endif /* ndef DOXYGEN */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERIPH_CPU_H */
 /** @} */

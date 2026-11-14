@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_hts221 ST HTS221 digital Humidity Sensor
@@ -21,9 +20,6 @@
  * @author      Sebastian Meiling <s@mlng.net>
  */
 
-#ifndef HTS221_H
-#define HTS221_H
-
 #include <stdint.h>
 
 #include "periph/i2c.h"
@@ -36,9 +32,7 @@ extern "C" {
 /**
  * @brief   Default I2C bus address (7 Bit) of HTS221 devices
  */
-#ifndef HTS221_I2C_ADDRESS
 #define HTS221_I2C_ADDRESS           (0x5F)
-#endif
 
 /**
  * @brief   Parameters needed for device initialization
@@ -167,5 +161,4 @@ int hts221_read_temperature(const hts221_t *dev, int16_t *val);
 }
 #endif
 
-#endif /* HTS221_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for
- * more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_ipv6 IPv6
@@ -95,12 +94,7 @@
  * @author      Oliver Hahm <oliver.hahm@inria.fr>
  */
 
-
-#ifndef NET_GNRC_IPV6_H
-#define NET_GNRC_IPV6_H
-
-#include "kernel_types.h"
-#include "net/gnrc.h"
+#include "sched.h"
 #include "thread.h"
 
 #include "net/ipv6.h"
@@ -116,18 +110,21 @@
 extern "C" {
 #endif
 
-
 /**
  * @defgroup    net_gnrc_ipv6_conf  GNRC IPv6 compile configurations
  * @ingroup     net_gnrc_ipv6
- * @ingroup     config
+ * @ingroup     net_gnrc_conf
  * @{
  */
 /**
  * @brief   Default stack size to use for the IPv6 thread
+ *
+ * @note    The message queue was previously allocated on the stack.
+ *          The default number of messages is 2³.
+ *          Given sizeof(msg_t) == 8, the stack size is reduced by 64 bytes.
  */
 #ifndef GNRC_IPV6_STACK_SIZE
-#define GNRC_IPV6_STACK_SIZE        (THREAD_STACKSIZE_DEFAULT)
+#define GNRC_IPV6_STACK_SIZE        ((THREAD_STACKSIZE_DEFAULT) - 64)
 #endif
 
 /**
@@ -138,10 +135,15 @@ extern "C" {
 #endif
 
 /**
- * @brief   Default message queue size to use for the IPv6 thread.
+ * @brief   Default message queue size to use for the IPv6 thread (as exponent
+ *          of 2^n).
+ *
+ *          As the queue size ALWAYS needs to be power of two, this option
+ *          represents the exponent of 2^n, which will be used as the size of
+ *          the queue.
  */
-#ifndef GNRC_IPV6_MSG_QUEUE_SIZE
-#define GNRC_IPV6_MSG_QUEUE_SIZE    (8U)
+#ifndef CONFIG_GNRC_IPV6_MSG_QUEUE_SIZE_EXP
+#define CONFIG_GNRC_IPV6_MSG_QUEUE_SIZE_EXP    (3U)
 #endif
 
 #ifdef DOXYGEN
@@ -151,18 +153,47 @@ extern "C" {
  * This macro allows to specify a certain link local IPv6 address to be assigned
  * to a network interface on startup, which might be handy for testing.
  * Note: a) a interface will keep its auto-generated link local address, too
- *       b) the address is incremented by 1, if multiple interfaces are present
+ *       b) the same static link local address is used for all interfaces
  *
  * To use the macro just add it to `CFLAGS` in the application's Makefile, like:
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.mk}
  * IPV6_STATIC_LLADDR ?= '"fe80::cafe:cafe:cafe:1"'
- * CFLAGS += -DGNRC_IPV6_STATIC_LLADDR=$(STATIC_IPV6_LLADDR)
+ * CFLAGS += -DCONFIG_GNRC_IPV6_STATIC_LLADDR=$(STATIC_IPV6_LLADDR)
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-#define GNRC_IPV6_STATIC_LLADDR
+#define CONFIG_GNRC_IPV6_STATIC_LLADDR
 #endif /* DOXYGEN */
 /** @} */
+
+/**
+ * @brief   Select interfaces by driver types for setting static link local
+ *          addresses
+ *
+ * This option allows to explicitly include interfaces by matching their
+ * netdev driver types, encoded in a bitmask.
+ * See @ref netdev_type_t for possible values of netdev driver types.
+ * Matching NETDEV_ANY will include all netdev driver types.
+ *
+ * Example usage, includes AT86RF215 and MRF24J40 driver types:
+ *
+ * @code{.c}
+ * #define CONFIG_GNRC_IPV6_STATIC_LLADDR_NETDEV_MASK \
+ *    ((1UL << NETDEV_AT86RF215) | (1UL << NETDEV_MRF24J40))
+ * @endcode
+ *
+ * A value of 0 will switch this selection feature off.
+ */
+#ifndef CONFIG_GNRC_IPV6_STATIC_LLADDR_NETDEV_MASK
+#define CONFIG_GNRC_IPV6_STATIC_LLADDR_NETDEV_MASK 0ULL
+#endif
+
+/**
+ * @brief Message queue size to use for the IPv6 thread.
+ */
+#ifndef GNRC_IPV6_MSG_QUEUE_SIZE
+#define GNRC_IPV6_MSG_QUEUE_SIZE    (1 << CONFIG_GNRC_IPV6_MSG_QUEUE_SIZE_EXP)
+#endif
 
 /**
  * @brief   The PID to the IPv6 thread.
@@ -224,7 +255,6 @@ ipv6_hdr_t *gnrc_ipv6_get_header(gnrc_pktsnip_t *pkt);
 }
 #endif
 
-#endif /* NET_GNRC_IPV6_H */
 /**
  * @}
  */

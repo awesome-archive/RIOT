@@ -1,11 +1,8 @@
 /*
- * Copyright (C) 2015 Jan Wagner <mail@jwagner.eu>
- *               2015-2016 Freie Universität Berlin
- *               2019 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Jan Wagner <mail@jwagner.eu>
+ * SPDX-FileCopyrightText: 2015-2016 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2019 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -28,6 +25,8 @@
  * @}
  */
 
+#include <assert.h>
+
 #include "cpu.h"
 #include "periph/gpio.h"
 #include "periph_cpu.h"
@@ -35,6 +34,29 @@
 
 #define PORT_BIT            (1 << 5)
 #define PIN_MASK            (0x1f)
+
+/* Compatibility wrapper defines for nRF53 and nRF9160 */
+#if defined(CPU_FAM_NRF53) || defined(CPU_FAM_NRF9160)
+#  ifdef NRF_TRUSTZONE_NONSECURE
+#    define NRF_P0 NRF_P0_NS
+#  else
+#    define NRF_P0 NRF_P0_S
+#  endif
+#endif
+
+/* Only the nRF53 has a second GPIO port */
+#ifdef CPU_FAM_NRF53
+#  define NRF_P1 NRF_P1_S
+#endif
+
+#if defined(CPU_FAM_NRF53) || defined(CPU_FAM_NRF9160)
+#  ifdef NRF_TRUSTZONE_NONSECURE
+#    define NRF_GPIOTE NRF_GPIOTE1_NS
+#  else
+#    define NRF_GPIOTE NRF_GPIOTE0_S
+#  endif
+#define GPIOTE_IRQn GPIOTE0_IRQn
+#endif
 
 #ifdef MODULE_PERIPH_GPIO_IRQ
 
@@ -71,11 +93,14 @@ static inline NRF_GPIO_Type *port(gpio_t pin)
 #if (CPU_FAM_NRF51)
     (void) pin;
     return NRF_GPIO;
-#elif defined(CPU_MODEL_NRF52832XXAA)
+#elif defined(CPU_FAM_NRF9160) && defined(NRF_TRUSTZONE_NONSECURE)
+    (void) pin;
+    return NRF_P0_NS;
+#elif defined(NRF_P1)
+    return (pin & PORT_BIT) ? NRF_P1 : NRF_P0;
+#else
     (void) pin;
     return NRF_P0;
-#else
-    return (pin & PORT_BIT) ? NRF_P1 : NRF_P0;
 #endif
 }
 
@@ -84,7 +109,7 @@ static inline NRF_GPIO_Type *port(gpio_t pin)
  */
 static inline int pin_num(gpio_t pin)
 {
-#ifdef CPU_MODEL_NRF52840XXAA
+#if GPIO_COUNT > 1
     return (pin & PIN_MASK);
 #else
     return (int)pin;
@@ -97,8 +122,10 @@ int gpio_init(gpio_t pin, gpio_mode_t mode)
         case GPIO_IN:
         case GPIO_IN_PD:
         case GPIO_IN_PU:
+        case GPIO_IN_OD_PU:
         case GPIO_OUT:
-            /* configure pin direction, input buffer and pull resistor state */
+            /* configure pin direction, input buffer, pull resistor state
+             * and drive configuration */
             port(pin)->PIN_CNF[pin_num(pin)] = mode;
             break;
         default:
@@ -108,7 +135,7 @@ int gpio_init(gpio_t pin, gpio_mode_t mode)
     return 0;
 }
 
-int gpio_read(gpio_t pin)
+bool gpio_read(gpio_t pin)
 {
     if (port(pin)->DIR & (1 << pin_num(pin))) {
         return (port(pin)->OUT & (1 << pin_num(pin))) ? 1 : 0;
@@ -133,7 +160,7 @@ void gpio_toggle(gpio_t pin)
     port(pin)->OUT ^= (1 << pin_num(pin));
 }
 
-void gpio_write(gpio_t pin, int value)
+void gpio_write(gpio_t pin, bool value)
 {
     if (value) {
         port(pin)->OUTSET = (1 << pin_num(pin));
@@ -144,17 +171,21 @@ void gpio_write(gpio_t pin, int value)
 }
 
 #ifdef MODULE_PERIPH_GPIO_IRQ
-int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
-                  gpio_cb_t cb, void *arg)
+uint8_t gpio_int_get_exti(gpio_t pin)
 {
-    uint8_t _pin_index = 0xff;
     /* Looking for already known pin in exti table */
     for (unsigned int i = 0; i < _gpiote_next_index; i++) {
         if (_exti_pins[i] == pin) {
-            _pin_index = i;
-            break;
+            return i;
         }
     }
+    return 0xff;
+}
+
+int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
+                  gpio_cb_t cb, void *arg)
+{
+    uint8_t _pin_index = gpio_int_get_exti(pin);
 
     /* New pin */
     if (_pin_index == 0xff) {
@@ -176,12 +207,12 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
     /* configure the GPIOTE channel: set even mode, pin and active flank */
     NRF_GPIOTE->CONFIG[_pin_index] = (GPIOTE_CONFIG_MODE_Event |
                              (pin_num(pin) << GPIOTE_CONFIG_PSEL_Pos) |
-#ifdef CPU_MODEL_NRF52840XXAA
+#if GPIO_COUNT > 1
                              ((pin & PORT_BIT) << 8) |
 #endif
                              (flank << GPIOTE_CONFIG_POLARITY_Pos));
     /* enable external interrupt */
-    NRF_GPIOTE->INTENSET |= (GPIOTE_INTENSET_IN0_Msk << _pin_index);
+    NRF_GPIOTE->INTENSET = (GPIOTE_INTENSET_IN0_Msk << _pin_index);
 
     return 0;
 }
@@ -191,7 +222,7 @@ void gpio_irq_enable(gpio_t pin)
     for (unsigned int i = 0; i < _gpiote_next_index; i++) {
         if (_exti_pins[i] == pin) {
             NRF_GPIOTE->CONFIG[i] |= GPIOTE_CONFIG_MODE_Event;
-            NRF_GPIOTE->INTENSET |= (GPIOTE_INTENSET_IN0_Msk << i);
+            NRF_GPIOTE->INTENSET = (GPIOTE_INTENSET_IN0_Msk << i);
             break;
         }
     }
@@ -209,7 +240,7 @@ void gpio_irq_disable(gpio_t pin)
     }
 }
 
-void isr_gpiote(void)
+void ISR_GPIOTE(void)
 {
     for (unsigned int i = 0; i < _gpiote_next_index; ++i) {
         if (NRF_GPIOTE->EVENTS_IN[i] == 1) {

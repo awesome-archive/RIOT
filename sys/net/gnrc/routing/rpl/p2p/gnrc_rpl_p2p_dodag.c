@@ -1,9 +1,6 @@
-/**
- * Copyright (C) 2016 Cenk Gündoğan <cenk.guendogan@haw-hamburg.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+/*
+ * SPDX-FileCopyrightText: 2016 Cenk Gündoğan <cenk.guendogan@haw-hamburg.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -19,7 +16,7 @@
 #include "net/gnrc/rpl/p2p_dodag.h"
 #include "net/gnrc/rpl/p2p_structs.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 gnrc_rpl_p2p_ext_t *gnrc_rpl_p2p_ext_new(gnrc_rpl_dodag_t *dodag)

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2014 PHYTEC Messtechnik GmbH
- *               2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 PHYTEC Messtechnik GmbH
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_hdc1000 HDC1000 Humidity and Temperature Sensor
@@ -21,7 +20,7 @@
  * simplified `hdc1000_read()` function, or the conversion can be triggered
  * manually using the `hdc1000_trigger_conversion()` and `hdc1000_get_results()`
  * functions sequentially. If using the second method, on must wait at least
- * `HDC1000_CONVERSION_TIME` between triggering the conversion and reading the
+ * `CONFIG_HDC1000_CONVERSION_TIME` between triggering the conversion and reading the
  * results.
  *
  * @note        The driver does currently not support using the devices heating
@@ -38,9 +37,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef HDC1000_H
-#define HDC1000_H
-
 #include <stdint.h>
 
 #include "periph/i2c.h"
@@ -52,10 +48,18 @@ extern "C"
 #endif
 
 /**
- * @brief   Default I2C bus address of HDC1000 devices
+ * @defgroup drivers_hdc1000_config     HDC1000 Humidity and Temperature Sensor driver compile configuration
+ * @ingroup config_drivers_sensors
+ * @{
  */
-#ifndef HDC1000_I2C_ADDRESS
-#define HDC1000_I2C_ADDRESS           (0x43)
+/**
+ * @brief   Default I2C bus address of HDC1000 devices
+ *
+ * The address value depends on the state of ADR0 and ADR1 Pins
+ * For more details refer Section 8.5.1 of datasheet
+ */
+#ifndef CONFIG_HDC1000_I2C_ADDRESS
+#define CONFIG_HDC1000_I2C_ADDRESS           (0x43)
 #endif
 
 /**
@@ -65,9 +69,10 @@ extern "C"
  *          conversions (worst case) to allow for timer imprecision:
  *          (convert temp + convert hum) * 2 -> (6.5ms + 6.5ms) * 2 := 26ms.
  */
-#ifndef HDC1000_CONVERSION_TIME
-#define HDC1000_CONVERSION_TIME       (26000)
+#ifndef CONFIG_HDC1000_CONVERSION_TIME
+#define CONFIG_HDC1000_CONVERSION_TIME       (26000)
 #endif
+/** @} */
 
 /**
  * @brief   HDC1000 specific return values
@@ -120,7 +125,7 @@ int hdc1000_init(hdc1000_t *dev, const hdc1000_params_t *params);
  * @brief   Trigger a new conversion
  *
  * After the conversion is triggered, one has to wait
- * @ref HDC1000_CONVERSION_TIME us until the results can be read using
+ * @ref CONFIG_HDC1000_CONVERSION_TIME us until the results can be read using
  * @ref hdc1000_get_results().
  *
  * @param[in]  dev          device descriptor of sensor
@@ -161,8 +166,9 @@ int hdc1000_read(const hdc1000_t *dev, int16_t *temp, int16_t *hum);
  * @brief   Extended read function including caching capability
  *
  * This function will return cached values if they are within the sampling
- * period (HDC1000_RENEW_INTERVAL), or will trigger a new conversion, wait for
- * the conversion to be finished and the get the results from the device.
+ * period (HDC1000_PARAM_RENEW_INTERVAL), or will trigger a new conversion,
+ * wait for the conversion to be finished and the get the results from the
+ * device.
  *
  * @param[in]  dev          device descriptor of sensor
  * @param[out] temp         temperature [in 100 * degree centigrade]
@@ -177,5 +183,4 @@ int hdc1000_read_cached(const hdc1000_t *dev, int16_t *temp, int16_t *hum);
 }
 #endif
 
-#endif /* HDC1000_H */
 /** @} */

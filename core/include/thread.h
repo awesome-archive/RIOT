@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    core_thread Threading
@@ -43,11 +42,11 @@
  * In addition to the priority, flags can be used when creating a thread to
  * alter the thread's behavior after creation. The following flags are available:
  *
- *  Flags                         | Description
- *  ----------------------------- | --------------------------------------------------
- *  @ref THREAD_CREATE_SLEEPING   | the thread will sleep until woken up manually
- *  @ref THREAD_CREATE_WOUT_YIELD | the thread might not run immediately after creation
- *  @ref THREAD_CREATE_STACKTEST  | measures the stack's memory usage
+ *  Flags                          | Description
+ *  ------------------------------ | --------------------------------------------------
+ *  @ref THREAD_CREATE_SLEEPING    | the thread will sleep until woken up manually
+ *  @ref THREAD_CREATE_WOUT_YIELD  | the thread might not run immediately after creation
+ *  @ref THREAD_CREATE_NO_STACKTEST| never measure the stack's memory usage
  *
  * Thread creation
  * ===============
@@ -83,7 +82,7 @@
  * int main(void)
  * {
  *     thread_create(rcv_thread_stack, sizeof(rcv_thread_stack),
- *                   THREAD_PRIORITY_MAIN - 1, THREAD_CREATE_STACKTEST,
+ *                   THREAD_PRIORITY_MAIN - 1, 0,
  *                   rcv_thread, NULL, "rcv_thread");
  * }
  * ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -116,56 +115,46 @@
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
  */
 
-#ifndef THREAD_H
-#define THREAD_H
+#include <stdbool.h>
 
-#include "clist.h"
 #include "cib.h"
+#include "clist.h"
+#include "compiler_hints.h"
 #include "msg.h"
-#include "cpu_conf.h"
 #include "sched.h"
+#include "thread_config.h"
 
 #ifdef MODULE_CORE_THREAD_FLAGS
 #include "thread_flags.h"
 #endif
 
+#include "thread_arch.h" /* IWYU pragma: export */
+
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
-/* Thread states */
 /**
- * @name Special meaning thread states
- * @{
+ * @brief Macro definition to inline some of the platform specific
+ *        implementations
+ *
+ * Should be enabled when advantageous by CPU's in their thread_arch.h header
  */
-#define STATUS_NOT_FOUND        (-1)    /**< Describes an illegal thread status */
-/** @} */
+#ifdef THREAD_API_INLINED
+#define THREAD_MAYBE_INLINE static inline __attribute__((always_inline))
+#else
+#define THREAD_MAYBE_INLINE
+#endif /* THREAD_API_INLINED */
 
+#if defined(DEVELHELP) && !defined(CONFIG_THREAD_NAMES)
 /**
- * @name Blocked thread states
- * @{
+ * @brief   This global macro enable storage of thread names to help developers.
+ *
+ *          To activate it set environment variable `THREAD_NAMES=1`, or use Kconfig.
+ *          It is automatically enabled if `DEVELHELP` is.
  */
-#define STATUS_STOPPED              0   /**< has terminated                     */
-#define STATUS_SLEEPING             1   /**< sleeping                           */
-#define STATUS_MUTEX_BLOCKED        2   /**< waiting for a locked mutex         */
-#define STATUS_RECEIVE_BLOCKED      3   /**< waiting for a message              */
-#define STATUS_SEND_BLOCKED         4   /**< waiting for message to be delivered*/
-#define STATUS_REPLY_BLOCKED        5   /**< waiting for a message response     */
-#define STATUS_FLAG_BLOCKED_ANY     6   /**< waiting for any flag from flag_mask*/
-#define STATUS_FLAG_BLOCKED_ALL     7   /**< waiting for all flags in flag_mask */
-#define STATUS_MBOX_BLOCKED         8   /**< waiting for get/put on mbox        */
-#define STATUS_COND_BLOCKED         9   /**< waiting for a condition variable   */
-/** @} */
-
-/**
- * @name Queued thread states
- * @{
- */
-#define STATUS_ON_RUNQUEUE      STATUS_RUNNING  /**< to check if on run queue:
-                                                 `st >= STATUS_ON_RUNQUEUE`             */
-#define STATUS_RUNNING         10               /**< currently running                  */
-#define STATUS_PENDING         11               /**< waiting to be scheduled to run     */
-/** @} */
+#define CONFIG_THREAD_NAMES
+#endif
 
 /**
  * @brief Prototype for a thread entry function
@@ -177,7 +166,7 @@ typedef void *(*thread_task_func_t)(void *arg);
  */
 struct _thread {
     char *sp;                       /**< thread's stack pointer         */
-    uint8_t status;                 /**< thread's status                */
+    thread_status_t status;         /**< thread's status                */
     uint8_t priority;               /**< thread's priority              */
 
     kernel_pid_t pid;               /**< thread's process id            */
@@ -202,121 +191,22 @@ struct _thread {
     msg_t *msg_array;               /**< memory holding messages sent
                                          to this thread's message queue */
 #endif
-#if defined(DEVELHELP) || defined(SCHED_TEST_STACK) \
-    || defined(MODULE_MPU_STACK_GUARD) || defined(DOXYGEN)
+#if defined(DEVELHELP) || IS_ACTIVE(SCHED_TEST_STACK) \
+    || defined(MODULE_MPU_STACK_GUARD) || defined(MODULE_CORTEXM_STACK_LIMIT) \
+    || defined(DOXYGEN)
     char *stack_start;              /**< thread's stack start address   */
 #endif
-#if defined(DEVELHELP) || defined(DOXYGEN)
+#if defined(CONFIG_THREAD_NAMES) || defined(DOXYGEN)
     const char *name;               /**< thread's name                  */
+#endif
+#if defined(DEVELHELP) || defined(DOXYGEN)
     int stack_size;                 /**< thread's stack size            */
 #endif
-#ifdef HAVE_THREAD_ARCH_T
-    thread_arch_t arch;             /**< architecture dependent part    */
+/* enable TLS only when Picolibc is compiled with TLS enabled */
+#ifdef PICOLIBC_TLS
+    void *tls;                      /**< thread local storage ptr */
 #endif
 };
-
-/**
- * @def THREAD_STACKSIZE_DEFAULT
- * @brief A reasonable default stack size that will suffice most smaller tasks
- *
- * @note This value must be defined by the CPU specific implementation, please
- *       take a look at @c cpu/$CPU/include/cpu_conf.h
- */
-#ifndef THREAD_STACKSIZE_DEFAULT
-#error THREAD_STACKSIZE_DEFAULT must be defined per CPU
-#endif
-#ifdef DOXYGEN
-#define THREAD_STACKSIZE_DEFAULT
-#endif
-
-/**
- * @def THREAD_STACKSIZE_IDLE
- * @brief Size of the idle task's stack in bytes
- *
- * @note This value must be defined by the CPU specific implementation, please
- *       take a look at @c cpu/$CPU/include/cpu_conf.h
- */
-#ifndef THREAD_STACKSIZE_IDLE
-#error THREAD_STACKSIZE_IDLE must be defined per CPU
-#endif
-#ifdef DOXYGEN
-#define THREAD_STACKSIZE_IDLE
-#endif
-
-/**
- * @def THREAD_EXTRA_STACKSIZE_PRINTF
- * @brief Size of the task's printf stack in bytes
- *
- * @note This value must be defined by the CPU specific implementation, please
- *       take a look at @c cpu/$CPU/include/cpu_conf.h
- */
-#ifndef THREAD_EXTRA_STACKSIZE_PRINTF
-#error THREAD_EXTRA_STACKSIZE_PRINTF must be defined per CPU
-#endif
-#ifdef DOXYGEN
-#define THREAD_EXTRA_STACKSIZE_PRINTF
-#endif
-
-/**
- * @def THREAD_STACKSIZE_MAIN
- * @brief Size of the main task's stack in bytes
- */
-#ifndef THREAD_STACKSIZE_MAIN
-#define THREAD_STACKSIZE_MAIN      (THREAD_STACKSIZE_DEFAULT + THREAD_EXTRA_STACKSIZE_PRINTF)
-#endif
-
-/**
- * @brief Large stack size
- */
-#ifndef THREAD_STACKSIZE_LARGE
-#define THREAD_STACKSIZE_LARGE (THREAD_STACKSIZE_MEDIUM * 2)
-#endif
-
-/**
- * @brief Medium stack size
- */
-#ifndef THREAD_STACKSIZE_MEDIUM
-#define THREAD_STACKSIZE_MEDIUM THREAD_STACKSIZE_DEFAULT
-#endif
-
-/**
- * @brief Small stack size
- */
-#ifndef THREAD_STACKSIZE_SMALL
-#define THREAD_STACKSIZE_SMALL (THREAD_STACKSIZE_MEDIUM / 2)
-#endif
-
-/**
- * @brief Tiny stack size
- */
-#ifndef THREAD_STACKSIZE_TINY
-#define THREAD_STACKSIZE_TINY (THREAD_STACKSIZE_MEDIUM / 4)
-#endif
-
-/**
- * @brief Minimum stack size
- */
-#ifndef THREAD_STACKSIZE_MINIMUM
-#define THREAD_STACKSIZE_MINIMUM  (sizeof(thread_t))
-#endif
-
-/**
- * @def THREAD_PRIORITY_MIN
- * @brief Least priority a thread can have
- */
-#define THREAD_PRIORITY_MIN            (SCHED_PRIO_LEVELS-1)
-
-/**
- * @def THREAD_PRIORITY_IDLE
- * @brief Priority of the idle thread
- */
-#define THREAD_PRIORITY_IDLE           (THREAD_PRIORITY_MIN)
-
-/**
- * @def THREAD_PRIORITY_MAIN
- * @brief Priority of the main thread
- */
-#define THREAD_PRIORITY_MAIN           (THREAD_PRIORITY_MIN - (SCHED_PRIO_LEVELS/2))
 
 /**
  * @name Optional flags for controlling a threads initial state
@@ -340,11 +230,13 @@ struct _thread {
  */
 #define THREAD_CREATE_WOUT_YIELD        (4)
 
- /**
-  * @brief Write markers into the thread's stack to measure stack usage (for
-  *        debugging and profiling purposes)
-  */
-#define THREAD_CREATE_STACKTEST         (8)
+/**
+ * @brief Never write markers into the thread's stack to measure stack usage
+ *
+ * This flag is ignored if `SCHED_TEST_STACK` is 0 or not defined.
+ * `SCHED_TEST_STACK` defaults to 1 with `DEVELHELP=1`.
+ */
+#define THREAD_CREATE_NO_STACKTEST      (8)
 /** @} */
 
 /**
@@ -358,35 +250,96 @@ struct _thread {
  *       is considered to be a bad programming practice and we strongly
  *       discourage you from doing so.
  *
+ * @pre The @p name parameter must stay valid even after the thread has
+ *      terminated (e.g. using a literal).
+ *
  * @param[out] stack    start address of the preallocated stack memory
  * @param[in] stacksize the size of the thread's stack in bytes
  * @param[in] priority  priority of the new thread, lower mean higher priority
  * @param[in] flags     optional flags for the creation of the new thread
  * @param[in] task_func pointer to the code that is executed in the new thread
  * @param[in] arg       the argument to the function
- * @param[in] name      a human readable descriptor for the thread
+ * @param[in] name      a human readable descriptor for the thread.
  *
  * @return              PID of newly created task on success
- * @return              -EINVAL, if @p priority is greater than or equal to
- *                      @ref SCHED_PRIO_LEVELS
- * @return              -EOVERFLOW, if there are too many threads running already
-*/
+ * @retval  -EINVAL     @p priority is greater than or equal to
+ *                      @ref SCHED_PRIO_LEVELS or @p stacksize is too small
+ * @retval  -EOVERFLOW  there are too many threads running already
+ */
+ACCESS(write_only, 1, 2)
 kernel_pid_t thread_create(char *stack,
-                  int stacksize,
-                  char priority,
-                  int flags,
-                  thread_task_func_t task_func,
-                  void *arg,
-                  const char *name);
+                           int stacksize,
+                           uint8_t priority,
+                           int flags,
+                           thread_task_func_t task_func,
+                           void *arg,
+                           const char *name);
 
 /**
- * @brief       Retreive a thread control block by PID.
+ * @brief       Retrieve a thread control block by PID without bounds checking
+ * @param[in]   pid         Thread to retrieve.
+ * @return      The thread identified by @p pid
+ * @retval      NULL        Thread identified by @p pid does not exist
+ *
+ * @pre         The caller has checked that @p pid is valid
+ * @warning     RIOT does not provide any means to synchronize access to the
+ *              thread control block with the life cycle of the thread. Most
+ *              threads will never exit and are created before any application
+ *              logic is running.
+ *
+ * A safe access would be:
+ *
+ * ```c
+ * unsigned irq_state = irq_disable();
+ * assert(pid_is_valid(pid));
+ * thread_t *t = thread_get_unchecked(pid);
+ * if (t) {
+ *     do_something_with_thread(t);
+ * }
+ * else {
+ *     LOG_ERROR("Thread %" PRIkernel_pid " does not exist\n", pid);
+ * }
+ * irq_restore(irq_state);
+ * ```
+ */
+static inline thread_t *thread_get_unchecked(kernel_pid_t pid)
+{
+    return (thread_t *)sched_threads[pid];
+}
+
+/**
+ * @brief       Retrieve a thread control block by PID.
  * @details     This is a bound-checked variant of accessing `sched_threads[pid]` directly.
  *              If you know that the PID is valid, then don't use this function.
- * @param[in]   pid   Thread to retreive.
- * @return      `NULL` if the PID is invalid or there is no such thread.
+ * @param[in]   pid   Thread to retrieve.
+ * @return      The thread identified by @p pid
+ * @retval      NULL        @p pid is out of bounds or the thread does not exist
+ * @warning     RIOT does not provide any means to synchronize access to the
+ *              thread control block with the life cycle of the thread. Most
+ *              threads will never exit and are created before any application
+ *              logic is running.
+ *
+ * A safe access would be:
+ *
+ * ```c
+ * unsigned irq_state = irq_disable();
+ * thread_t *t = thread_get(pid);
+ * if (t) {
+ *     do_something_with_thread(t);
+ * }
+ * else {
+ *     LOG_ERROR("Thread %" PRIkernel_pid " does not exist or is out of bounds\n", pid);
+ * }
+ * irq_restore(irq_state);
+ * ```
  */
-volatile thread_t *thread_get(kernel_pid_t pid);
+static inline thread_t *thread_get(kernel_pid_t pid)
+{
+    if (pid_is_valid(pid)) {
+        return thread_get_unchecked(pid);
+    }
+    return NULL;
+}
 
 /**
  * @brief Returns the status of a process
@@ -396,7 +349,7 @@ volatile thread_t *thread_get(kernel_pid_t pid);
  * @return          status of the thread
  * @return          `STATUS_NOT_FOUND` if pid is unknown
  */
-int thread_getstatus(kernel_pid_t pid);
+thread_status_t thread_getstatus(kernel_pid_t pid);
 
 /**
  * @brief Puts the current thread into sleep mode. Has to be woken up externally.
@@ -414,7 +367,14 @@ void thread_sleep(void);
  *
  * @see     thread_yield_higher()
  */
+#if defined(MODULE_CORE_THREAD) || DOXYGEN
 void thread_yield(void);
+#else
+static inline void thread_yield(void)
+{
+    /* NO-OP */
+}
+#endif
 
 /**
  * @brief   Lets current thread yield in favor of a higher prioritized thread.
@@ -428,7 +388,28 @@ void thread_yield(void);
  *
  * @see     thread_yield()
  */
-void thread_yield_higher(void);
+THREAD_MAYBE_INLINE void thread_yield_higher(void);
+
+/**
+ * @brief   Puts the current thread into zombie state.
+ *
+ * @details Does nothing when in ISR.
+ *          A thread in zombie state will never be scheduled again,
+ *          but its scheduler entry and stack will be kept.
+ *          A zombie state thread is supposed to be cleaned up
+ *          by @ref thread_kill_zombie().
+ */
+void thread_zombify(void);
+
+/**
+ * @brief Terminates zombie thread.
+ *
+ * @param[in] pid   the PID of the thread to terminate
+ *
+ * @return          `1` on success
+ * @return          `STATUS_NOT_FOUND` if pid is unknown or not a zombie
+ */
+int thread_kill_zombie(kernel_pid_t pid);
 
 /**
  * @brief Wakes up a sleeping thread.
@@ -448,7 +429,22 @@ int thread_wakeup(kernel_pid_t pid);
 static inline kernel_pid_t thread_getpid(void)
 {
     extern volatile kernel_pid_t sched_active_pid;
+
     return sched_active_pid;
+}
+
+/**
+ * @brief   Returns a pointer to the Thread Control Block of the currently
+ *          running thread
+ *
+ * @return  Pointer to the TCB of the currently running thread, or `NULL` if
+ *          no thread is running
+ */
+static inline thread_t *thread_get_active(void)
+{
+    extern volatile thread_t *sched_active_thread;
+
+    return (thread_t *)sched_active_thread;
 }
 
 /**
@@ -461,7 +457,9 @@ static inline kernel_pid_t thread_getpid(void)
  *
  * @return stack pointer
  */
-char *thread_stack_init(thread_task_func_t task_func, void *arg, void *stack_start, int stack_size);
+ACCESS(write_only, 3, 4)
+char *thread_stack_init(thread_task_func_t task_func, void *arg,
+                        void *stack_start, int stack_size);
 
 /**
  * @brief Add thread to list, sorted by priority (internal)
@@ -488,20 +486,39 @@ void thread_add_to_list(list_node_t *list, thread_t *thread);
  * @return          the threads name
  * @return          `NULL` if pid is unknown
  */
+#if defined(MODULE_CORE_THREAD) || DOXYGEN
 const char *thread_getname(kernel_pid_t pid);
+#else
+static inline const char *thread_getname(kernel_pid_t pid)
+{
+    (void)pid;
+    return "(none)";
+}
+#endif
 
-#ifdef DEVELHELP
 /**
- * @brief Measures the stack usage of a stack
+ * @brief       Measure the stack usage of a stack
+ * @internal    Should not be used externally
  *
- * Only works if the thread was created with the flag THREAD_CREATE_STACKTEST.
+ * Only works if the stack is filled with canaries
+ * (`*((uintptr_t *)ptr) == (uintptr_t)ptr` for naturally aligned `ptr` within
+ * the stack).
+ * This is done by thread_create() if `SCHED_TEST_STACK` is 1 (the default
+ * with `DEVELHELP=1`), unless the thread is created with
+ * @ref THREAD_CREATE_NO_STACKTEST.
  *
- * @param[in] stack the stack you want to measure. try `sched_active_thread->stack_start`
+ * @param[in] stack     The stack you want to measure, must be aligned to
+ *                      `alignof(void *)`. Try
+ *                      `thread_get_stackstart(thread_get_active())`, which
+ *                      is aligned by thread_create(), but is `NULL` if the
+ *                      stack start is not stored for the thread.
+ * @param[in] size      Size of @p stack in bytes.
  *
- * @return          the amount of unused space of the thread's stack
+ * @return              The amount of unused space of the thread's stack.
+ * @retval              0 if @p stack is `NULL`.
  */
-uintptr_t thread_measure_stack_free(char *stack);
-#endif /* DEVELHELP */
+ACCESS(read_only, 1, 2)
+uintptr_t measure_stack_free_internal(const char *stack, size_t size);
 
 /**
  * @brief   Get the number of bytes used on the ISR stack
@@ -535,11 +552,15 @@ void thread_print_stack(void);
  *
  * @param[in] thread    The thread to check for
  *
- * @return  `== 0`, if @p thread has no initialized message queue
- * @return  `!= 0`, if @p thread has its message queue initialized
+ * @pre     @p thread is not `NULL` and the thread corresponding to the thread
+ *          control block @p thread points to (still) exists
+ *
+ * @retval  false    @p thread has no initialized message queue
+ * @retval  true     @p thread has its message queue initialized
  */
-static inline int thread_has_msg_queue(const volatile struct _thread *thread)
+static inline bool thread_has_msg_queue(const thread_t *thread)
 {
+    assume(thread != NULL);
 #if defined(MODULE_CORE_MSG) || defined(DOXYGEN)
     return (thread->msg_array != NULL);
 #else
@@ -548,9 +569,142 @@ static inline int thread_has_msg_queue(const volatile struct _thread *thread)
 #endif
 }
 
+/**
+ * Get a thread's status
+ *
+ * @param   thread   thread to work on
+ * @returns status of thread
+ */
+static inline thread_status_t thread_get_status(const thread_t *thread)
+{
+    return thread->status;
+}
+
+/**
+ * Get a thread's priority
+ *
+ * @param   thread   thread to work on
+ * @returns priority of thread
+ */
+static inline uint8_t thread_get_priority(const thread_t *thread)
+{
+    return thread->priority;
+}
+
+/**
+ * Returns if a thread is active (currently running or waiting to be scheduled)
+ *
+ * @param   thread   thread to work on
+ * @returns true if thread is active, false otherwise
+ */
+static inline bool thread_is_active(const thread_t *thread)
+{
+    return thread->status >= STATUS_ON_RUNQUEUE;
+}
+
+/**
+ * Convert a thread state code to a human readable string.
+ *
+ * @param   state   thread state to convert
+ * @returns ptr to string representation of thread state (or to "unknown")
+ */
+const char *thread_state_to_string(thread_status_t state);
+
+/**
+ * Get start address (lowest) of a thread's stack.
+ *
+ * @param   thread thread to work on
+ * @returns current stack pointer, or NULL if not available
+ */
+static inline void *thread_get_stackstart(const thread_t *thread)
+{
+#if defined(DEVELHELP) || IS_ACTIVE(SCHED_TEST_STACK) \
+    || defined(MODULE_MPU_STACK_GUARD) || defined(MODULE_CORTEXM_STACK_LIMIT)
+    return thread->stack_start;
+#else
+    (void)thread;
+    return NULL;
+#endif
+}
+
+/**
+ * Get stored Stack Pointer of thread.
+ *
+ * *Only provides meaningful value if the thread is not currently running!*.
+ *
+ * @param   thread thread to work on
+ * @returns current stack pointer
+ */
+static inline void *thread_get_sp(const thread_t *thread)
+{
+    return thread->sp;
+}
+
+/**
+ * Get size of a thread's stack.
+ *
+ * @param   thread thread to work on
+ * @returns thread stack size, or 0 if not available
+ */
+static inline size_t thread_get_stacksize(const thread_t *thread)
+{
+#if defined(DEVELHELP)
+    return thread->stack_size;
+#else
+    (void)thread;
+    return 0;
+#endif
+}
+
+/**
+ * Get PID of thread.
+ *
+ * This is a simple getter for thread->pid.
+ *
+ * @param   thread thread to work on
+ * @returns thread pid
+ */
+static inline kernel_pid_t thread_getpid_of(const thread_t *thread)
+{
+    return thread->pid;
+}
+
+/**
+ * Get name of thread.
+ *
+ * @param   thread thread to work on
+ * @returns thread name or NULL if not available
+ */
+static inline const char *thread_get_name(const thread_t *thread)
+{
+#if defined(CONFIG_THREAD_NAMES)
+    return thread->name;
+#else
+    (void)thread;
+    return NULL;
+#endif
+}
+
+/**
+ * @brief       Measures the stack usage of a stack
+ *
+ * @pre         Does not work if the thread was created with the flag
+ *              `THREAD_CREATE_NO_STACKTEST`.
+ *
+ * @param[in] thread    The thread to measure the stack of
+ *
+ * @return              the amount of unused space of the thread's stack
+ */
+static inline uintptr_t thread_measure_stack_free(const thread_t *thread)
+{
+    /* explicitly casting void pointers is bad code style, but needed for C++
+     * compatibility */
+    return measure_stack_free_internal((const char *)thread_get_stackstart(thread),
+                                       thread_get_stacksize(thread));
+}
+
 #ifdef __cplusplus
 }
 #endif
 
 /** @} */
-#endif /* THREAD_H */

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -35,7 +32,6 @@
 #define BLUE_SHIFT      (16U)
 #define GREEN_SHIFT     (8U)
 
-
 static inline void shift(const apa102_t *dev, uint32_t data)
 {
     for (int i = 31; i >= 0; i--) {
@@ -65,7 +61,7 @@ void apa102_load_rgba(const apa102_t *dev, const color_rgba_t vals[])
     for (int i = 0; i < dev->led_numof; i++) {
         uint32_t data = HEAD;
         /* we scale the 8-bit alpha value to a 5-bit value by cutting off the
-         * 3 leas significant bits */
+         * 3 least significant bits */
         data |= (((uint32_t)vals[i].alpha << BRIGHT_SHIFT) & BRIGHT);
         data |= ((uint32_t)vals[i].color.b << BLUE_SHIFT);
         data |= ((uint32_t)vals[i].color.g << GREEN_SHIFT);

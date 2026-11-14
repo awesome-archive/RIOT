@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_esp32_esp-wrover-kit
@@ -17,7 +16,7 @@
  *
  * - Micro-SD card interface
  * - OV7670 camera interface
- * - 3.2" SPI LCD panel
+ * - 3.2\" SPI LCD panel
  * - RGB LED
  *
  * Furthermore, many GPIOs are broken out for extension. The USB bridge
@@ -32,24 +31,17 @@
  * configuration.
  *
  * For detailed information about the configuration of ESP32 boards, see
- * section \ref esp32_comm_periph "Common Peripherals".
+ * section \ref esp32_peripherals "Common Peripherals".
  *
  * @note
- * Most definitions can be overridden by an \ref esp32_app_spec_conf
+ * Most definitions can be overridden by an \ref esp32_application_specific_configurations
  * "application-specific board configuration".
  *
  * @file
  * @author      Gunar Schorcht <gunar@schorcht.net>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include <stdint.h>
-
-#ifdef __cplusplus
- extern "C" {
-#endif
 
 /**
  * @name    LED (on-board) configuration
@@ -61,13 +53,14 @@
 #define LED0_ACTIVE     (1)     /**< LED0 is high active */
 #endif
 
-#if !MODULE_SDCARD_SPI || DOXYGEN
-#define LED1_PIN        GPIO2    /**< LED1 is available when the SD-Card is not used */
+#if !MODULE_PERIPH_SPI || DOXYGEN
+#define LED1_PIN        GPIO2    /**< LED1 is available when the SPI bus is not used */
 #define LED1_ACTIVE     (1)      /**< LED1 is high active */
 #endif
 
-#if !MODULE_ESP32_WROVER_KIT_CAMERA || DOXYGEN
-#define LED2_PIN        GPIO4    /**< LED2 is available when the camera is not plugged in */
+#if (!MODULE_ESP32_WROVER_KIT_CAMERA && !MODULE_PERIPH_SDMMC) || DOXYGEN
+#define LED2_PIN        GPIO4    /**< LED2 is available when the camera is not plugged in
+                                      and SDMMD is not used */
 #define LED2_ACTIVE     (1)      /**< LED2 is high active */
 #endif
 
@@ -80,6 +73,8 @@
 #ifdef  LED2_PIN
 #define LED_BLUE_PIN    LED2_PIN /**< LED2 is a blue LED */
 #endif
+
+/** @} */
 
 /**
  * @name   SD-Card interface configuration
@@ -101,12 +96,41 @@
 #endif
 /** @} */
 
-#ifdef __cplusplus
-} /* end extern "C" */
+/**
+ * @name    LCD configuration
+ *
+ * This configuration cannot be changed.
+ * @{
+ */
+#if MODULE_ILI9341 || DOXYGEN
+#define LCD_CS                  GPIO22
+#define LCD_RST                 GPIO18
+#define LCD_DC                  GPIO21
+#define LCD_BACKLIGHT           GPIO5
+
+#define BACKLIGHT_ON            gpio_clear(LCD_BACKLIGHT)
+#define BACKLIGHT_OFF           gpio_set(LCD_BACKLIGHT)
+
+#define ILI9341_PARAM_SPI       SPI_DEV(1)
+#define ILI9341_PARAM_SPI_CLK   SPI_CLK_10MHZ
+#define ILI9341_PARAM_CS        LCD_CS
+#define ILI9341_PARAM_DCX       LCD_DC
+#define ILI9341_PARAM_RST       LCD_RST
+#define ILi9341_PARAM_RGB       0
+#define ILI9341_PARAM_INVERTED  0
+#define ILI9341_PARAM_ROTATION  ILI9341_ROTATION_HORZ_FLIP
 #endif
+/** @} */
 
 /* include common board definitions as last step */
 #include "board_common.h"
 
-#endif /* BOARD_H */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef __cplusplus
+} /* end extern "C" */
+#endif
+
 /** @} */

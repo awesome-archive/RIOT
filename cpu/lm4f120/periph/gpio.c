@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Marc Poulhiès
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2015 Marc Poulhiès
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -19,7 +16,6 @@
  * @}
  */
 
-
 #include <stdio.h>
 
 #include "cpu.h"
@@ -27,7 +23,7 @@
 #include "periph/gpio.h"
 #include "periph_conf.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #define NUM_OF_PORT 6
@@ -95,7 +91,6 @@ typedef struct {
 static gpio_state_t gpio_config[NUM_OF_PORT][NUM_OF_PINS];
 #endif /* MODULE_PERIPH_GPIO_IRQ */
 
-
 int gpio_init(gpio_t pin, gpio_mode_t mode)
 {
     const uint8_t port_num = _port_num(pin);
@@ -121,7 +116,7 @@ int gpio_init(gpio_t pin, gpio_mode_t mode)
     return 0;
 }
 
-int gpio_read(gpio_t pin)
+bool gpio_read(gpio_t pin)
 {
     const uint8_t port_num = _port_num(pin);
     const uint32_t port_addr = _port_base[port_num];
@@ -159,7 +154,7 @@ void gpio_toggle(gpio_t pin)
     }
 }
 
-void gpio_write(gpio_t pin, int value)
+void gpio_write(gpio_t pin, bool value)
 {
     if (value) {
         gpio_set(pin);
@@ -262,6 +257,10 @@ void gpio_irq_enable(gpio_t pin)
     const uint8_t pin_num = _pin_num(pin);
     const uint8_t pin_bit = 1<<pin_num;
 
+    /* clear stale interrupt */
+    ROM_GPIOPinIntClear(port_addr, pin_bit);
+
+    /* enable interrupt */
     HWREG(im_reg_addr) |= pin_bit;
 }
 

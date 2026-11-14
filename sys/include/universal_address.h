@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014  Martin Landsmann <Martin.Landsmann@HAW-Hamburg.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Martin Landsmann <Martin.Landsmann@HAW-Hamburg.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_universal_address Universal Address Container
@@ -17,9 +16,6 @@
  * @brief       Types and functions for operating universal addresses
  * @author      Martin Landsmann
  */
-
-#ifndef UNIVERSAL_ADDRESS_H
-#define UNIVERSAL_ADDRESS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -101,7 +97,7 @@ void universal_address_rem(universal_address_container_t *entry);
  *                           this value is overwritten with the actual size required
  *
  * @return addr if the address is copied to the addr destination
- * @return NULL if the size is unsufficient for copy
+ * @return NULL if the size is insufficient for copy
  */
 uint8_t* universal_address_get_address(universal_address_container_t *entry,
                                        uint8_t *addr, size_t *addr_size);
@@ -114,7 +110,7 @@ uint8_t* universal_address_get_address(universal_address_container_t *entry,
  * @param[in] entry       pointer to the universal_address_container_t for compare
  * @param[in] addr        pointer to the address for compare
  * @param[in, out] addr_size_in_bits  the number of bits  used for the address entry
- *                                    on sucessfull return this value is overwritten
+ *                                    on successful return this value is overwritten
  *                                    with the number of matching bits till the
  *                                    first of trailing `0`s
  *
@@ -123,11 +119,10 @@ uint8_t* universal_address_get_address(universal_address_container_t *entry,
  *                                           (trailing '0's in @p entry)
  * @return UNIVERSAL_ADDRESS_IS_ALL_ZERO_ADDRESS if the entry address is all `0`s
  *                                               and considered as default route
- * @return -ENOENT if the given adresses do not match
+ * @return -ENOENT if the given addresses do not match
  */
 int universal_address_compare(universal_address_container_t *entry,
                               uint8_t *addr, size_t *addr_size_in_bits);
-
 
 /**
 * @brief Determine if the entry equals the provided prefix
@@ -145,7 +140,7 @@ int universal_address_compare(universal_address_container_t *entry,
 * @return UNIVERSAL_ADDRESS_EQUAL if the entries are equal
 * @return UNIVERSAL_ADDRESS_MATCHING_PREFIX if the entry matches to a certain prefix
 *                                           (trailing '0's in @p prefix)
-* @return -ENOENT if the given adresses do not match
+* @return -ENOENT if the given addresses do not match
 */
 int universal_address_compare_prefix(universal_address_container_t *entry,
                             uint8_t *prefix, size_t prefix_size_in_bits);
@@ -171,5 +166,4 @@ void universal_address_print_table(void);
 }
 #endif
 
-#endif /* UNIVERSAL_ADDRESS_H */
 /** @} */

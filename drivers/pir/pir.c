@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- * Copyright (C) 2018 UC Berkeley
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2018 UC Berkeley
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -24,9 +21,9 @@
 #include "irq.h"
 #include "thread.h"
 #include "msg.h"
-#include "xtimer.h"
+#include "ztimer64.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 /**********************************************************************
@@ -50,7 +47,7 @@ int pir_init(pir_t *dev, const pir_params_t *params)
     dev->active = false;
     dev->accum_active_time = 0;
     dev->start_active_time = 0;
-    dev->last_read_time = xtimer_now_usec64();
+    dev->last_read_time = ztimer64_now(ZTIMER64_USEC);
 
     gpio_mode_t gpio_mode;
     if (dev->p.active_high) {
@@ -74,7 +71,7 @@ pir_event_t pir_get_status(const pir_t *dev)
 
 int pir_get_occupancy(pir_t *dev, int16_t *occup) {
     int irq_state = irq_disable();
-    uint64_t now = xtimer_now_usec64();
+    uint64_t now = ztimer64_now(ZTIMER64_USEC);
     uint64_t total_time = now - dev->last_read_time;
     if (total_time == 0) {
         irq_restore(irq_state);
@@ -145,7 +142,7 @@ static void pir_callback(void *arg)
     DEBUG("pir_callback: %p\n", arg);
     pir_t *dev = (pir_t*) arg;
     bool pin_now = gpio_read(dev->p.gpio);
-    uint64_t now = xtimer_now_usec64();
+    uint64_t now = ztimer64_now(ZTIMER64_USEC);
 
     /* We were busy counting */
     if (dev->active) {

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -66,12 +63,12 @@ static int read_eco2(const void *dev, phydat_t *res)
 
 const saul_driver_t ccs811_saul_driver_eco2 = {
     .read = read_eco2,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_CO2
 };
 
 const saul_driver_t ccs811_saul_driver_tvoc = {
     .read = read_tvoc,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_TVOC
 };

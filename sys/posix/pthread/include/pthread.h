@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup pthread POSIX threads
@@ -16,9 +15,6 @@
  * @details Please see the transcluded `pthread_*.h` files for further information.
  * @see     [The Open Group Base Specifications Issue 7: pthread.h - threads](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/pthread.h.html)
  */
-
-#ifndef PTHREAD_H
-#define PTHREAD_H
 
 #include <time.h>
 
@@ -57,8 +53,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* PTHREAD_H */
 
 /**
  * @}

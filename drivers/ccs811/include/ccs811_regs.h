@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_ccs811
@@ -13,9 +12,6 @@
  * @file
  * @{
  */
-
-#ifndef CCS811_REGS_H
-#define CCS811_REGS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,7 +48,7 @@ extern "C" {
  * @name Status register bits (#CCS811_REG_STATUS)
  * @{
  */
-#define CCS811_STATUS_ERROR        (0x01)  /**< error occured, details in CCS811_REG_ERROR */
+#define CCS811_STATUS_ERROR        (0x01)  /**< error occurred, details in CCS811_REG_ERROR */
 #define CCS811_STATUS_DATA_RDY     (0x08)  /**< new data sample available in ALG_RESULT_DATA */
 #define CCS811_STATUS_APP_VALID    (0x10)  /**< valid application firmware loaded */
 #define CCS811_STATUS_FW_MODE      (0x80)  /**< firmware is in application mode */
@@ -77,5 +73,4 @@ extern "C" {
 }
 #endif
 
-#endif /* CCS811_REGS_H */
 /** @} */

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 Bas Stottelaar <basstottelaar@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Bas Stottelaar <basstottelaar@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -19,12 +16,12 @@
  */
 
 #include <string.h>
-#include "xtimer.h"
+#include "ztimer.h"
 
 #include "si70xx_internals.h"
 #include "si70xx.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #define SI70XX_I2C     (dev->params.i2c_dev)
@@ -53,10 +50,7 @@ static uint16_t _do_measure(const si70xx_t *dev, uint8_t command)
     return ((uint16_t)result[0] << 8) + (result[1] & 0xfc);
 }
 
-/**
- * @brief   Internal helper function that reads the device serial number.
- */
-static uint64_t _get_serial(const si70xx_t *dev)
+uint64_t si70xx_get_serial(const si70xx_t *dev)
 {
     uint8_t out[2];
     uint8_t in_first[8] = { 0 };
@@ -95,18 +89,12 @@ static uint64_t _get_serial(const si70xx_t *dev)
     return (((uint64_t) id_first) << 32) + id_second;
 }
 
-/**
- * @brief   Internal helper function that reads the device identifier.
- */
-static uint8_t _get_id(const si70xx_t *dev)
+uint8_t si70xx_get_id(const si70xx_t *dev)
 {
-    return (_get_serial(dev) >> 24) & 0xff;
+    return (si70xx_get_serial(dev) >> 24) & 0xff;
 }
 
-/**
- * @brief   Internal helper function that reads the device serial revision.
- */
-static uint8_t _get_revision(const si70xx_t *dev)
+uint8_t si70xx_get_revision(const si70xx_t *dev)
 {
     uint8_t out[2];
     uint8_t in = 0;
@@ -126,23 +114,45 @@ static uint8_t _get_revision(const si70xx_t *dev)
     return in;
 }
 
-static int _test_device(const si70xx_t *dev)
+static int _identify_device(const si70xx_t *dev)
 {
-    uint8_t revision = _get_revision(dev);
+    uint8_t revision = si70xx_get_revision(dev);
 
     if (revision != SI70XX_REVISION_1 && revision != SI70XX_REVISION_2) {
         DEBUG("[ERROR] Bad device revision (%d).\n", revision);
         return -SI70XX_ERR_NODEV;
     }
 
-    uint8_t id = _get_id(dev);
+    uint8_t id = si70xx_get_id(dev);
 
-    if (id != SI70XX_ID) {
-        DEBUG("[ERROR] Not a valid Si7006/13/20/21 device\n");
-        return -SI70XX_ERR_NODEV;;
+    const bool valid_id = (id == SI70XX_ID);
+    if (!valid_id) {
+        DEBUG("[ERROR] Not a valid Si7006/13/20/21/5x device: %u\n",
+              (unsigned)id);
+        return -SI70XX_ERR_NODEV;
     }
 
     return SI70XX_OK;
+}
+
+static int _test_device(const si70xx_t *dev)
+{
+    unsigned int retries = 3;
+    int res;
+
+    while (retries--) {
+        res = _identify_device(dev);
+
+        if (res == SI70XX_OK) {
+            return SI70XX_OK;
+        }
+
+        /* sensor is ready after at most 25 ms after power up, but only wait
+         * after a failed attempt */
+        ztimer_sleep(ZTIMER_MSEC, 25);
+    }
+
+    return res;
 }
 
 int si70xx_init(si70xx_t *dev, const si70xx_params_t *params)
@@ -153,6 +163,7 @@ int si70xx_init(si70xx_t *dev, const si70xx_params_t *params)
     /* setup the i2c bus */
     i2c_acquire(SI70XX_I2C);
 
+    /* detect the peripheral */
     if (_test_device(dev) != SI70XX_OK) {
         DEBUG("[ERROR] No valid device found.\n");
         i2c_release(SI70XX_I2C);
@@ -168,8 +179,8 @@ int si70xx_init(si70xx_t *dev, const si70xx_params_t *params)
 
     i2c_release(SI70XX_I2C);
 
-    /* sensor is ready after at most 25 ms */
-    xtimer_usleep(25 * US_PER_MS);
+    /* sensor is ready after at most 15 ms after a reset command */
+    ztimer_sleep(ZTIMER_MSEC, 15);
 
     DEBUG("[DEBUG] Device initialized with success.\n");
     return SI70XX_OK;

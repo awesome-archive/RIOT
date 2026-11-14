@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2014, 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014-2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -21,9 +18,9 @@
 #include "unittests-constants.h"
 #include "tests-pktqueue.h"
 
-#define PKT_INIT_ELEM(len, data, next) \
-    { (next), (data), (len), 1, GNRC_NETTYPE_UNDEF }
-#define PKT_INIT_ELEM_STATIC_DATA(data, next) PKT_INIT_ELEM(sizeof(data), data, next)
+#define PKT_INIT_ELEM(len, ptr, nxt) \
+    { .next = (nxt), .data = (void *)(ptr), .size = (len), .users = 1, .type = GNRC_NETTYPE_UNDEF }
+#define PKT_INIT_ELEM_STATIC_DATA(data, next) PKT_INIT_ELEM(sizeof(data), (void *)(data), (next))
 #define PKTQUEUE_INIT_ELEM(pkt) { NULL, pkt }
 
 static gnrc_pktqueue_t *root;

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup    sys_can_conn
@@ -17,13 +16,11 @@
  *
  */
 
-#ifndef CAN_CONN_ISOTP_H
-#define CAN_CONN_ISOTP_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include "compiler_hints.h"
 #include "can/can.h"
 #include "can/isotp.h"
 #include "mbox.h"
@@ -90,10 +87,11 @@ struct conn_can_isotp_master {
  * This must be called on slave connections when conn_can_isotp_multi is used.
  * Does not exist otherwise.
  *
- * @param[in]    master     the master connection
- * @param[inout] slave      the slave connection to initialize
+ * @param[in]       master      the master connection
+ * @param[in,out]   slave       the slave connection to initialize
  */
-static inline void conn_can_isotp_init_slave(conn_can_isotp_t *master, conn_can_isotp_slave_t *slave)
+static inline void conn_can_isotp_init_slave(conn_can_isotp_t *master,
+                                             conn_can_isotp_slave_t *slave)
 {
     slave->next = NULL;
     slave->master = master;
@@ -112,10 +110,10 @@ static inline void conn_can_isotp_init_slave(conn_can_isotp_t *master, conn_can_
  * @brief   ISOTP connection
  */
 typedef struct conn_can_isotp {
-    struct isotp isotp;  /**< ISO-TP connection */
-    int ifnum;           /**< interface number */
-    int bound;           /**< 1 if connection is bound */
-    mbox_t mbox;         /**< mbox */
+    struct isotp isotp; /**< ISO-TP connection */
+    int ifnum;          /**< interface number */
+    int bound;          /**< 1 if connection is bound */
+    mbox_t mbox;        /**< mbox */
     /** message queue */
     msg_t mbox_queue[CONN_CAN_ISOTP_MBOX_SIZE];
 } conn_can_isotp_t;
@@ -124,9 +122,9 @@ typedef struct conn_can_isotp {
 /**
  * @brief  Create can isotp connection socket
  *
- * @param[inout] conn       ISO-TP connection
- * @param[in] options       ISO-TP options
- * @param[in] ifnum         can device Interface
+ * @param[in,out] conn      ISO-TP connection
+ * @param[in]     options   ISO-TP options
+ * @param[in]     ifnum     can device Interface
  *
  * @return 0 if socket was successfully connected
  * @return any other negative number in case of an error
@@ -136,12 +134,13 @@ int conn_can_isotp_create(conn_can_isotp_t *conn, struct isotp_options *options,
 /**
  * @brief Bind a can isotp connection
  *
- * @param[inout] conn       ISO-TP connection
+ * @param[in,out] conn          ISO-TP connection
+ * @param[in]     fc_options    ISO-TP flow control options, can be NULL for default parameters
  *
- * @return 0 on success
- * @return any other negative number in case of an error
+ * @retval        0             on success
+ * @retval        !=0           in case of an error
  */
-int conn_can_isotp_bind(conn_can_isotp_t *conn);
+int conn_can_isotp_bind(conn_can_isotp_t *conn, struct isotp_fc_options *fc_options);
 
 /**
  * @brief  Close can isotp connection socket
@@ -164,6 +163,7 @@ int conn_can_isotp_close(conn_can_isotp_t *conn);
  * @return the number of bytes received
  * @return any other negative number in case of an error
  */
+ACCESS(write_only, 2, 3)
 int conn_can_isotp_recv(conn_can_isotp_t *conn, void *buf, size_t size, uint32_t timeout);
 
 /**
@@ -178,6 +178,7 @@ int conn_can_isotp_recv(conn_can_isotp_t *conn, void *buf, size_t size, uint32_t
  * @return the number of bytes sent
  * @return any other negative number in case of an error
  */
+ACCESS(read_only, 2, 3)
 int conn_can_isotp_send(conn_can_isotp_t *conn, const void *buf, size_t size, int flags);
 
 #if defined(MODULE_CONN_CAN_ISOTP_MULTI) || defined(DOXYGEN)
@@ -190,12 +191,12 @@ int conn_can_isotp_send(conn_can_isotp_t *conn, const void *buf, size_t size, in
  *
  * @return 0 if OK, < 0 if error
  */
-int conn_can_isotp_select(conn_can_isotp_slave_t **conn, conn_can_isotp_t *master, uint32_t timeout);
+int conn_can_isotp_select(conn_can_isotp_slave_t **conn, conn_can_isotp_t *master,
+                          uint32_t timeout);
 #endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CAN_CONN_ISOTP_H */
 /** @} */

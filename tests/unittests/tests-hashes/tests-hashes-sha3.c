@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017-2018 Mathias Tausig <mathias.tausig@fh-campsuwien.ac.at>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017-2018 Mathias Tausig <mathias.tausig@fh-campsuwien.ac.at>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -28,7 +25,7 @@
 /**
  * @brief expected SHA3-256 hash for test 01
  *
- * All test values taken from the Keccak code pacakge:
+ * All test values taken from the Keccak code package:
  * https://github.com/gvanas/KeccakCodePackage
  * Files: TestVectors/ShortMsgKAT_SHA3-256.txt, TestVectors/ShortMsgKAT_SHA3-384.txt,
  *        TestVectors/ShortMsgKAT_SHA3-512.txt
@@ -149,7 +146,6 @@ static const uint8_t m03_2[] = { 0xAA, 0x7C, 0x6D, 0xA9, 0xAD, 0xD2, 0x08, 0x89,
                                  0xE9, 0xE9, 0xBA, 0xF3, 0xD8, 0x27, 0xAE, 0x68, 0x5F,
                                  0xB1, 0xD8, 0x17 };
 size_t m03_2_len = sizeof(m03_2);
-
 
 static const uint8_t h03_256[] = { 0xB7, 0xD0, 0x31, 0xAA, 0x69, 0xB7, 0xB4, 0xD2,
                                    0x6A, 0x35, 0xB8, 0x96, 0xD7, 0x61, 0x31, 0x4F,
@@ -294,7 +290,6 @@ static const uint8_t hfail_512[] = { 0x15, 0x0D, 0x78, 0x7D, 0x6E, 0xB4, 0x96, 0
                                      0xB5, 0x5C, 0xC5, 0x88, 0xC6, 0xB9, 0x13, 0x13,
                                      0x2F, 0x1A, 0x65, 0x8F, 0xB1, 0x22, 0xCB, 0x52 };
 
-
 static int calc_and_compare_hash_256(const uint8_t *msg, size_t msg_len, const uint8_t *expected)
 {
     static unsigned char hash[SHA3_256_DIGEST_LENGTH];
@@ -305,7 +300,8 @@ static int calc_and_compare_hash_256(const uint8_t *msg, size_t msg_len, const u
 }
 
 static int calc_steps_and_compare_hash_256(const uint8_t *msg1, size_t msg1_len,
-                                           const uint8_t *msg2, size_t msg2_len, const uint8_t *expected)
+                                           const uint8_t *msg2, size_t msg2_len,
+                                           const uint8_t *expected)
 {
     static unsigned char hash[SHA3_256_DIGEST_LENGTH];
     keccak_state_t state;
@@ -328,7 +324,8 @@ static int calc_and_compare_hash_384(const uint8_t *msg, size_t msg_len, const u
 }
 
 static int calc_steps_and_compare_hash_384(const uint8_t *msg1, size_t msg1_len,
-                                           const uint8_t *msg2, size_t msg2_len, const uint8_t *expected)
+                                           const uint8_t *msg2, size_t msg2_len,
+                                           const uint8_t *expected)
 {
     static unsigned char hash[SHA3_384_DIGEST_LENGTH];
     keccak_state_t state;
@@ -351,7 +348,8 @@ static int calc_and_compare_hash_512(const uint8_t *msg, size_t msg_len, const u
 }
 
 static int calc_steps_and_compare_hash_512(const uint8_t *msg1, size_t msg1_len,
-                                           const uint8_t *msg2, size_t msg2_len, const uint8_t *expected)
+                                           const uint8_t *msg2, size_t msg2_len,
+                                           const uint8_t *expected)
 {
     static unsigned char hash[SHA3_512_DIGEST_LENGTH];
     keccak_state_t state;
@@ -410,7 +408,6 @@ static void test_hashes_sha3_hash_sequence_failing_compare(void)
     TEST_ASSERT(!calc_and_compare_hash_384(mfail, mfail_len, hfail_384));
     TEST_ASSERT(!calc_and_compare_hash_512(mfail, mfail_len, hfail_512));
 }
-
 
 Test *tests_hashes_sha3_tests(void)
 {

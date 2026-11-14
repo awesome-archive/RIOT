@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2015 HAW Hamburg
- *               2016 Freie Universität Berlin
- *               2018 Matthew Blue
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 HAW Hamburg
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2018 Matthew Blue
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup         cpu_atmega1284p
@@ -20,14 +19,22 @@
  * @author          Matthew Blue <matthew.blue.neuro@gmail.com>
  */
 
-#ifndef PERIPH_CPU_H
-#define PERIPH_CPU_H
-
 #include "periph_cpu_common.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @name    Power management configuration
+ * @{
+ */
+#define PM_NUM_MODES            (5)
+#define AVR8_PM_SLEEP_MODE_0    SLEEP_MODE_PWR_DOWN /**< Power Down */
+#define AVR8_PM_SLEEP_MODE_1    SLEEP_MODE_PWR_SAVE /**< Power Save */
+#define AVR8_PM_SLEEP_MODE_2    SLEEP_MODE_STANDBY  /**< Standby */
+#define AVR8_PM_SLEEP_MODE_3    SLEEP_MODE_ADC      /**< Sleep ADC low noise */
+/** @} */
 
 /**
  * @brief   Define a CPU specific GPIO pin generator macro
@@ -54,6 +61,33 @@ enum {
                                  GPIO_PIN(PORT_B, 2) }
 
 /**
+ * @brief   Get the interrupt vector number of the given GPIO pin
+ */
+static inline uint8_t atmega_pin2exti(uint8_t port_num, uint8_t pin_num)
+{
+    if (port_num == PORT_B) {
+        return 2;
+    }
+
+    return pin_num - 2;
+}
+
+/**
+ * @brief   Check if the given pin can be used as external interrupt
+ */
+static inline bool atmega_has_pin_exti(uint8_t port_num, uint8_t pin_num)
+{
+    switch (port_num) {
+    default:
+        return false;
+    case PORT_D:
+        return ((pin_num == 2) || (pin_num == 3));
+    case PORT_B:
+        return pin_num == 2;
+    }
+}
+
+/**
  * @name   Defines for the I2C interface
  * @{
  */
@@ -72,5 +106,7 @@ enum {
 }
 #endif
 
-#endif /* PERIPH_CPU_H */
+#include "periph_conf.h"
+#include "default_timer_config.h"
+
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 José Ignacio Alamos <jialamos@uc.cl>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 José Ignacio Alamos <jialamos@uc.cl>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_ppphdr Point-to-Point Protocol Header
@@ -18,9 +17,6 @@
  * @author  José Ignacio Alamos
  */
 
-#ifndef NET_PPP_HDR_H
-#define NET_PPP_HDR_H
-
 #include <inttypes.h>
 
 #include "byteorder.h"
@@ -29,10 +25,9 @@
 extern "C" {
 #endif
 
-
 /**
  * @brief   Header of a PPP packet
- * @details A PPP packet is transmited as a payload of an HDLC packet. PPP packets only carry information about control protocol
+ * @details A PPP packet is transmitted as a payload of an HDLC packet. PPP packets only carry information about control protocol
  * of a PPP stack (Link Control Protocol, IP Control Protocol, etc). IP packets encapsulated in HDLC frame are not
  * considered PPP packet.
  *
@@ -63,5 +58,4 @@ typedef struct __attribute__((packed)){
 }
 #endif
 
-#endif /* NET_PPP_HDR_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_ccs811
@@ -13,9 +12,6 @@
  * @file
  * @{
  */
-
-#ifndef CCS811_PARAMS_H
-#define CCS811_PARAMS_H
 
 #include "board.h"
 #include "ccs811.h"
@@ -56,8 +52,8 @@ extern "C" {
 #define CCS811_PARAMS    { .i2c_dev   = CCS811_PARAM_I2C_DEV,  \
                            .i2c_addr  = CCS811_PARAM_I2C_ADDR, \
                            .mode      = CCS811_PARAM_MODE,     \
-                           .int_mode  = CCS811_PARAM_INT_MODE, \
                            .int_pin   = CCS811_PARAM_INT_PIN,  \
+                           .int_mode  = CCS811_PARAM_INT_MODE, \
                            .wake_pin  = CCS811_PARAM_WAKE_PIN, \
                            .reset_pin = CCS811_PARAM_RESET_PIN \
                          }
@@ -95,5 +91,4 @@ static const saul_reg_info_t ccs811_saul_info[] =
 }
 #endif
 
-#endif /* CCS811_PARAMS_H */
 /** @} */

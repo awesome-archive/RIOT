@@ -1,9 +1,6 @@
 /*
- * Copyright 2017  JP Bonn
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 JP Bonn
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -17,8 +14,6 @@
  * @}
  */
 #include "cpucycle.h"
-#include "vendor/encoding.h"
-
 
 uint64_t get_cycle_count(void)
 {
@@ -30,5 +25,5 @@ uint64_t get_cycle_count(void)
                           "csrr %2, mcycleh\n\t"        \
                           "bne  %0, %2, 1b\n\t"         \
                           : "=r" (hi), "=r" (lo), "=r" (hi2));
-    return lo | ((uint64_t) hi << 32);
+    return lo | ((uint64_t)hi << 32);
 }

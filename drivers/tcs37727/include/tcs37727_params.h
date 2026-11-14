@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_tcs37727
@@ -15,9 +14,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef TCS37727_PARAMS_H
-#define TCS37727_PARAMS_H
 
 #include "board.h"
 #include "tcs37727.h"
@@ -38,7 +34,7 @@ extern "C" {
 #define TCS37727_PARAM_ADDR         (TCS37727_I2C_ADDRESS)
 #endif
 #ifndef TCS37727_PARAM_ATIME
-#define TCS37727_PARAM_ATIME        (TCS37727_ATIME_DEFAULT)
+#define TCS37727_PARAM_ATIME        (CONFIG_TCS37727_ATIME_DEFAULT)
 #endif
 
 #ifndef TCS37727_PARAMS
@@ -71,5 +67,4 @@ static const saul_reg_info_t tcs37727_saul_info[] =
 }
 #endif
 
-#endif /* TCS37727_PARAMS_H */
 /** @} */

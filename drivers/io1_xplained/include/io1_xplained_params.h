@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_io1_xplained
@@ -15,9 +14,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef IO1_XPLAINED_PARAMS_H
-#define IO1_XPLAINED_PARAMS_H
 
 #include "board.h"
 #include "io1_xplained.h"
@@ -91,5 +87,4 @@ saul_gpio_params_t io1_xplained_saul_gpios[] =
 }
 #endif
 
-#endif /* IO1_XPLAINED_PARAMS_H */
 /** @} */

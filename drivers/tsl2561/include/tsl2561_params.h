@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_tsl2561
@@ -15,9 +14,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef TSL2561_PARAMS_H
-#define TSL2561_PARAMS_H
 
 #include "board.h"
 #include "saul_reg.h"
@@ -75,5 +71,4 @@ saul_reg_info_t tsl2561_saul_info[] =
 }
 #endif
 
-#endif /* TSL2561_PARAMS_H */
 /** @} */

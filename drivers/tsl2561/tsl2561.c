@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -25,9 +22,9 @@
 #include "tsl2561.h"
 #include "tsl2561_internals.h"
 #include "periph/i2c.h"
-#include "xtimer.h"
+#include "ztimer.h"
 
-#define ENABLE_DEBUG        (0)
+#define ENABLE_DEBUG        0
 #include "debug.h"
 
 #define DEV_I2C             (dev->params.i2c_dev)
@@ -60,11 +57,16 @@ int tsl2561_init(tsl2561_t *dev, const tsl2561_params_t *params)
 
     /* Verify sensor ID */
     uint8_t id;
-    i2c_read_reg(DEV_I2C, DEV_ADDR,
-                 TSL2561_COMMAND_MODE | TSL2561_REGISTER_ID, &id, 0);
+    if (i2c_read_reg(DEV_I2C, DEV_ADDR,
+                     TSL2561_COMMAND_MODE | TSL2561_REGISTER_ID, &id, 0) < 0) {
+        DEBUG("[Error] could not read sensor ID\n");
+        i2c_release(DEV_I2C);
+        return TSL2561_NOI2C;
+    }
     DEBUG("[Info] ID ? %d\n", id);
     if (id != TSL2561_ID ) {
         DEBUG("[Error] not a TSL2561 sensor\n");
+        i2c_release(DEV_I2C);
         return TSL2561_BADDEV;
     }
 
@@ -75,13 +77,14 @@ int tsl2561_init(tsl2561_t *dev, const tsl2561_params_t *params)
                   TSL2561_COMMAND_MODE | TSL2561_REGISTER_TIMING,
                   DEV_INTEGRATION | DEV_GAIN, 0);
 
-#if ENABLE_DEBUG
-    uint8_t timing;
-    i2c_read_reg(DEV_I2C, DEV_ADDR,
-                 TSL2561_COMMAND_MODE | TSL2561_REGISTER_TIMING, &timing, 0);
-    DEBUG("[Info] Timing ? %d (expected: %d)\n",
-          timing, DEV_INTEGRATION | DEV_GAIN);
-#endif
+    if (IS_ACTIVE(ENABLE_DEBUG)) {
+        uint8_t timing;
+        i2c_read_reg(DEV_I2C, DEV_ADDR,
+                     TSL2561_COMMAND_MODE | TSL2561_REGISTER_TIMING,
+                     &timing, 0);
+        DEBUG("[Info] Timing ? %d (expected: %d)\n",
+              timing, DEV_INTEGRATION | DEV_GAIN);
+    }
 
     _disable(dev);
     i2c_release(DEV_I2C);
@@ -180,21 +183,20 @@ uint16_t tsl2561_read_illuminance(const tsl2561_t *dev)
     return (uint16_t)(illuminance >> TSL2561_LUXSCALE);
 }
 
-
 static void _enable(const tsl2561_t *dev)
 {
     /* enabling device */
     i2c_write_reg(DEV_I2C, DEV_ADDR,
                   TSL2561_COMMAND_MODE | TSL2561_REGISTER_CONTROL,
                   TSL2561_CONTROL_POWERON, 0);
-#if ENABLE_DEBUG
-    uint8_t en;
-    i2c_read_reg(DEV_I2C, DEV_ADDR,
-                 TSL2561_COMMAND_MODE | TSL2561_REGISTER_CONTROL, &en, 0);
-    DEBUG("[Info] Enabled ? %s\n", en == 3 ? "true" : "false");
-#endif
-}
 
+    if (IS_ACTIVE(ENABLE_DEBUG)) {
+        uint8_t en;
+        i2c_read_reg(DEV_I2C, DEV_ADDR,
+                     TSL2561_COMMAND_MODE | TSL2561_REGISTER_CONTROL, &en, 0);
+        DEBUG("[Info] Enabled ? %s\n", en == 3 ? "true" : "false");
+    }
+}
 
 static void _disable(const tsl2561_t *dev)
 {
@@ -203,12 +205,12 @@ static void _disable(const tsl2561_t *dev)
                   TSL2561_COMMAND_MODE | TSL2561_REGISTER_CONTROL,
                   TSL2561_CONTROL_POWEROFF, 0);
 
-#if ENABLE_DEBUG
-    uint8_t dis;
-    i2c_read_reg(DEV_I2C, DEV_ADDR,
-                 TSL2561_COMMAND_MODE | TSL2561_REGISTER_CONTROL, &dis, 0);
-    DEBUG("[Info] Disabled ? %s\n", dis == 0 ? "true": "false");
-#endif
+    if (IS_ACTIVE(ENABLE_DEBUG)) {
+        uint8_t dis;
+        i2c_read_reg(DEV_I2C, DEV_ADDR,
+                     TSL2561_COMMAND_MODE | TSL2561_REGISTER_CONTROL, &dis, 0);
+        DEBUG("[Info] Disabled ? %s\n", dis == 0 ? "true": "false");
+    }
 }
 
 static void _read_data(const tsl2561_t *dev, uint16_t *full, uint16_t *ir)
@@ -220,16 +222,16 @@ static void _read_data(const tsl2561_t *dev, uint16_t *full, uint16_t *ir)
 
     /* Wait integration time in ms for ADC to complete */
     switch (DEV_INTEGRATION) {
-        case TSL2561_INTEGRATIONTIME_13MS:
-            xtimer_usleep(13700);
+        case TSL2561_INTEGRATIONTIME_13MS: /* 13700us */
+            ztimer_sleep(ZTIMER_MSEC, 14);
             break;
 
         case TSL2561_INTEGRATIONTIME_101MS:
-            xtimer_usleep(101000);
+            ztimer_sleep(ZTIMER_MSEC, 101);
             break;
 
         default: /* TSL2561_INTEGRATIONTIME_402MS */
-            xtimer_usleep(402000);
+            ztimer_sleep(ZTIMER_MSEC, 402);
             break;
     }
 

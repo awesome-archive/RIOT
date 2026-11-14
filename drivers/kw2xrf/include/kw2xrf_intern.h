@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Phytec Messtechnik GmbH
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Phytec Messtechnik GmbH
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_kw2xrf
@@ -15,9 +14,6 @@
  *
  * @author      Johann Fischer <j.fischer@phytec.de>
  */
-
-#ifndef KW2XRF_INTERN_H
-#define KW2XRF_INTERN_H
 
 #include <stdint.h>
 #include "kw2xrf.h"
@@ -233,5 +229,4 @@ uint32_t kw2xrf_get_timestamp(kw2xrf_t *dev);
 }
 #endif
 
-#endif /* KW2XRF_INTERN_H */
 /** @} */

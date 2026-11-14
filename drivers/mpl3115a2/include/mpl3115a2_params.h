@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017   HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_mpl3115a2
@@ -15,9 +14,6 @@
  *
  * @author      Sebastian Meiling <s@mlng.net>
  */
-
-#ifndef MPL3115A2_PARAMS_H
-#define MPL3115A2_PARAMS_H
 
 #include "board.h"
 #include "saul_reg.h"
@@ -74,5 +70,4 @@ static const saul_reg_info_t mpl3115a2_saul_info[] =
 }
 #endif
 
-#endif /* MPL3115A2_PARAMS_H */
 /** @} */

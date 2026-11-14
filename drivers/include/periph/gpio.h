@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_periph_gpio GPIO
@@ -33,7 +32,7 @@
  * pin can thus be described by its port/pin tuple. To access a pin, the
  * @p GPIO_PIN(port, pin) macro should be used. For example: If your platform has
  * a pin PB22, it will be port=1 and pin=22. The @p GPIO_PIN macro should be
- * overridden by a MCU, to allow for efficient encoding of the the port/pin tuple.
+ * overridden by a MCU, to allow for efficient encoding of the port/pin tuple.
  * For example, on many platforms it is possible to `OR` the pin number with the
  * corresponding ports base register address. This allows for efficient decoding
  * of pin number and base address without the need of any address lookup.
@@ -43,6 +42,28 @@
  * definitions in `RIOT/boards/ * /include/periph_conf.h` will define the selected
  * GPIO pin.
  *
+ * @warning The scalar GPIO pin type `gpio_t` is deprecated and will be
+ * replaced by a structured GPIO pin type in a future GPIO API. Therefore,
+ * don't use the direct comparison of GPIO pins anymore. Instead, use the
+ * inline comparison functions @ref gpio_is_equal and @ref gpio_is_valid.
+ *
+ * # (Low-) Power Implications
+ *
+ * On almost all platforms, we can only control the peripheral power state of
+ * full ports (i.e. groups of pins), but not for single GPIO pins. Together with
+ * CPU specific alternate function handling for pins used by other peripheral
+ * drivers, this can make it quite complex to keep track of pins that are
+ * currently used at a certain moment. To simplify the implementations (and ease
+ * the memory consumption), we expect ports to be powered on (e.g. through
+ * peripheral clock gating) when first used and never be powered off again.
+ *
+ * GPIO driver implementations **should** power on the corresponding port during
+ * gpio_init() and gpio_init_int().
+ *
+ * For external interrupts to work, some platforms may need to block certain
+ * power modes (although this is not very likely). This should be done during
+ * gpio_init_int().
+ *
  * @{
  * @file
  * @brief       Low-level GPIO peripheral driver interface definitions
@@ -50,10 +71,8 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef PERIPH_GPIO_H
-#define PERIPH_GPIO_H
-
 #include <limits.h>
+#include <stdbool.h>
 
 #include "periph_cpu.h"
 #include "periph_conf.h"
@@ -160,6 +179,12 @@ int gpio_init(gpio_t pin, gpio_mode_t mode);
  * @note    You have to add the module `periph_gpio_irq` to your project to
  *          enable this function
  *
+ * @pre     @p cb must not be NULL
+ * @pre     The pin interrupt must not be active when calling
+ *          `gpio_init_int()`. The pin must either not have been configured as
+ *          an interrupt source before, or the interrupt must be disabled with
+ *          @ref gpio_irq_disable before calling `gpio_init_int()` again.
+ *
  * @param[in] pin       pin to initialize
  * @param[in] mode      mode of the pin, see @c gpio_mode_t
  * @param[in] flank     define the active flank(s)
@@ -174,6 +199,9 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
 
 /**
  * @brief   Enable pin interrupt if configured as interrupt source
+ *
+ * Interrupts that would have occurred after @see gpio_irq_disable
+ * was called will be discarded.
  *
  * @note    You have to add the module `periph_gpio_irq` to your project to
  *          enable this function
@@ -199,10 +227,10 @@ void gpio_irq_disable(gpio_t pin);
  *
  * @param[in] pin       the pin to read
  *
- * @return              0 when pin is LOW
- * @return              >0 for HIGH
+ * @retval              false   pin is LOW
+ * @retval              true    pin is HIGH
  */
-int gpio_read(gpio_t pin);
+bool gpio_read(gpio_t pin);
 
 /**
  * @brief   Set the given pin to HIGH
@@ -231,11 +259,31 @@ void gpio_toggle(gpio_t pin);
  * @param[in] pin       the pin to set
  * @param[in] value     value to set the pin to, 0 for LOW, HIGH otherwise
  */
-void gpio_write(gpio_t pin, int value);
+void gpio_write(gpio_t pin, bool value);
+
+/**
+ * @brief   Test if a GPIO pin is equal to another GPIO pin
+ *
+ * @param[in] gpio1 First GPIO pin to check
+ * @param[in] gpio2 Second GPIO pin to check
+ */
+static inline int gpio_is_equal(gpio_t gpio1, gpio_t gpio2)
+{
+    return (gpio1 == gpio2);
+}
+
+/**
+ * @brief   Test if a GPIO pin is a valid pin and not declared as undefined.
+ *
+ * @param[in] gpio GPIO pin to check
+ */
+static inline int gpio_is_valid(gpio_t gpio)
+{
+    return (gpio != GPIO_UNDEF);
+}
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERIPH_GPIO_H */
 /** @} */

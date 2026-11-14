@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2022 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -12,41 +9,56 @@
  * @{
  *
  * @file
- * @brief       Low-level SPI driver implementation
+ * @brief       Low-level SPI driver implementation for ESP8266
  *
  * @author      Gunar Schorcht <gunar@schorcht.net>
  *
  * @}
  */
 
-#define ENABLE_DEBUG (0)
-#include "debug.h"
-#include "common.h"
-#include "log.h"
-
-#if defined(MODULE_PERIPH_SPI)
-
+#include <assert.h>
+#include <inttypes.h>
 #include <string.h>
+
+#include "esp_common.h"
+#include "log.h"
 
 #include "cpu.h"
 #include "mutex.h"
 #include "periph/spi.h"
+#include "macros/units.h"
+
+#include "esp_attr.h"
+#include "gpio_arch.h"
+
+#define ENABLE_DEBUG 0
+#include "debug.h"
 
 #include "esp/iomux_regs.h"
-#include "esp/spi_regs.h"
+#include "esp8266/spi_register.h"
+#include "esp8266/spi_struct.h"
 
-#include "gpio_common.h"
+#define SPI_DOUTDIN (BIT(0))
 
-#define SPI_BUS_NUM     2
-#define SPI_BLOCK_SIZE  64         /* number of bytes per SPI transfer */
+#define SPI_BLOCK_SIZE  64  /* number of bytes per SPI transfer */
 
-static mutex_t _spi_lock[SPI_BUS_NUM] = { MUTEX_INIT };
+/** structure which describes all properties of one SPI bus */
+struct _spi_bus_t {
+    spi_dev_t* regs;       /* pointer to register data struct of the SPI device */
+    mutex_t lock;          /* mutex for each possible SPI interface */
+    bool initialized;      /* interface already initialized */
+    bool pins_initialized; /* pins interface initialized */
+};
 
-/* indicate whether SPI interface were already initilized */
-static bool _spi_initialized[SPI_BUS_NUM] = { false };
-
-/* indicate whether pins of the SPI interface were already initilized */
-static bool _spi_pins_initialized[SPI_BUS_NUM] = { false };
+static struct _spi_bus_t _spi[] = {
+#ifdef SPI0_CTRL
+    {
+        .initialized = false,
+        .pins_initialized = false,
+        .lock = MUTEX_INIT
+    },
+#endif
+};
 
 /*
  * GPIOs that were once initialized as SPI interface pins can not be used
@@ -57,23 +69,31 @@ static bool _spi_pins_initialized[SPI_BUS_NUM] = { false };
  * the *spi_init_cs* function or the *spi_acquire* function when the interface
  * is used for the first time.
  */
-void IRAM spi_init (spi_t bus)
+void IRAM_ATTR spi_init(spi_t bus)
 {
+    assert(bus < SPI_NUMOF_MAX);
+    assert(bus < SPI_NUMOF);
+
+    if (spi_config[bus].ctrl == HSPI) {
+        _spi[bus].regs = &SPI1;
+    }
+    else {
+        LOG_TAG_ERROR("spi", "invalid SPI interface controller "
+                      "used for SPI_DEV(%d)\n", bus);
+    }
     return;
 }
 
-void _spi_init_internal(spi_t bus)
+/* Internal initialization function when the interface is used the first time */
+static void IRAM_ATTR _spi_init_internal(spi_t bus)
 {
-    /* only one physical SPI(1) bus (HSPI) can be used for peripherals */
-    /* RIOT's SPI_DEV(0) is mapped to SPI(1) bus (HSPI) */
-    /* TODO SPI overlap mode SPI and HSPI */
-    CHECK_PARAM (bus == SPI_DEV(0));
+    assert(bus < SPI_NUMOF);
 
     /* avoid multiple initializations */
-    if (_spi_initialized[bus]) {
+    if (_spi[bus].initialized) {
         return;
     }
-    _spi_initialized[bus] = true;
+    _spi[bus].initialized = true;
 
     DEBUG("%s bus=%u\n", __func__, bus);
 
@@ -82,197 +102,213 @@ void _spi_init_internal(spi_t bus)
 
     /* check whether pins could be initialized, otherwise return, CS is not
        initialized in spi_init_pins */
-    if (_gpio_pin_usage[SPI0_SCK_GPIO] != _SPI &&
-        _gpio_pin_usage[SPI0_MOSI_GPIO] != _SPI &&
-        _gpio_pin_usage[SPI0_MISO_GPIO] != _SPI) {
+    if (gpio_get_pin_usage(spi_config[bus].sck) != _SPI &&
+        gpio_get_pin_usage(spi_config[bus].miso) != _SPI &&
+        gpio_get_pin_usage(spi_config[bus].mosi) != _SPI &&
+        gpio_get_pin_usage(spi_config[bus].cs) != _SPI) {
         return;
     }
 
-    /* set bus into a defined state */
-    SPI(bus).USER0  = SPI_USER0_MOSI | SPI_USER0_CLOCK_IN_EDGE | SPI_USER0_DUPLEX;
-    SPI(bus).USER0 |= SPI_USER0_CS_SETUP | SPI_USER0_CS_HOLD;
+    /* bring the bus into a defined state */
+    _spi[bus].regs->user.val = SPI_USR_MOSI | SPI_CK_I_EDGE | SPI_DOUTDIN |
+                               SPI_CS_SETUP | SPI_CS_HOLD;
 
     /* set byte order to little endian for read and write operations */
-    SPI(bus).USER0 &= ~(SPI_USER0_WR_BYTE_ORDER | SPI_USER0_RD_BYTE_ORDER);
+    _spi[bus].regs->user.wr_byte_order = 0;
+    _spi[bus].regs->user.rd_byte_order = 0;
 
     /* set bit order to most significant first for read and write operations */
-    SPI(bus).CTRL0 = 0; /* ~(SPI_CTRL0_WR_BIT_ORDER | SPI_CTRL0_RD_BIT_ORDER); */
+    _spi[bus].regs->ctrl.wr_bit_order = 0;
+    _spi[bus].regs->ctrl.rd_bit_order = 0;
 
-    DEBUG("%s SPI(bus).USER0=%08x SPI(bus).CTRL0=%08x\n",
-          __func__,  SPI(bus).USER0, SPI(bus).CTRL0);
+    /* reset all DIO or QIO flags */
+    _spi[bus].regs->ctrl.fread_qio = 0;
+    _spi[bus].regs->ctrl.fread_dio = 0;
+    _spi[bus].regs->ctrl.fread_quad = 0;
+    _spi[bus].regs->ctrl.fread_dual = 0;
+
+    /* disable fast read mode and write protection */
+    _spi[bus].regs->ctrl.fastrd_mode = 0;
+
+    /* acquire and release to set default parameters */
+    spi_acquire(bus, GPIO_UNDEF, SPI_MODE_0, SPI_CLK_1MHZ);
+    spi_release(bus);
 }
 
 void spi_init_pins(spi_t bus)
 {
-    /* see spi_init */
-    CHECK_PARAM (bus == SPI_DEV(0));
+    assert(bus < SPI_NUMOF);
 
     /* call initialization of the SPI interface if it is not initialized yet */
-    if (!_spi_initialized[bus]) {
+    if (!_spi[bus].initialized) {
         _spi_init_internal(bus);
     }
 
     /* avoid multiple pin initializations */
-    if (_spi_pins_initialized[bus]) {
+    if (_spi[bus].pins_initialized) {
         return;
     }
-    _spi_pins_initialized[bus] = true;
+    _spi[bus].pins_initialized = true;
 
     DEBUG("%s bus=%u\n", __func__, bus);
 
-    uint32_t iomux_func = (bus == 0) ? IOMUX_FUNC(1) : IOMUX_FUNC(2);
+    if (gpio_init(spi_config[bus].sck, GPIO_OUT) ||
+        gpio_init(spi_config[bus].mosi, GPIO_OUT) ||
+        gpio_init(spi_config[bus].miso, GPIO_IN)) {
+        LOG_TAG_ERROR("spi",
+                      "SPI_DEV(%d) pins could not be initialized\n", bus);
+        return;
+    }
+    if (spi_init_cs(bus, spi_config[bus].cs) != SPI_OK) {
+        LOG_TAG_ERROR("spi",
+                      "SPI_DEV(%d) CS signal could not be initialized\n",
+                      bus);
+        return;
+    }
+
+    /* store the usage type in GPIO table */
+    gpio_set_pin_usage(spi_config[bus].sck, _SPI);
+    gpio_set_pin_usage(spi_config[bus].mosi, _SPI);
+    gpio_set_pin_usage(spi_config[bus].miso, _SPI);
 
     /*
-     * CS is handled as normal GPIO ouptut. Due to the small number of GPIOs
+     * CS is handled as normal GPIO output. Due to the small number of GPIOs
      * we have, we do not initialize the default CS pin here. Either the app
      * uses spi_init_cs to initialize the CS pin explicitly, or we initialize
      * the default CS when spi_aquire is used first time.
      */
-    IOMUX.PIN[_gpio_to_iomux[SPI0_MISO_GPIO]] &= ~IOMUX_PIN_FUNC_MASK;
-    IOMUX.PIN[_gpio_to_iomux[SPI0_MOSI_GPIO]] &= ~IOMUX_PIN_FUNC_MASK;
-    IOMUX.PIN[_gpio_to_iomux[SPI0_SCK_GPIO]]  &= ~IOMUX_PIN_FUNC_MASK;
+    uint32_t iomux_func = IOMUX_FUNC(2);
 
-    IOMUX.PIN[_gpio_to_iomux[SPI0_MISO_GPIO]] |= iomux_func;
-    IOMUX.PIN[_gpio_to_iomux[SPI0_MOSI_GPIO]] |= iomux_func;
-    IOMUX.PIN[_gpio_to_iomux[SPI0_SCK_GPIO]]  |= iomux_func;
+    IOMUX.PIN[_gpio_to_iomux[spi_config[bus].miso]] &= ~IOMUX_PIN_FUNC_MASK;
+    IOMUX.PIN[_gpio_to_iomux[spi_config[bus].mosi]] &= ~IOMUX_PIN_FUNC_MASK;
+    IOMUX.PIN[_gpio_to_iomux[spi_config[bus].sck]]  &= ~IOMUX_PIN_FUNC_MASK;
 
-    _gpio_pin_usage [SPI0_MISO_GPIO] = _SPI;  /* pin cannot be used for anything else */
-    _gpio_pin_usage [SPI0_MOSI_GPIO] = _SPI;  /* pin cannot be used for anything else */
-    _gpio_pin_usage [SPI0_SCK_GPIO]  = _SPI;  /* pin cannot be used for anything else */
+    IOMUX.PIN[_gpio_to_iomux[spi_config[bus].miso]] |= iomux_func;
+    IOMUX.PIN[_gpio_to_iomux[spi_config[bus].mosi]] |= iomux_func;
+    IOMUX.PIN[_gpio_to_iomux[spi_config[bus].sck]]  |= iomux_func;
 }
 
 int spi_init_cs(spi_t bus, spi_cs_t cs)
 {
     DEBUG("%s bus=%u cs=%u\n", __func__, bus, cs);
 
-    /* see spi_init */
-    CHECK_PARAM_RET (bus == SPI_DEV(0), SPI_NODEV);
+    assert(bus < SPI_NUMOF);
 
     /* call initialization of the SPI interface if it is not initialized yet */
-    if (!_spi_initialized[bus]) {
+    if (!_spi[bus].initialized) {
         _spi_init_internal(bus);
     }
 
     /* return if pin is already initialized as SPI CS signal */
-    if (_gpio_pin_usage [cs] == _SPI) {
+    if (gpio_get_pin_usage(cs) == _SPI) {
         return SPI_OK;
     }
 
-    if (_gpio_pin_usage [cs] != _GPIO) {
+    /* check whether CS pin is used otherwise */
+    if (gpio_get_pin_usage(cs) != _GPIO) {
         return SPI_NOCS;
     }
 
+    /* initialize the pin */
     gpio_init(cs, GPIO_OUT);
-    gpio_set (cs);
+    gpio_set(cs);
 
-    _gpio_pin_usage [cs]  = _SPI;  /* pin cannot be used for anything else */
+    /* pin cannot be used for anything else */
+    gpio_set_pin_usage(cs, _SPI);
 
     return SPI_OK;
 }
 
-int spi_acquire(spi_t bus, spi_cs_t cs, spi_mode_t mode, spi_clk_t clk)
+void IRAM_ATTR spi_acquire(spi_t bus, spi_cs_t cs, spi_mode_t mode, spi_clk_t clk)
 {
     DEBUG("%s bus=%u cs=%u mode=%u clk=%u\n", __func__, bus, cs, mode, clk);
 
-    /* see spi_init */
-    CHECK_PARAM_RET (bus == SPI_DEV(0), SPI_NODEV);
+    assert(bus < SPI_NUMOF);
 
     /* call initialization of the SPI interface if it is not initialized yet */
-    if (!_spi_initialized[bus]) {
+    if (!_spi[bus].initialized) {
         _spi_init_internal(bus);
     }
 
     /* if parameter cs is GPIO_UNDEF, the default CS pin is used */
-    cs = (cs == GPIO_UNDEF) ? SPI0_CS0_GPIO : cs;
+    cs = (cs == GPIO_UNDEF) ? spi_config[bus].cs : cs;
 
     /* if the CS pin used is not yet initialized, we do it now */
-    if (_gpio_pin_usage[cs] != _SPI && spi_init_cs(bus, cs) != SPI_OK) {
-        LOG_ERROR("SPI_DEV(%d) CS signal could not be initialized\n", bus);
-        return SPI_NOCS;
+    if (gpio_get_pin_usage(cs) != _SPI && spi_init_cs(bus, cs) != SPI_OK) {
+        LOG_TAG_ERROR("spi",
+                      "SPI_DEV(%d) CS signal could not be initialized\n",
+                      bus);
+        assert(0);
     }
 
     /* lock the bus */
-    mutex_lock(&_spi_lock[bus]);
+    mutex_lock(&_spi[bus].lock);
 
-    /* set SPI mode */
-    bool cpha = (mode == SPI_MODE_1 || mode == SPI_MODE_3);
-    bool cpol = (mode == SPI_MODE_2 || mode == SPI_MODE_3);
-
-    if (cpol) {
-        cpha = !cpha;  /* CPHA must be inverted when CPOL = 1 */
-    }
-
-    if (cpha) {
-        SPI(bus).USER0 |= SPI_USER0_CLOCK_OUT_EDGE;
-    }
-    else {
-        SPI(bus).USER0 &= ~SPI_USER0_CLOCK_OUT_EDGE;
-    }
-
-    if (cpol) {
-        SPI(bus).PIN |= SPI_PIN_IDLE_EDGE;
-    }
-    else {
-        SPI(bus).PIN &= ~SPI_PIN_IDLE_EDGE;
-    }
+    /*
+     * set SPI mode
+     * see ESP32 Technical Reference, Table 27 and Section 7.4.1
+     */
+    _spi[bus].regs->pin.ck_idle_edge = (mode == SPI_MODE_2 || mode == SPI_MODE_3);
+    _spi[bus].regs->user.ck_out_edge = (mode == SPI_MODE_1 || mode == SPI_MODE_2);
+    _spi[bus].regs->ctrl2.miso_delay_mode = (mode == SPI_MODE_0 || mode == SPI_MODE_3) ? 2 : 1;
+    _spi[bus].regs->ctrl2.miso_delay_num = 0;
+    _spi[bus].regs->ctrl2.mosi_delay_mode = 0;
+    _spi[bus].regs->ctrl2.mosi_delay_num = 0;
 
     /* set SPI clock
      * see ESP8266 Technical Reference Appendix 2 - SPI registers
      * https://www.espressif.com/sites/default/files/documentation/esp8266-technical_reference_en.pdf
      */
 
-    uint32_t spi_clkdiv_pre;
-    uint32_t spi_clkcnt_N;
+    uint32_t spi_clkdiv_pre;    /* 13 bit */
+    uint32_t spi_clkcnt_N;      /*  6 bit */
 
-    switch (clk) {
-        case SPI_CLK_10MHZ:  spi_clkdiv_pre = 2;    /* predivides 80 MHz to 40 MHz */
-                             spi_clkcnt_N = 4;      /* 4 cycles results into 10 MHz */
-                             break;
-        case SPI_CLK_5MHZ:   spi_clkdiv_pre = 2;    /* predivides 80 MHz to 40 MHz */
-                             spi_clkcnt_N = 8;      /* 8 cycles results into 5 MHz */
-                             break;
-        case SPI_CLK_1MHZ:   spi_clkdiv_pre = 2;    /* predivides 80 MHz to 40 MHz */
-                             spi_clkcnt_N = 40;     /* 40 cycles results into 1 MHz */
-                             break;
-        case SPI_CLK_400KHZ: spi_clkdiv_pre = 20;   /* predivides 80 MHz to 4 MHz */
-                             spi_clkcnt_N = 10;     /* 10 cycles results into 400 kHz */
-                             break;
-        case SPI_CLK_100KHZ: spi_clkdiv_pre = 20;   /* predivides 80 MHz to 4 MHz */
-                             spi_clkcnt_N = 40;     /* 20 cycles results into 100 kHz */
-                             break;
-        default: spi_clkdiv_pre = 20;   /* predivides 80 MHz to 4 MHz */
-                 spi_clkcnt_N = 40;     /* 20 cycles results into 100 kHz */
-    }
+    spi_clkcnt_N = 2;
+    spi_clkdiv_pre = (MHZ(80)/spi_clkcnt_N) / clk;
 
     /* register values are set to deviders-1 */
     spi_clkdiv_pre--;
     spi_clkcnt_N--;
 
-    DEBUG("%s spi_clkdiv_prev=%u spi_clkcnt_N=%u\n", __func__, spi_clkdiv_pre, spi_clkcnt_N);
+    DEBUG("%s spi_clkdiv_prev=%" PRIu32 " spi_clkcnt_N=%" PRIu32 "\n",
+          __func__, spi_clkdiv_pre, spi_clkcnt_N);
 
-    /* SPI clock is derived from system bus frequency and should not be affected by */
-    /* CPU clock */
+    IOMUX.CONF &= ~IOMUX_CONF_SPI1_CLOCK_EQU_SYS_CLOCK;
 
-    IOMUX.CONF &= ~(bus == 0 ? IOMUX_CONF_SPI0_CLOCK_EQU_SYS_CLOCK
-                             : IOMUX_CONF_SPI1_CLOCK_EQU_SYS_CLOCK);
-    SPI(bus).CLOCK  = VAL2FIELD_M (SPI_CLOCK_DIV_PRE, spi_clkdiv_pre) |
-                      VAL2FIELD_M (SPI_CLOCK_COUNT_NUM, spi_clkcnt_N) |
-                      VAL2FIELD_M (SPI_CLOCK_COUNT_HIGH, (spi_clkcnt_N+1)/2-1) |
-                      VAL2FIELD_M (SPI_CLOCK_COUNT_LOW, spi_clkcnt_N);
+    /* SPI clock is derived from APB clock by dividers */
+    _spi[bus].regs->clock.clk_equ_sysclk = 0;
 
-    DEBUG("%s IOMUX.CONF=%08x SPI(bus).CLOCK=%08x\n",
-          __func__, IOMUX.CONF, SPI(bus).CLOCK);
+    /* set SPI clock dividers */
+    _spi[bus].regs->clock.clkdiv_pre = spi_clkdiv_pre;
+    _spi[bus].regs->clock.clkcnt_n = spi_clkcnt_N;
+    _spi[bus].regs->clock.clkcnt_h = (spi_clkcnt_N+1)/2-1;
+    _spi[bus].regs->clock.clkcnt_l = spi_clkcnt_N;
 
-    return SPI_OK;
+    DEBUG("%s bus %d: SPI_CLOCK_REG=%08" PRIx32 "\n",
+          __func__, bus, _spi[bus].regs->clock.val);
 }
 
-void spi_release(spi_t bus)
+void IRAM_ATTR spi_release(spi_t bus)
 {
-    /* see spi_init */
-    CHECK_PARAM (bus == SPI_DEV(0));
+    DEBUG("%s bus=%u\n", __func__, bus);
+
+    assert(bus < SPI_NUMOF);
 
     /* release the bus */
-    mutex_unlock(&_spi_lock[bus]);
+    mutex_unlock(&_spi[bus].lock);
+}
+
+static const char* _spi_names[] = { "FSPI", "HSPI" };
+
+void spi_print_config(void)
+{
+    for (unsigned bus = 0; bus < SPI_NUMOF; bus++) {
+        printf("\tSPI_DEV(%u)\t%s ", bus, _spi_names[spi_config[bus].ctrl]);
+        printf("sck=%d ", spi_config[bus].sck);
+        printf("miso=%d ", spi_config[bus].miso);
+        printf("mosi=%d ", spi_config[bus].mosi);
+        printf("cs=%d\n", spi_config[bus].cs);
+    }
 }
 
 /*
@@ -284,29 +320,32 @@ void spi_release(spi_t bus)
  * https://github.com/SuperHouse/esp-open-rtos/blob/master/LICENSE
  */
 
-inline static void _set_size(uint8_t bus, uint8_t bytes)
+inline static void IRAM_ATTR _set_size(uint8_t bus, uint8_t bytes)
 {
     uint32_t bits = ((uint32_t)bytes << 3) - 1;
-    SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_MISO_BITLEN, bits);
-    SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_MOSI_BITLEN, bits);
+
+    _spi[bus].regs->user1.usr_mosi_bitlen = bits;
+    _spi[bus].regs->user1.usr_miso_bitlen = bits;
 }
 
-inline static void _wait(uint8_t bus)
+inline static void IRAM_ATTR _wait(uint8_t bus)
 {
-    while (SPI(bus).CMD & SPI_CMD_USR) {}
+    /* SPI_CMD_REG.SPI_USR is cleared when operation has been finished */
+    while (_spi[bus].regs->cmd.usr) {}
 }
 
-inline static void _start(uint8_t bus)
+inline static void IRAM_ATTR _start(uint8_t bus)
 {
-    SPI(bus).CMD |= SPI_CMD_USR;
+    /* set SPI_CMD_REG.SPI_USR to start an operation */
+    _spi[bus].regs->cmd.usr = 1;
 }
 
-inline static void _store_data(uint8_t bus, const void *data, size_t len)
+inline static void IRAM_ATTR _store_data(uint8_t bus, const void *data, size_t len)
 {
     uint8_t words = len / 4;
     uint8_t tail = len % 4;
 
-    memcpy((void *)SPI(bus).W, data, len - tail);
+    memcpy((void *)_spi[bus].regs->data_buf, data, len - tail);
 
     if (!tail) {
         return;
@@ -317,12 +356,12 @@ inline static void _store_data(uint8_t bus, const void *data, size_t len)
     for (uint8_t i = 0; i < tail; i++) {
         last = last | (offs[i] << (i * 8));
     }
-    SPI(bus).W[words] = last;
+    _spi[bus].regs->data_buf[words] = last;
 }
 
 static const uint8_t spi_empty_out[SPI_BLOCK_SIZE] = { 0 };
 
-static void _spi_buf_transfer(uint8_t bus, const void *out, void *in, size_t len)
+static void IRAM_ATTR _spi_buf_transfer(uint8_t bus, const void *out, void *in, size_t len)
 {
     DEBUG("%s bus=%u out=%p in=%p len=%u\n", __func__, bus, out, in, len);
 
@@ -333,15 +372,14 @@ static void _spi_buf_transfer(uint8_t bus, const void *out, void *in, size_t len
     _start(bus);
     _wait(bus);
     if (in) {
-        memcpy(in, (void *)SPI(bus).W, len);
+        memcpy(in, (void *)_spi[bus].regs->data_buf, len);
     }
 }
 
-void spi_transfer_bytes(spi_t bus, spi_cs_t cs, bool cont,
-                        const void *out, void *in, size_t len)
+void IRAM_ATTR spi_transfer_bytes(spi_t bus, spi_cs_t cs, bool cont,
+                                  const void *out, void *in, size_t len)
 {
-    /* see spi_init */
-    CHECK_PARAM (bus == SPI_DEV(0));
+    assert(bus < SPI_NUMOF);
 
     DEBUG("%s bus=%u cs=%u cont=%d out=%p in=%p len=%u\n",
           __func__, bus, cs, cont, out, in, len);
@@ -350,18 +388,18 @@ void spi_transfer_bytes(spi_t bus, spi_cs_t cs, bool cont,
         return;
     }
 
-    #if ENABLE_DEBUG
-    if (out) {
-        DEBUG("out = ");
-        for (size_t i = 0; i < len; i++) {
-            DEBUG("%02x ", ((const uint8_t *)out)[i]);
+    if (IS_ACTIVE(ENABLE_DEBUG)) {
+        if (out) {
+            DEBUG("out = ");
+            for (size_t i = 0; i < len; i++) {
+                DEBUG("%02x ", ((const uint8_t *)out)[i]);
+            }
+            DEBUG("\n");
         }
-        DEBUG("\n");
     }
-    #endif
 
     if (cs != SPI_CS_UNDEF) {
-        gpio_clear (cs);
+        gpio_clear(cs);
     }
 
     size_t blocks = len / SPI_BLOCK_SIZE;
@@ -386,31 +424,13 @@ void spi_transfer_bytes(spi_t bus, spi_cs_t cs, bool cont,
         gpio_set (cs);
     }
 
-    #if ENABLE_DEBUG
-    if (in) {
-        DEBUG("in = ");
-        for (size_t i = 0; i < len; i++) {
-            DEBUG("%02x ", ((const uint8_t *)in)[i]);
+    if (IS_ACTIVE(ENABLE_DEBUG)) {
+        if (in) {
+            DEBUG("in = ");
+            for (size_t i = 0; i < len; i++) {
+                DEBUG("%02x ", ((const uint8_t *)in)[i]);
+            }
+            DEBUG("\n");
         }
-        DEBUG("\n");
     }
-    #endif
 }
-
-void spi_print_config(void)
-{
-    LOG_INFO("\tSPI_DEV(0): ");
-    LOG_INFO("sck=%d " , SPI0_SCK_GPIO);
-    LOG_INFO("miso=%d ", SPI0_MISO_GPIO);
-    LOG_INFO("mosi=%d ", SPI0_MOSI_GPIO);
-    LOG_INFO("cs=%d\n" , SPI0_CS0_GPIO);
-}
-
-#else /* MODULE_PERIPH_SPI */
-
-void spi_print_config(void)
-{
-    LOG_INFO("\tSPI: no devices\n");
-}
-
-#endif /* MODULE_PERIPH_SPI */

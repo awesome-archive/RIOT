@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_sixlowpan_nd    6LoWPAN Neighbor Discovery
@@ -19,8 +18,6 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_SIXLOWPAN_ND_H
-#define NET_SIXLOWPAN_ND_H
 
 #include <stdint.h>
 
@@ -55,6 +52,7 @@ extern "C" {
  *          is 0.
  */
 #define SIXLOWPAN_ND_OPT_ABR_LTIME_DEFAULT      (10000U)
+/** @} */
 
 /**
  * @{
@@ -259,9 +257,22 @@ static inline void sixlowpan_nd_opt_abr_set_version(sixlowpan_nd_opt_abr_t *abr_
     abr_opt->vhigh = byteorder_htons((uint16_t)(version >> 16));
 }
 
+/**
+ * @brief   Get the lifetime of an Authoritative Border Router from an ABR option
+ *
+ * @param[in] abr_opt   An Authoritative Border Router option (ABRO).
+ *
+ * @return  The lifetime of @p abr_opt in minutes. If the lifetime is 0,
+ *          @ref SIXLOWPAN_ND_OPT_ABR_LTIME_DEFAULT is returned.
+ */
+static inline uint16_t gnrc_sixlowpan_nd_opt_get_ltime(const sixlowpan_nd_opt_abr_t *abr_opt)
+{
+    uint16_t ltime = byteorder_ntohs(abr_opt->ltime);
+    return (ltime == 0) ? SIXLOWPAN_ND_OPT_ABR_LTIME_DEFAULT : ltime;
+}
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* NET_SIXLOWPAN_ND_H */
 /** @} */

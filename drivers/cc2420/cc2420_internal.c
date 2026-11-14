@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2015-2016 Freie Universität Berlin
- *               2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015-2016 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -31,7 +28,6 @@
 #define SPI_CS              (dev->params.pin_cs)
 #define SPI_MODE            (SPI_MODE_0)
 #define SPI_CLK             (dev->params.spi_clk)
-
 
 uint8_t cc2420_strobe(const cc2420_t *dev, const uint8_t command)
 {

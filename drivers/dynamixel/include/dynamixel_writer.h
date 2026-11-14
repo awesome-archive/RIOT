@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_dynamixel
@@ -16,9 +15,6 @@
  *
  * @author      Loïc Dauphin <loic.dauphin@inria.fr>
  */
-
-#ifndef DYNAMIXEL_WRITER_H
-#define DYNAMIXEL_WRITER_H
 
 #include "dynamixel_protocol.h"
 #include <stdint.h>
@@ -52,7 +48,7 @@ void dynamixel_writer_init(dynamixel_writer_t *writer, uint8_t *buffer, size_t l
  *
  * @param[out] writer    the packet writer
  *
- * @return the begining address of the buffer
+ * @return the beginning address of the buffer
  */
 const uint8_t *dynamixel_writer_get_data(const dynamixel_writer_t *writer);
 
@@ -98,5 +94,4 @@ void dynamixel_writer_read_make(dynamixel_writer_t *writer, uint8_t id, uint16_t
 }
 #endif
 
-#endif /* DYNAMIXEL_WRITER_H */
 /** @} */

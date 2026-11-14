@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2016 Kees Bakker, SODAQ
- *               2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Kees Bakker, SODAQ
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -26,7 +23,7 @@
 
 static int read_temperature(const void *dev, phydat_t *res)
 {
-    res->val[0] = bmx280_read_temperature((const bmx280_t *)dev);
+    res->val[0] = bmx280_read_temperature((bmx280_t *)dev);
     res->unit = UNIT_TEMP_C;
     res->scale = -2;
 
@@ -35,17 +32,19 @@ static int read_temperature(const void *dev, phydat_t *res)
 
 static int read_pressure(const void *dev, phydat_t *res)
 {
-    res->val[0] = bmx280_read_pressure((const bmx280_t *)dev) / 100;
     res->unit = UNIT_PA;
-    res->scale = 2;
+    res->scale = 0;
+
+    int32_t val = bmx280_read_pressure((bmx280_t *)dev);
+    phydat_fit(res, &val, 1);
 
     return 1;
 }
 
-#ifdef MODULE_BME280
+#if defined(MODULE_BME280_SPI) || defined(MODULE_BME280_I2C)
 static int read_relative_humidity(const void *dev, phydat_t *res)
 {
-    res->val[0] = bme280_read_humidity((const bmx280_t *)dev);
+    res->val[0] = bme280_read_humidity((bmx280_t *)dev);
     res->unit = UNIT_PERCENT;
     res->scale = -2;
 
@@ -55,20 +54,20 @@ static int read_relative_humidity(const void *dev, phydat_t *res)
 
 const saul_driver_t bmx280_temperature_saul_driver = {
     .read = read_temperature,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_TEMP,
 };
 
 const saul_driver_t bmx280_pressure_saul_driver = {
     .read = read_pressure,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_PRESS,
 };
 
-#ifdef MODULE_BME280
+#if defined(MODULE_BME280_SPI) || defined(MODULE_BME280_I2C)
 const saul_driver_t bme280_relative_humidity_saul_driver = {
     .read = read_relative_humidity,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_HUM,
 };
 #endif

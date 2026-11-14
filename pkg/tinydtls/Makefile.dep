@@ -1,10 +1,13 @@
-ifneq (,$(filter tinydtls,$(USEPKG)))
-  USEMODULE += tinydtls
-endif
+USEMODULE += tinydtls
 
-ifneq (,$(filter tinydtls,$(USEMODULE)))
-  USEMODULE += memarray
-  USEMODULE += hashes
-  USEMODULE += tinydtls_aes
-  USEMODULE += tinydtls_ecc
+USEMODULE += memarray
+USEMODULE += hashes
+USEMODULE += random
+USEMODULE += tinydtls_aes
+USEMODULE += tinydtls_ecc
+USEMODULE += ztimer_msec
+
+ifneq (,$(filter sock_dtls,$(USEMODULE)))
+  USEMODULE += tinydtls_sock_dtls
+  USEMODULE += ztimer_usec
 endif

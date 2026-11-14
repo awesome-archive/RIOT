@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 Loci Controls Inc.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Loci Controls Inc.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_cc2538dk
@@ -16,47 +15,15 @@
  * @author      Ian Martin <ian@locicontrols.com>
  */
 
-#ifndef PERIPH_CONF_H
-#define PERIPH_CONF_H
-
 #include "cpu.h"
 #include "periph_cpu.h"
+
+#include "cfg_clk_default.h"
+#include "cfg_timer_default.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @name    Timer configuration
- *
- * General purpose timers (GPT[0-3]) are configured consecutively and in order
- * (without gaps) starting from GPT0, i.e. if multiple timers are enabled.
- *
- * @{
- */
-static const timer_conf_t timer_config[] = {
-    {
-        .chn = 2,
-        .cfg = GPTMCFG_16_BIT_TIMER, /* required for XTIMER */
-    },
-    {
-        .chn = 1,
-        .cfg = GPTMCFG_32_BIT_TIMER,
-    },
-    {
-        .chn = 2,
-        .cfg = GPTMCFG_16_BIT_TIMER,
-    },
-    {
-        .chn = 1,
-        .cfg = GPTMCFG_32_BIT_TIMER,
-    },
-};
-
-#define TIMER_NUMOF         (sizeof(timer_config) / sizeof(timer_config[0]))
-
-#define TIMER_IRQ_PRIO      1
-/** @} */
 
 /**
  * @name    UART configuration
@@ -67,8 +34,10 @@ static const uart_conf_t uart_config[] = {
         .dev      = UART0_BASEADDR,
         .rx_pin   = GPIO_PIN(0, 0),
         .tx_pin   = GPIO_PIN(0, 1),
+#ifdef MODULE_PERIPH_UART_HW_FC
         .cts_pin  = GPIO_UNDEF,
         .rts_pin  = GPIO_UNDEF
+#endif
     }
 };
 
@@ -76,7 +45,7 @@ static const uart_conf_t uart_config[] = {
 #define UART_0_ISR          isr_uart0
 
 /* macros common across all UARTs */
-#define UART_NUMOF          (sizeof(uart_config) / sizeof(uart_config[0]))
+#define UART_NUMOF          ARRAY_SIZE(uart_config)
 
 /** @} */
 
@@ -94,7 +63,7 @@ static const i2c_conf_t i2c_config[] = {
     },
 };
 
-#define I2C_NUMOF               (sizeof(i2c_config) / sizeof(i2c_config[0]))
+#define I2C_NUMOF               ARRAY_SIZE(i2c_config)
 /** @} */
 
 /**
@@ -111,7 +80,7 @@ static const spi_conf_t spi_config[] = {
     }
 };
 
-#define SPI_NUMOF           (sizeof(spi_config) / sizeof(spi_config[0]))
+#define SPI_NUMOF           ARRAY_SIZE(spi_config)
 /** @} */
 
 /**
@@ -124,19 +93,11 @@ static const adc_conf_t adc_config[] = {
     GPIO_PIN(0, 6), /**< GPIO_PA6 = ADC_ALS_PIN */
 };
 
-#define ADC_NUMOF           (sizeof(adc_config) / sizeof(adc_config[0]))
-/** @} */
-
-/**
- * @name Radio peripheral configuration
- * @{
- */
-#define RADIO_IRQ_PRIO      1
+#define ADC_NUMOF           ARRAY_SIZE(adc_config)
 /** @} */
 
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
 
-#endif /* PERIPH_CONF_H */
 /** @} */

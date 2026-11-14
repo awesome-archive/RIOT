@@ -1,11 +1,8 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- * Copyright (C) 2014 PHYTEC Messtechnik GmbH
- * Copyright (C) 2014 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2014 PHYTEC Messtechnik GmbH
+ * SPDX-FileCopyrightText: 2014 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -31,6 +28,12 @@
 #include "bitarithm.h"
 #include "bit.h"
 #include "periph/gpio.h"
+
+/* Single-port MCU*/
+#if !defined(PORTA_BASE) && defined(PORT_BASE)
+#  define PORTA_BASE PORT_BASE
+#  define PORTA PORT
+#endif
 
 #ifndef PORT_PCR_ODE_MASK
 /* For compatibility with Kinetis CPUs without open drain GPIOs (e.g. KW41Z) */
@@ -139,6 +142,7 @@ static inline int pin_num(gpio_t pin)
 }
 
 #ifdef MODULE_PERIPH_GPIO_IRQ
+
 /**
  * @brief   Get context for a specific pin
  */
@@ -175,19 +179,28 @@ static void write_map(int port, int pin, int ctx)
 static void ctx_clear(int port, int pin)
 {
     int ctx = get_ctx(port, pin);
+
     write_map(port, pin, ctx);
 }
 #endif /* MODULE_PERIPH_GPIO_IRQ */
 
 static inline void clk_en(gpio_t pin)
 {
+#if defined(SIM_SCGC5_PORTA_SHIFT)
     bit_set32(&SIM->SCGC5, SIM_SCGC5_PORTA_SHIFT + port_num(pin));
+#else
+    /* In some cases GPIO is always clocked */
+    (void) pin;
+#endif
+
 }
 
 int gpio_init(gpio_t pin, gpio_mode_t mode)
 {
+#ifdef KINETIS_HAVE_PCR
     /* set pin to analog mode while configuring it */
     gpio_init_port(pin, GPIO_AF_ANALOG);
+#endif
 
     /* set pin direction */
     if (mode & MODE_OUT) {
@@ -197,8 +210,10 @@ int gpio_init(gpio_t pin, gpio_mode_t mode)
         gpio(pin)->PDDR &= ~(1 << pin_num(pin));
     }
 
+#ifdef KINETIS_HAVE_PCR
     /* enable GPIO function */
     port(pin)->PCR[pin_num(pin)] = (GPIO_AF_GPIO | (mode & MODE_PCR_MASK));
+#endif
     return 0;
 }
 
@@ -207,6 +222,7 @@ void gpio_init_port(gpio_t pin, uint32_t pcr)
     /* enable PORT clock in case it was not active before */
     clk_en(pin);
 
+#ifdef KINETIS_HAVE_PCR
 #ifdef MODULE_PERIPH_GPIO_IRQ
     /* if the given interrupt was previously configured as interrupt source, we
      * need to free its interrupt context. We to this only after we
@@ -223,9 +239,12 @@ void gpio_init_port(gpio_t pin, uint32_t pcr)
         ctx_clear(port_num(pin), pin_num(pin));
     }
 #endif /* MODULE_PERIPH_GPIO_IRQ */
+#else
+    (void) pcr;
+#endif /* KINETIS_HAVE_PCR */
 }
 
-int gpio_read(gpio_t pin)
+bool gpio_read(gpio_t pin)
 {
     if (gpio(pin)->PDDR & (1 << pin_num(pin))) {
         return (gpio(pin)->PDOR & (1 << pin_num(pin))) ? 1 : 0;
@@ -250,7 +269,7 @@ void gpio_toggle(gpio_t pin)
     gpio(pin)->PTOR = (1 << pin_num(pin));
 }
 
-void gpio_write(gpio_t pin, int value)
+void gpio_write(gpio_t pin, bool value)
 {
     if (value) {
         gpio(pin)->PSOR = (1 << pin_num(pin));
@@ -388,6 +407,14 @@ void isr_portb_portc(void)
     irq_handler(PORTB, 1);
     irq_handler(PORTC, 2);
     cortexm_isr_end();
+}
+#endif
+#if defined(PORTC_BASE) && defined(PORTD_BASE)
+/* Combined ISR used in certain KL devices */
+void isr_portc_portd(void)
+{
+    irq_handler(PORTC, 2);
+    irq_handler(PORTD, 3);
 }
 #endif
 #endif /* MODULE_PERIPH_GPIO_IRQ */

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -25,13 +22,10 @@
 #include "phydat.h"
 #include "periph/adc.h"
 
-
 static int read_adc(const void *dev, phydat_t *res)
 {
     const saul_adc_params_t *params = *((const saul_adc_params_t **)dev);
     res->val[0] = adc_sample(params->line, params->res);
-    res->val[1] = 0;
-    res->val[2] = 0;
     /* Raw ADC reading has no unit */
     res->unit = UNIT_NONE;
     res->scale = 0;
@@ -40,6 +34,6 @@ static int read_adc(const void *dev, phydat_t *res)
 
 const saul_driver_t adc_saul_driver = {
     .read = read_adc,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_ANALOG,
 };

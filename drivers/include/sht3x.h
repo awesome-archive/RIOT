@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_sht3x
@@ -13,9 +12,6 @@
  * @file
  * @{
  */
-
-#ifndef SHT3X_H
-#define SHT3X_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -53,7 +49,6 @@ typedef enum {
     SHT3X_PERIODIC_10_MPS   /**< periodic with  10 measurements per second (mps) */
 } sht3x_mode_t;
 
-
 /**
  * @brief   SHT3x repeatability levels
  *
@@ -77,7 +72,6 @@ typedef enum {
     SHT3X_MEDIUM,   /**< medium repeatability */
     SHT3X_LOW       /**< low repeatability */
 } sht3x_repeat_t;
-
 
 /**
  * @brief   SHT3x device initialization parameters
@@ -106,7 +100,6 @@ typedef struct {
                                           current measurement become available */
 } sht3x_dev_t;
 
-
 /**
  * @brief	Initialize the SHT3x sensor device
  *
@@ -127,7 +120,7 @@ typedef struct {
 int sht3x_init (sht3x_dev_t *dev, const sht3x_params_t *params);
 
 /**
- * @brief   Read SHT3x measurment results (temperature and humidity)
+ * @brief   Read SHT3x measurement results (temperature and humidity)
  *
  * The function returns the results of one measurement once they are available.
  *
@@ -166,5 +159,4 @@ int sht3x_read (sht3x_dev_t* dev, int16_t* temp, int16_t* hum);
 }
 #endif
 
-#endif /* SHT3X_H */
 /** @} */

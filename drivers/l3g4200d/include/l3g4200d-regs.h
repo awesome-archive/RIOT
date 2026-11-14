@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_l3g4200d
@@ -15,10 +14,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef L3G4200D_REGS_H
-#define L3G4200D_REGS_H
-
 
 #ifdef __cplusplus
  extern "C" {
@@ -75,6 +70,7 @@
 
 /**
  * @name    CTRL4 bitfields
+ * @{
  */
 #define L3G4200D_CTRL4_BDU              0x80
 #define L3G4200D_CTRL4_BLE              0x40
@@ -90,5 +86,4 @@
 }
 #endif
 
-#endif /* L3G4200D_REGS_H */
 /** @} */

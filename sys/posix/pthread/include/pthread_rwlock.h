@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 René Kijewski <rene.kijewski@fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 René Kijewski <rene.kijewski@fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup pthread
@@ -13,9 +12,6 @@
  * @brief   Implementation of a fair, POSIX conforming reader/writer lock.
  * @note    Do not include this header file directly, but pthread.h.
  */
-
-#ifndef PTHREAD_RWLOCK_H
-#define PTHREAD_RWLOCK_H
 
 #include "priority_queue.h"
 #include "thread.h"
@@ -175,8 +171,6 @@ bool __pthread_rwlock_blocked_writingly(const pthread_rwlock_t *rwlock);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* PTHREAD_RWLOCK_H */
 
 /**
  * @}

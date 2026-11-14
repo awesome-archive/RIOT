@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Cenk Gündoğan <mail@cgundogan.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Cenk Gündoğan <mail@cgundogan.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_rpl_p2p Reactive Discovery of P2P Routes in LLNs
@@ -20,8 +19,6 @@
  *
  * @author  Cenk Gündoğan <mail@cgundogan.de>
  */
-#ifndef NET_GNRC_RPL_P2P_H
-#define NET_GNRC_RPL_P2P_H
 
 #include "net/ipv6/addr.h"
 #include "net/gnrc.h"
@@ -126,7 +123,7 @@ extern const uint8_t gnrc_rpl_p2p_lifetime_lookup[4];
  * @param[in] instance_id       Id of the instance
  * @param[in] dodag_id          Id of the DODAG
  * @param[in] target            Target of the P2P-RPL routes discovery
- * @param[in] gen_inst_id       Flag indicating whether to generate a local isntance id.
+ * @param[in] gen_inst_id       Flag indicating whether to generate a local instance id.
  *                              If true, @p instance_id will be ignored
  *
  * @return  Pointer to the new Instance, on success.
@@ -176,5 +173,4 @@ void gnrc_rpl_p2p_update(void);
 }
 #endif
 
-#endif /* NET_GNRC_RPL_P2P_H */
 /** @} */

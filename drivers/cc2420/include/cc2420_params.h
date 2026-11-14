@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_cc2420
@@ -16,10 +15,8 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef CC2420_PARAMS_H
-#define CC2420_PARAMS_H
-
 #include "board.h"
+#include "cc2420.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,5 +79,4 @@ static const cc2420_params_t cc2420_params[] =
 }
 #endif
 
-#endif /* CC2420_PARAMS_H */
 /** @} */

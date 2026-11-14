@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     sys_crypto
@@ -16,9 +15,6 @@
  * @author      Freie Universitaet Berlin, Computer Systems & Telematics
  * @author      Nico von Geyso <nico.geyso@fu-berlin.de>
  */
-
-#ifndef CRYPTO_MODES_CBC_H
-#define CRYPTO_MODES_CBC_H
 
 #include <stddef.h>
 #include "crypto/ciphers.h"
@@ -40,12 +36,11 @@ extern "C" {
  *
  * @return            <0 on error
  * @return            CIPHER_ERR_INVALID_LENGTH when input_len % BLOCK_SIZE != 0
- * @return            CIPHER_ERR_ENC_FAILED on internal encrption error
+ * @return            CIPHER_ERR_ENC_FAILED on internal encryption error
  * @return            otherwise number of input bytes that aren't consumed
  */
-int cipher_encrypt_cbc(cipher_t *cipher, uint8_t iv[16], const uint8_t *input,
+int cipher_encrypt_cbc(const cipher_t *cipher, uint8_t iv[16], const uint8_t *input,
                        size_t input_len, uint8_t *output);
-
 
 /**
  * @brief Decrypt encrypted data in cipher block chaining mode.
@@ -62,12 +57,11 @@ int cipher_encrypt_cbc(cipher_t *cipher, uint8_t iv[16], const uint8_t *input,
  * @return            CIPHER_ERR_DEC_FAILED on internal decryption error
  * @return            otherwise number of bytes decrypted
  */
-int cipher_decrypt_cbc(cipher_t *cipher, uint8_t iv[16], const uint8_t *input,
+int cipher_decrypt_cbc(const cipher_t *cipher, uint8_t iv[16], const uint8_t *input,
                        size_t input_len, uint8_t *output);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CRYPTO_MODES_CBC_H */
 /** @} */

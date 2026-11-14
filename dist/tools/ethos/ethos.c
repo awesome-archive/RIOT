@@ -1,8 +1,6 @@
 /*
- * Copyright (C) 2016 Kaspar Schleiser <kaspar@schleiser.de>
- *
- * This file is subject to the terms and conditions of the GNU General Public
- * License v2. See the file LICENSE for more details.
+ * SPDX-FileCopyrightText: 2016 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-License-Identifier: GPL-2.0-only
  */
 
 #include <errno.h>
@@ -119,8 +117,9 @@ void set_blocking(int fd, int should_block)
     tty.c_cc[VTIME] = TTY_TIMEOUT_MS / 100; /* 0.5 seconds read timeout*/
                                             /* in tenths of a second*/
 
-    if (tcsetattr (fd, TCSANOW, &tty) != 0)
+    if (tcsetattr (fd, TCSANOW, &tty) != 0) {
         perror("error setting term attributes");
+    }
 }
 
 /**
@@ -156,37 +155,38 @@ typedef struct {
  **************************************************************************/
 int tun_alloc(char *dev, int flags) {
 
-  struct ifreq ifr;
-  int fd, err;
+    struct ifreq ifr = { 0 };
 
-  if( (fd = open("/dev/net/tun", O_RDWR)) < 0 ) {
-    perror("Opening /dev/net/tun");
+    int fd = open("/dev/net/tun", O_RDWR);
+    if (fd < 0) {
+        perror("Opening /dev/net/tun");
+        return fd;
+    }
+
+    ifr.ifr_flags = flags;
+
+    if (*dev) {
+        strncpy(ifr.ifr_name, dev, IFNAMSIZ - 1);
+    }
+
+    int err = ioctl(fd, TUNSETIFF, (void *)&ifr);
+    if (err < 0 ) {
+        perror("ioctl(TUNSETIFF)");
+        close(fd);
+        return err;
+    }
+
+    strcpy(dev, ifr.ifr_name);
+
     return fd;
-  }
-
-  memset(&ifr, 0, sizeof(ifr));
-
-  ifr.ifr_flags = flags;
-
-  if (*dev) {
-    strncpy(ifr.ifr_name, dev, IFNAMSIZ);
-  }
-
-  if( (err = ioctl(fd, TUNSETIFF, (void *)&ifr)) < 0 ) {
-    perror("ioctl(TUNSETIFF)");
-    close(fd);
-    return err;
-  }
-
-  strcpy(dev, ifr.ifr_name);
-
-  return fd;
 }
 
 static void _handle_char(serial_t *serial, char c)
 {
-    serial->frame[serial->framebytes] = c;
-    serial->framebytes++;
+    if (serial->framebytes < sizeof(serial->frame)) {
+        serial->frame[serial->framebytes] = c;
+        serial->framebytes++;
+    }
 }
 
 static int _serial_handle_byte(serial_t *serial, char c)
@@ -261,15 +261,13 @@ static void _write_escaped(int fd, char* buf, ssize_t n)
     /* Our workaround is to prepare the data to send in a local buffer and then
      * call write() on the buffer instead of one char at a time */
     uint8_t out[SERIAL_BUFFER_SIZE];
-    size_t escaped = 0;
     size_t buffered = 0;
 
-    while(n--) {
+    while (n--) {
         unsigned char c = *buf++;
         if (c == LINE_FRAME_DELIMITER || c == LINE_ESC_CHAR) {
             out[buffered++] = LINE_ESC_CHAR;
             c ^= 0x20;
-            ++escaped;
             if (buffered >= SERIAL_BUFFER_SIZE) {
                 checked_write(fd, out, buffered);
                 buffered = 0;
@@ -311,7 +309,7 @@ static int _parse_baudrate(const char *arg, unsigned *baudrate)
         return 0;
     }
 
-    switch(strtol(arg, (char**)NULL, 10)) {
+    switch (strtol(arg, (char**)NULL, 10)) {
     case 9600:
         *baudrate = B9600;
         break;
@@ -328,7 +326,7 @@ static int _parse_baudrate(const char *arg, unsigned *baudrate)
         *baudrate = B115200;
         break;
     /* the following baudrates might not be available on all platforms */
-    #ifdef B234000
+    #ifdef B230400
         case_baudrate(230400);
     #endif
     #ifdef B460800
@@ -412,11 +410,13 @@ int _tcp_connect(char *host, char *port)
        and) try the next address. */
     for (rp = result; rp != NULL; rp = rp->ai_next) {
         sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-        if (sfd == -1)
+        if (sfd == -1) {
             continue;
+        }
 
-        if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
+        if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1) {
             break;
+        }
 
         close(sfd);
     }
@@ -517,14 +517,13 @@ int main(int argc, char *argv[])
         serial_option = argv[3];
     }
 
-    char ifname[IFNAMSIZ];
-    strncpy(ifname, argv[1], IFNAMSIZ);
+    char ifname[IFNAMSIZ] = { 0 };
+    strncpy(ifname, argv[1], IFNAMSIZ - 1);
     int tap_fd = tun_alloc(ifname, IFF_TAP | IFF_NO_PI);
 
     if (tap_fd < 0) {
         return 1;
     }
-
 
     int serial_fd = _open_connection(argv[2], serial_option);
     if (serial_fd < 0) {
@@ -541,7 +540,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "----> ethos: activating serial pass through.\n");
     _send_hello(serial_fd, &serial, LINE_FRAME_TYPE_HELLO);
     int stdin_open = 1;
-    while(1) {
+    while (1) {
         int activity;
         FD_ZERO(&readfds);
         if (stdin_open) {
@@ -549,10 +548,9 @@ int main(int argc, char *argv[])
         }
         FD_SET(tap_fd, &readfds);
         FD_SET(serial_fd, &readfds);
-        activity = select( max_fd + 1 , &readfds , NULL , NULL , NULL);
+        activity = select(max_fd + 1, &readfds, NULL, NULL, NULL);
 
-        if ((activity < 0) && (errno != EINTR))
-        {
+        if ((activity < 0) && (errno != EINTR)) {
             perror("select error");
         }
 

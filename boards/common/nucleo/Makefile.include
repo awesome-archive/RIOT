@@ -1,19 +1,23 @@
 # export this module and its includes
-USEMODULE += boards_common_nucleo
 INCLUDES  += -I$(RIOTBOARD)/common/nucleo/include
 
 # we use shared STM32 configuration snippets
 INCLUDES += -I$(RIOTBOARD)/common/stm32/include
 
-# configure the serial terminal
-PORT_LINUX ?= /dev/ttyACM0
-PORT_DARWIN ?= $(firstword $(sort $(wildcard /dev/tty.usbmodem*)))
+# Setup of programmer and serial is shared between STM32 based boards
+include $(RIOTMAKE)/boards/stm32.inc.mk
 
-# setup serial terminal
-include $(RIOTMAKE)/tools/serial.inc.mk
+# If port selection via ttys.py is enabled by `MOST_RECENT_PORT=1`, filter
+# USB serials to only select the UART bridge of embedded STLink debuggers.
+TTY_BOARD_FILTER := --model 'STM32 STLink'
 
-# all Nucleo boards have an on-board ST-link adapter
-export DEBUG_ADAPTER ?= stlink
+# The TTY serial also is the ID of the debug adapter, as the TTY is provided by
+# the debug adapter
+DEBUG_ADAPTER_ID_IS_TTY_SERIAL := 1
 
-# nucleo boards use openocd
-include $(RIOTMAKE)/tools/openocd.inc.mk
+# variable needed by cpy2remed PROGRAMMER
+# it contains name of ST-Link removable media
+
+DIR_NAME_AT_REMED = "NODE$(call uppercase,$(subst -,_,$(subst nucleo,,$(BOARD))))"
+
+PROGRAMMERS_SUPPORTED += cpy2remed

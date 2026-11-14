@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup  sys_fs_constfs ConstFS static file system
@@ -21,9 +20,6 @@
  * @author  Joakim Nohlgård <joakim.nohlgard@eistec.se>
  */
 
-#ifndef FS_CONSTFS_H
-#define FS_CONSTFS_H
-
 #include <stddef.h>
 #include <stdint.h>
 
@@ -37,9 +33,9 @@ extern "C" {
  * @brief A file in ConstFS (file name + contents)
  */
 typedef struct {
-    const char *path; /**< file system relative path to file */
+    const char *path;  /**< file system relative path to file */
     const size_t size; /**< length of @c data */
-    const uint8_t *data; /**< pointer to file contents */
+    const void *data;  /**< pointer to file contents */
 } constfs_file_t;
 
 /**
@@ -60,7 +56,5 @@ extern const vfs_file_system_t constfs_file_system;
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* FS_CONSTFS_H */
 
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_openmote-cc2538
@@ -16,11 +15,9 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include "cpu.h"
 #include "periph/gpio.h"
+#include "cc2538_eui_primary.h"
 
 #ifdef __cplusplus
  extern "C" {
@@ -81,13 +78,16 @@
 /** @} */
 
 /**
- * @brief   Initialize board specific hardware, including clock, LEDs and std-IO
+ * @name    RF CORE observable signals settings
+ * @{
  */
-void board_init(void);
+#define CONFIG_CC2538_RF_OBS_SIG_0_PCX  5   /* PC5 */
+#define CONFIG_CC2538_RF_OBS_SIG_1_PCX  6   /* PC6 */
+#define CONFIG_CC2538_RF_OBS_SIG_2_PCX  7   /* PC7 */
+/** @} */
 
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
 
-#endif /* BOARD_H */
 /** @} */

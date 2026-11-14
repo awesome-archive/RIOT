@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -23,20 +20,6 @@
 
 void board_init(void)
 {
-    #ifdef AUTO_INIT_LED0
-    /* The LED pin is also used for SPI, so we enable it
-       only if explicitly wanted by the user */
-    LED0_OFF;
-    gpio_init(LED0_PIN, GPIO_OUT);
-    #endif
-
-    LED_RED_OFF;
-    gpio_init(LED_RED_PIN, GPIO_OUT);
-    LED_GREEN_OFF;
-    gpio_init(LED_GREEN_PIN, GPIO_OUT);
-    LED_BLUE_OFF;
-    gpio_init(LED_BLUE_PIN, GPIO_OUT);
-
     /* set NB-IoT device off by default */
     NB_IOT_DISABLE;
     gpio_init(NB_IOT_ENABLE_PIN, GPIO_OUT);
@@ -48,7 +31,4 @@ void board_init(void)
     /* set GPS off by default */
     GPS_ENABLE_OFF;
     gpio_init(GPS_ENABLE_PIN, GPIO_OUT);
-
-    /* initialize the CPU */
-    cpu_init();
 }

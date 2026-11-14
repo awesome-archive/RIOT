@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018 Kaspar Schleiser <kaspar@schleiser.de>
- *                    Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2018 Inria
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_riotboot_hdr RIOT header helpers and tools
@@ -27,9 +27,6 @@
  *
  * @}
  */
-
-#ifndef RIOTBOOT_HDR_H
-#define RIOTBOOT_HDR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,5 +82,3 @@ uint32_t riotboot_hdr_checksum(const riotboot_hdr_t *riotboot_hdr);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* RIOTBOOT_HDR_H */

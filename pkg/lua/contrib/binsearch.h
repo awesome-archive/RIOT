@@ -1,16 +1,14 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @internal
- * @{
  * @file
- *
+ * @ingroup  pkg_lua
  * @brief   Generic binary search for tables containing strings.
  * @author  Juan Carrano <j.carrano@fu-berlin.de>
  *
@@ -25,7 +23,7 @@
  * the array) given by the struct definition.
  *
  * For example, given the following struct and array definitions and assuming
- * a 32 bit platform with strict aligment:
+ * a 32 bit platform with strict alignment:
  *  struct s1 {
  *      int a;      // Takes up 4 bytes
  *      char *name; // Takes up 4 bytes
@@ -39,10 +37,8 @@
  * "name" field as:
  *      [address of my_table] + offset + i*stride
  * Where stride=12 bytes and offset = 4 bytes.
+ * @{
  */
-
-#ifndef BINSEARCH_H
-#define BINSEARCH_H
 
 #include <stdint.h>
 #include <errno.h>
@@ -129,11 +125,9 @@ int binsearch_str(const void *start, size_t offset, size_t stride, size_t nmemb,
 const void *binsearch_str_p(const void *start, size_t offset, size_t stride,
                             size_t nmemb, const char *str, size_t n);
 
-
 #ifdef __cplusplus
 }
 #endif
 
-/** @} */
-
-#endif /* BINSEARCH_H */
+/** @internal
+ * @} */

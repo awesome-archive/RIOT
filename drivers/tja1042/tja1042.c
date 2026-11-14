@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016-2018  OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016-2018 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -21,7 +18,7 @@
 
 #include <assert.h>
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #include "tja1042.h"

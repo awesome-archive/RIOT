@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_bmp180
@@ -16,9 +15,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef BMP180_INTERNALS_H
-#define BMP180_INTERNALS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,15 +43,14 @@ extern "C" {
  * @name    Oversampling modes delays (micros)
  * @{
  */
-#define BMP180_ULTRALOWPOWER_DELAY    (5000UL)
-#define BMP180_STANDARD_DELAY         (8000UL)
-#define BMP180_HIGHRES_DELAY          (14000UL)
-#define BMP180_ULTRAHIGHRES_DELAY     (26000UL)
+#define BMP180_ULTRALOWPOWER_DELAY_MS (5UL)     /**< Ultra low power delay (ms) */
+#define BMP180_STANDARD_DELAY_MS      (8UL)     /**< Standard resolution delay (ms) */
+#define BMP180_HIGHRES_DELAY_MS       (14UL)    /**< High resolution delay (ms) */
+#define BMP180_ULTRAHIGHRES_DELAY_MS  (26UL)    /**< Ultra high resolution delay (ms) */
 /** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BMP180_INTERNALS_H */
 /** @} */

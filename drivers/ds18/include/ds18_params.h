@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Frits Kuipers
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Frits Kuipers
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_ds18
@@ -16,9 +15,7 @@
  * @author      Frits Kuipers <frits.kuipers@gmail.com>
  */
 
-#ifndef DS18_PARAMS_H
-#define DS18_PARAMS_H
-
+#include "board.h"
 #include "ds18.h"
 #include "saul_reg.h"
 
@@ -65,5 +62,4 @@ static const saul_reg_info_t ds18_saul_reg_info[] =
 }
 #endif
 
-#endif /* DS18_PARAMS_H */
 /** @} */

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015-2017 Simon Brummer
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015-2017 Simon Brummer
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_tcp TCP
@@ -19,9 +18,6 @@
  * @author      Simon Brummer <simon.brummer@posteo.de>
  */
 
-#ifndef NET_TCP_H
-#define NET_TCP_H
-
 #include "byteorder.h"
 
 #ifdef __cplusplus
@@ -29,11 +25,11 @@ extern "C" {
 #endif
 
 /**
- * @brief TCP offset value boundries.
+ * @brief TCP offset value boundaries.
  * @{
  */
-#define TCP_HDR_OFFSET_MIN (0x05)
-#define TCP_HDR_OFFSET_MAX (0x0F)
+#define TCP_HDR_OFFSET_MIN (0x05) /**< Header offset minimum value */
+#define TCP_HDR_OFFSET_MAX (0x0F) /**< Header offset maximum value */
 /** @} */
 
 /**
@@ -41,7 +37,7 @@ extern "C" {
  * @{
  */
 #define TCP_OPTION_KIND_EOL (0x00)  /**< "End of List"-Option */
-#define TCP_OPTION_KIND_NOP (0x01)  /**< "No Operatrion"-Option */
+#define TCP_OPTION_KIND_NOP (0x01)  /**< "No Operation"-Option */
 #define TCP_OPTION_KIND_MSS (0x02)  /**< "Maximum Segment Size"-Option */
 /** @} */
 
@@ -49,6 +45,7 @@ extern "C" {
  * @brief TCP option "length"-field values.
  * @{
  */
+#define TCP_OPTION_LENGTH_MIN (2U)    /**< Minimum option field size in bytes */
 #define TCP_OPTION_LENGTH_MSS (0x04)  /**< MSS Option Size always 4 */
 /** @} */
 
@@ -58,7 +55,7 @@ extern "C" {
 typedef struct __attribute__((packed)) {
     network_uint16_t src_port;     /**< Source port, in network byte order */
     network_uint16_t dst_port;     /**< Destination port, in network byte order */
-    network_uint32_t seq_num;      /**< Dequence number, in network byte order */
+    network_uint32_t seq_num;      /**< Sequence number, in network byte order */
     network_uint32_t ack_num;      /**< Acknowledgement number, in network byte order */
     network_uint16_t off_ctl;      /**< Data Offset and control Bits in network byte order */
     network_uint16_t window;       /**< Window, in network byte order */
@@ -86,5 +83,4 @@ void tcp_hdr_print(tcp_hdr_t *hdr);
 }
 #endif
 
-#endif /* NET_TCP_H */
 /** @} */

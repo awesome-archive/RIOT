@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -19,7 +16,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include "assert.h"
 #include "fmt.h"
 
 #include "net/loramac.h"
@@ -27,7 +23,7 @@
 #include "rn2xx3.h"
 #include "rn2xx3_internal.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 static const char *mac = "mac";

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_lis3mdl
@@ -16,9 +15,6 @@
  *
  * @author      René Herthel <rene-herthel@outlook.de>
  */
-
-#ifndef LIS3MDL_INTERNAL_H
-#define LIS3MDL_INTERNAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,7 +36,7 @@ extern "C" {
 /**  @} */
 
 /**
- * @name    LIS3DML controll register
+ * @name    LIS3DML control register
  * @{
  */
 #define LIS3MDL_CTRL_REG1                 (0x20)
@@ -130,7 +126,7 @@ extern "C" {
 #define LIS3MDL_MASK_INT_CFG_IEA          (0x04)
 #define LIS3MDL_MASK_INT_CFG_LIR          (0x02)
 #define LIS3MDL_MASK_INT_CFG_IEN          (0x01)
-/** }@ */
+/** @} */
 
 /**
  * @name    LIS3MDL masks for interrupt src register
@@ -144,10 +140,10 @@ extern "C" {
 #define LIS3MDL_MASK_INT_SRC_NTH_Z        (0x04)
 #define LIS3MDL_MASK_INT_SRC_MROI         (0x02)
 #define LIS3MDL_MASK_INT_SRC_INT          (0x01)
+/** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LIS3MDL_INTERNAL_H */
 /** @} */

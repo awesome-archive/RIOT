@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_hts221
@@ -15,9 +14,6 @@
  *
  * @author      Sebastian Meiling <s@mlng.net>
  */
-
-#ifndef HTS221_PARAMS_H
-#define HTS221_PARAMS_H
 
 #include "board.h"
 #include "hts221.h"
@@ -77,5 +73,4 @@ static const saul_reg_info_t hts221_saul_info[] =
 }
 #endif
 
-#endif /* HTS221_PARAMS_H */
 /** @} */

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2017 Kaspar Schleiser <kaspar@schleiser.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2017 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     sys_event
@@ -31,9 +32,7 @@
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
  */
 
-#ifndef EVENT_CALLBACK_H
-#define EVENT_CALLBACK_H
-
+#include <assert.h>
 #include "event.h"
 
 #ifdef __cplusplus
@@ -57,6 +56,43 @@ typedef struct {
  * @param[in]   arg             callback argument to set up
  */
 void event_callback_init(event_callback_t *event_callback, void (*callback)(void *), void *arg);
+
+/**
+ * @brief   Queue an event
+ *
+ * The given event will be posted on the given @p queue. If the event is already
+ * queued when calling this function, the event will not be touched and remain
+ * in the previous position on the queue. So reposting an event while it is
+ * already on the queue will have no effect.
+ *
+ * @pre     queue should be initialized
+ *
+ * @param[in]   queue   event queue to queue event in
+ * @param[in]   event   event to queue in event queue
+ */
+static inline void event_callback_post(event_queue_t *queue, event_callback_t *event)
+{
+    assert(event->callback);
+    event_post(queue, &event->super);
+}
+
+/**
+ * @brief   Generate a one-shot callback event on @p queue
+ *
+ * This will initialize @p event and post it immediately
+ *
+ * @param[in]   event           event_callback object to initialize
+ * @param[in]   queue           queue that the event will be added to
+ * @param[in]   callback        callback to set up
+ * @param[in]   arg             callback argument to set up
+ */
+static inline void event_callback_oneshot(event_callback_t *event,
+                                          event_queue_t *queue,
+                                          void (*callback)(void *), void *arg)
+{
+    event_callback_init(event, callback, arg);
+    event_post(queue, &event->super);
+}
 
 /**
  * @brief   event callback handler function (used internally)
@@ -83,5 +119,4 @@ void _event_callback_handler(event_t *event);
 #ifdef __cplusplus
 }
 #endif
-#endif /* EVENT_CALLBACK_H */
 /** @} */

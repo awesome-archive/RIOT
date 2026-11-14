@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
+ * Copyright (C) 2018,2019 Freie Universität Berlin
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     net_bluetil_ad
+ * @ingroup     ble_bluetil_ad
  * @{
  *
  * @file
@@ -44,8 +44,12 @@ int bluetil_ad_find(const bluetil_ad_t *ad, uint8_t type,
 
     unsigned pos = 0;
 
-    while ((pos + POS_TYPE) < ad->pos) {
+    while ((pos + POS_DATA) < ad->pos) {
         uint8_t len = ad->buf[pos];
+
+        if (pos + len >= ad->pos) {
+            return BLUETIL_AD_NOMEM;
+        }
 
         if (ad->buf[pos + POS_TYPE] == type) {
             data->data = ad->buf + pos + POS_DATA;
@@ -57,6 +61,17 @@ int bluetil_ad_find(const bluetil_ad_t *ad, uint8_t type,
     }
 
     return BLUETIL_AD_NOTFOUND;
+}
+
+int bluetil_ad_find_and_cmp(const bluetil_ad_t *ad, uint8_t type,
+                            const void *val, size_t val_len)
+{
+    bluetil_ad_data_t field;
+
+    if (bluetil_ad_find(ad, type, &field) == BLUETIL_AD_OK) {
+        return ((field.len == val_len) && memcmp(val, field.data, val_len) == 0);
+    }
+    return 0;
 }
 
 int bluetil_ad_find_str(const bluetil_ad_t *ad, uint8_t type,

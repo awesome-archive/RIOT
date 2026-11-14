@@ -1,18 +1,16 @@
 /*
-* Copyright (C) 2015 Kaspar Schleiser <kaspar@schleiser.de>
-*
-* This file is subject to the terms and conditions of the GNU Lesser
-* General Public License v2.1. See the file LICENSE in the top level
-* directory for more details.
-*/
+ * SPDX-FileCopyrightText: 2015 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
+ */
 
 #include <string.h>
+#include <inttypes.h>
 #include "embUnit.h"
 #include "tests-div.h"
 
 #include "div.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 static const uint32_t u32_test_values[] = {
@@ -65,8 +63,8 @@ static const uint64_t u64_15625_512_expected_values[] = {
     302231454903657293,
 };
 
-#define N_U32_VALS (sizeof(u32_test_values)/sizeof(u32_test_values[0]))
-#define N_U64_VALS (sizeof(u64_test_values)/sizeof(u64_test_values[0]))
+#define N_U32_VALS ARRAY_SIZE(u32_test_values)
+#define N_U64_VALS ARRAY_SIZE(u64_test_values)
 
 static void test_div_u64_by_15625(void)
 {
@@ -78,7 +76,13 @@ static void test_div_u64_by_15625(void)
     }
 
     for (unsigned i = 0; i < N_U64_VALS; i++) {
+#ifdef PRIu64
         DEBUG("Dividing %12"PRIu64" by 15625...\n", u64_test_values[i]);
+#else
+        DEBUG("Dividing %12"PRIu32"%s by 15625...\n", (uint32_t)u64_test_values[i],
+                ((uint32_t)u64_test_values[i] != u64_test_values[i]) ? "!trunc" : "");
+#endif
+
         TEST_ASSERT_EQUAL_INT(
             (uint64_t)u64_test_values[i] / 15625,
             div_u64_by_15625(u64_test_values[i]));
@@ -105,7 +109,12 @@ static void test_div_u64_by_1000000(void)
     }
 
     for (unsigned i = 0; i < N_U64_VALS; i++) {
+#ifdef PRIu64
         DEBUG("Dividing %"PRIu64" by 1000000...\n", u64_test_values[i]);
+#else
+        DEBUG("Dividing %"PRIu32"%s by 1000000...\n", (uint32_t)u64_test_values[i],
+                ((uint32_t)u64_test_values[i] != u64_test_values[i]) ? "!trunc" : "");
+#endif
         TEST_ASSERT_EQUAL_INT(
             u64_test_values[i] / 1000000lu,
             div_u64_by_1000000(u64_test_values[i]));
@@ -122,7 +131,12 @@ static void test_div_u64_by_15625div512(void)
     }
 
     for (unsigned i = 0; i < N_U64_VALS; i++) {
+#ifdef PRIu64
         DEBUG("Dividing %"PRIu64" by (15625/512)...\n", u64_test_values[i]);
+#else
+        DEBUG("Dividing %"PRIu32"%s by (15625/512)...\n", (uint32_t)u64_test_values[i],
+                ((uint32_t)u64_test_values[i] != u64_test_values[i]) ? "!trunc" : "");
+#endif
         TEST_ASSERT_EQUAL_INT(
             u64_15625_512_expected_values[i],
             div_u64_by_15625div512(u64_test_values[i]));

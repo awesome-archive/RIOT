@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_l3g4200d L3G4200D gyroscope
@@ -24,9 +23,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef L3G4200D_H
-#define L3G4200D_H
-
 #include <stdint.h>
 
 #include "periph/i2c.h"
@@ -37,9 +33,22 @@
 #endif
 
 /**
- * @brief   The sensors default I2C address
+ * @defgroup drivers_l3g4200d_config     L3G4200D gyroscope driver compile configuration
+ * @ingroup config_drivers_sensors
+ * @{
  */
-#define L3G4200D_DEFAULT_ADDRESS        0x68
+/**
+ * @brief Default address
+ *
+ * The address depends on the status of SDO Pin. Default
+ * address corresponds to SDO connected to GND. For more
+ * information refer to the section 'I2C Operation' in
+ * the datasheet.
+ */
+#ifndef CONFIG_L3G4200D_DEFAULT_ADDRESS
+#define CONFIG_L3G4200D_DEFAULT_ADDRESS        0x68
+#endif
+/** @} */
 
 /**
  * @brief   Result vector for gyro measurement
@@ -95,8 +104,8 @@ typedef struct {
  * @brief   Device descriptor for L3G4200D sensors
  */
 typedef struct {
-    l3g4200d_params_t params; /**< device initialization parameters */
-    int scale;                /**< internal scaling factor to normalize results */
+    l3g4200d_params_t params;     /**< device initialization parameters */
+    int32_t scale;                /**< internal scaling factor to normalize results */
 } l3g4200d_t;
 
 /**
@@ -145,5 +154,4 @@ int l3g4200d_disable(const l3g4200d_t *dev);
 }
 #endif
 
-#endif /* L3G4200D_H */
 /** @} */

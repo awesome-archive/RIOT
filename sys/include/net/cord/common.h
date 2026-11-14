@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017,2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017-2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_cord_common CoRE RD Common
@@ -17,9 +16,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef NET_CORD_COMMON_H
-#define NET_CORD_COMMON_H
 
 #include "net/cord/config.h"
 
@@ -52,7 +48,7 @@ static inline const char *cord_common_get_ep(void)
  *
  * This function adds:
  *  - `ep` -> as extracted by cord_common_get_ep()
- *  - [optional] `lt` -> if defined by CORD_LT
+ *  - [optional] `lt` -> if defined by CONFIG_CORD_LT
  *  - [optional] 'd'  -> if defined by CORD_D
  *
  *  @return  0 on success
@@ -64,5 +60,4 @@ int cord_common_add_qstring(coap_pkt_t *pkt);
 }
 #endif
 
-#endif /* NET_CORD_COMMON_H */
 /** @} */

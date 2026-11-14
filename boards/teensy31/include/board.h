@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_teensy31
@@ -16,12 +15,8 @@
  * @author      Loïc Dauphin <loic.dauphin@inria.fr>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include "cpu.h"
 #include "periph_conf.h"
-#include "mtd.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,7 +38,6 @@ extern "C" {
 #define XTIMER_CHAN                 (0)
 #define XTIMER_BACKOFF              (40)
 #define XTIMER_ISR_BACKOFF          (40)
-#define XTIMER_OVERHEAD             (30)
 /** @} */
 
 /**
@@ -60,14 +54,8 @@ extern "C" {
 #define LED0_TOGGLE         (LED_PORT->PTOR = (1 << LED0_BIT))
 /** @} */
 
-/**
- * @brief Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

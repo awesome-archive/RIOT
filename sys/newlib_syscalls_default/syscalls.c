@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2015 Kaspar Schleiser <kaspar@schleiser.de>
- *               2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2015 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -24,30 +21,27 @@
  * @}
  */
 
-#include <unistd.h>
-#include <reent.h>
 #include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/unistd.h>
+#include <malloc.h>
+#include <reent.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/times.h>
+#include <sys/unistd.h>
+#include <unistd.h>
 
-#include "cpu.h"
-#include "board.h"
-#include "sched.h"
-#include "thread.h"
-#include "irq.h"
+#include "assert.h"
 #include "log.h"
+#include "modules.h"
 #include "periph/pm.h"
+#include "sched.h"
+#include "stdio_base.h"
+#include "thread.h"
+
 #if MODULE_VFS
 #include "vfs.h"
 #endif
-
-#include "stdio_base.h"
-
-#include <sys/times.h>
 
 #ifdef MODULE_XTIMER
 #include <sys/time.h>
@@ -55,21 +49,100 @@
 #include "xtimer.h"
 #endif
 
+#ifndef NUM_HEAPS
+#define NUM_HEAPS 1
+#endif
+
+#ifdef __MSP430__
+/* the msp430 linker scripts define the end of all memory as __stack, which in
+ * turn is used as the initial stack. RIOT also uses __stack as SP on isr
+ * entry.  This logic makes __stack - ISR_STACKSIZE the heap end.
+ */
+extern char __stack;
+extern char __heap_start__;
+#define _sheap __heap_start__
+#define __eheap (char *)((uintptr_t)&__stack - ISR_STACKSIZE)
+
+#else /* __MSP430__ */
+
 /**
  * @brief manage the heap
  */
 extern char _sheap;                 /* start of the heap */
 extern char _eheap;                 /* end of the heap */
-char *heap_top = &_sheap + 4;
+#define __eheap &_eheap
+#endif
 
-/* MIPS newlib crt implements _init,_fini and _exit and manages the heap */
-#ifndef __mips__
+/**
+ * @brief Additional heap sections that may be defined in the linkerscript.
+ *
+ *        The compiler should not generate references to those symbols if
+ *        they are not used, so only provide them if additional memory sections
+ *        that can be used as heap are available.
+ * @{
+ */
+extern char _sheap1;
+extern char _eheap1;
+
+extern char _sheap2;
+extern char _eheap2;
+
+extern char _sheap3;
+extern char _eheap3;
+/* @} */
+
+struct heap {
+    char* start;
+    char* end;
+};
+
+static char *heap_top[NUM_HEAPS] = {
+    &_sheap,
+#if NUM_HEAPS > 1
+    &_sheap1,
+#endif
+#if NUM_HEAPS > 2
+    &_sheap2,
+#endif
+#if NUM_HEAPS > 3
+    &_sheap3,
+#endif
+#if NUM_HEAPS > 4
+#error "Unsupported NUM_HEAPS value, edit newlib_syscalls_default/syscalls.c to add more heaps."
+#endif
+};
+
+static const struct heap heaps[NUM_HEAPS] = {
+    {
+        .start = &_sheap,
+        .end   = __eheap
+    },
+#if NUM_HEAPS > 1
+    {
+        .start = &_sheap1,
+        .end   = &_eheap1
+    },
+#endif
+#if NUM_HEAPS > 2
+    {
+        .start = &_sheap2,
+        .end   = &_eheap2
+    },
+#endif
+#if NUM_HEAPS > 3
+    {
+        .start = &_sheap3,
+        .end   = &_eheap3
+    },
+#endif
+};
+
 /**
  * @brief Initialize NewLib, called by __libc_init_array() from the startup script
  */
 void _init(void)
 {
-    stdio_init();
+    /* nothing to do here */
 }
 
 /**
@@ -89,40 +162,72 @@ __attribute__((used)) void _fini(void)
  *
  * @param n     the exit code, 0 for all OK, >0 for not OK
  */
-void _exit(int n)
+__attribute__((used)) void _exit(int n)
 {
-    LOG_INFO("#! exit %i: powering off\n", n);
+    if (n > 0) {
+        LOG_ERROR("ERR: program failed with exit code %i\n", n);
+    }
+    else {
+        LOG_WARNING("WARN: program exited\n");
+    }
+#ifdef MODULE_PERIPH_PM
     pm_off();
-    while(1);
+#endif
+    while (1) {}
 }
 
 /**
  * @brief Allocate memory from the heap.
- *
- * The current heap implementation is very rudimentary, it is only able to allocate
- * memory. But it does not have any means to free memory again
  *
  * @return      pointer to the newly allocated memory on success
  * @return      pointer set to address `-1` on failure
  */
 void *_sbrk_r(struct _reent *r, ptrdiff_t incr)
 {
+    void *res = (void*)UINTPTR_MAX;
     unsigned int state = irq_disable();
-    void *res = heap_top;
 
-    if ((heap_top + incr > &_eheap) || (heap_top + incr < &_sheap)) {
-        r->_errno = ENOMEM;
-        res = (void *)-1;
+    for (unsigned i = 0; i < NUM_HEAPS; ++i) {
+        if ((heap_top[i] + incr > heaps[i].end) ||
+            (heap_top[i] + incr < heaps[i].start)) {
+            continue;
+        }
+
+        res = heap_top[i];
+        heap_top[i] += incr;
+        break;
     }
-    else {
-        heap_top += incr;
+
+    if (res == (void*)UINTPTR_MAX) {
+        r->_errno = ENOMEM;
     }
 
     irq_restore(state);
     return res;
 }
 
-#endif /*__mips__*/
+/**
+ * @brief Print heap statistics
+ *
+ * If the CPU does not provide its own heap handling and heap_stats function,
+ * but instead uses the newlib_syscall_default function, this function outputs
+ * the heap statistics. If the CPU provides its own heap_stats function, it
+ * should define HAVE_HEAP_STATS in its cpu_conf.h file.
+ */
+#ifndef HAVE_HEAP_STATS
+__attribute__((weak)) void heap_stats(void)
+{
+    struct mallinfo minfo = mallinfo();
+    long int heap_size = 0;
+
+    for (unsigned int i = 0; i < NUM_HEAPS; i++) {
+        heap_size += heaps[i].end - heaps[i].start;
+    }
+
+    printf("heap: %ld (used %d, free %ld) [bytes]\n",
+           heap_size, minfo.uordblks, heap_size - minfo.uordblks);
+}
+#endif /* HAVE_HEAP_STATS */
 
 /**
  * @brief Get the process-ID of the current thread
@@ -131,7 +236,7 @@ void *_sbrk_r(struct _reent *r, ptrdiff_t incr)
  */
 pid_t _getpid(void)
 {
-    return sched_active_pid;
+    return thread_getpid();
 }
 
 /**
@@ -142,7 +247,7 @@ pid_t _getpid(void)
 pid_t _getpid_r(struct _reent *ptr)
 {
     (void) ptr;
-    return sched_active_pid;
+    return thread_getpid();
 }
 
 /**
@@ -307,10 +412,10 @@ int _fcntl_r (struct _reent *r, int fd, int cmd, int arg)
  */
 _off_t _lseek_r(struct _reent *r, int fd, _off_t off, int whence)
 {
-    int res = vfs_lseek(fd, off, whence);
+    off_t res = vfs_lseek(fd, off, whence);
     if (res < 0) {
         /* vfs returns negative error codes */
-        r->_errno = -res;
+        r->_errno = -(int)res;
         return -1;
     }
     return res;
@@ -346,7 +451,7 @@ int _fstat_r(struct _reent *r, int fd, struct stat *buf)
  *
  * @param[in]  r        pointer to reent structure
  * @param[in]  name     path to file
- * @param[out] buf      pointer to stat struct to fill
+ * @param[out] st       pointer to stat struct to fill
  *
  * @return 0 on success
  * @return -1 on error, @c r->_errno set to a constant from errno.h to indicate the error
@@ -494,7 +599,7 @@ int _isatty_r(struct _reent *r, int fd)
 {
     r->_errno = 0;
 
-    if(fd == STDIN_FILENO || fd == STDOUT_FILENO || fd == STDERR_FILENO) {
+    if (fd == STDIN_FILENO || fd == STDOUT_FILENO || fd == STDERR_FILENO) {
         return 1;
     }
 
@@ -518,23 +623,15 @@ int _kill(pid_t pid, int sig)
     return -1;
 }
 
-#ifdef MODULE_XTIMER
+#if (IS_USED(MODULE_LIBC_GETTIMEOFDAY))
 int _gettimeofday_r(struct _reent *r, struct timeval *restrict tp, void *restrict tzp)
 {
-    (void) r;
-    (void) tzp;
+    (void)tzp;
+    (void)r;
     uint64_t now = xtimer_now_usec64();
     tp->tv_sec = div_u64_by_1000000(now);
     tp->tv_usec = now - (tp->tv_sec * US_PER_SEC);
     return 0;
-}
-#else
-int _gettimeofday_r(struct _reent *r, struct timeval *restrict tp, void *restrict tzp)
-{
-    (void) tp;
-    (void) tzp;
-    r->_errno = ENOSYS;
-    return -1;
 }
 #endif
 
@@ -551,4 +648,21 @@ clock_t _times_r(struct _reent *ptr, struct tms *ptms)
     ptr->_errno = ENOSYS;
 
     return (-1);
+}
+
+/**
+ * @brief Wrapper for newlib's assert implementation
+ */
+NORETURN
+void __wrap___assert_func (const char *file, int line, const char *func, const char *expr)
+{
+    (void)file;
+    (void)line;
+    (void)func;
+    (void)expr;
+#ifdef DEBUG_ASSERT_VERBOSE
+    _assert_failure(file, line);
+#else
+    _assert_panic();
+#endif
 }

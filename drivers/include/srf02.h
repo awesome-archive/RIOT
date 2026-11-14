@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2013 Zakaria Kasmi <zkasmi@inf.fu-berlin.de>
- *               2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2013 Zakaria Kasmi <zkasmi@inf.fu-berlin.de>
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_srf02 SRF02 ultrasonic range sensor
@@ -21,9 +20,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @author      Kevin Weiss <kevin.weiss@haw-hamburg.de>
  */
-
-#ifndef SRF02_H
-#define SRF02_H
 
 #include <stdint.h>
 #include "periph/i2c.h"
@@ -136,5 +132,4 @@ int srf02_set_addr(srf02_t *dev, uint8_t new_addr);
 }
 #endif
 
-#endif /* SRF02_H */
 /** @} */

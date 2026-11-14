@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Mesotic SAS
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Mesotic SAS
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_adxl345
@@ -15,9 +14,6 @@
  *
  * @author      Dylan Laduranty <dylan.laduranty@mesotic.com>
  */
-
-#ifndef ADXL345_REGS_H
-#define ADXL345_REGS_H
 
 #ifdef __cplusplus
  extern "C" {
@@ -188,5 +184,4 @@
 }
 #endif
 
-#endif /* ADXL345_REGS_H */
 /** @} */

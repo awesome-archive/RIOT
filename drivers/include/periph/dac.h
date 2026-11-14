@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2014 Simon Brummer
- *               2015-2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Simon Brummer
+ * SPDX-FileCopyrightText: 2015-2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_periph_dac DAC
@@ -27,6 +26,18 @@
  * so that any particular bit-width configuration on this driver level would not
  * have much effect...
  *
+ * # (Low-) Power Implications
+ *
+ * The configured DAC peripherals are active (and consume power) from the point
+ * of initialization. When calling dac_poweroff(), the implementation **should**
+ * disable the given DAC line and put the DAC peripheral to sleep (e.g. through
+ * peripheral clock gating). When woken up again through dac_poweron(), the
+ * given DAC line **should** transparently continue it's previous operation.
+ *
+ * The DAC driver implementation may need to block (and free) certain power
+ * modes in the driver's dac_init(), dac_poweron(), and the dac_poweroff()
+ * functions.
+ *
  * @{
  * @file
  * @brief       DAC peripheral driver interface definition
@@ -35,9 +46,7 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef PERIPH_DAC_H
-#define PERIPH_DAC_H
-
+#include <stddef.h>
 #include <stdint.h>
 #include <limits.h>
 
@@ -52,7 +61,7 @@ extern "C" {
  * @brief   Define default DAC type identifier
  */
 #ifndef HAVE_DAC_T
-typedef unsigned int dac_t;
+typedef uint_fast8_t dac_t;
 #endif
 
 /**
@@ -67,7 +76,7 @@ enum {
  * @brief   Default DAC undefined value
  */
 #ifndef DAC_UNDEF
-#define DAC_UNDEF           (UINT_MAX)
+#define DAC_UNDEF           (UINT_FAST8_MAX)
 #endif
 
 /**
@@ -117,10 +126,73 @@ void dac_poweron(dac_t line);
  */
 void dac_poweroff(dac_t line);
 
+/**
+ * @brief   Get the sample rate of the DAC in Hz
+ *
+ * @note this requires the `periph_dac_play` feature
+ *
+ * @return  Sampling Rate in Hz
+ */
+uint32_t dac_get_freq(void);
+
+/**
+ * @brief   Options for @ref dac_play
+ * @{
+ */
+#define DAC_PLAY_LOOPED     (1 << 0)    /**< keep playing the sample buffer in a loop */
+/** @} */
+
+/**
+ * @brief   Signature of event callback functions triggered from interrupts
+ *
+ * @param[in] arg       optional context for the callback
+ */
+typedef void (*dma_cb_t)(void *arg);
+
+/**
+ * @brief   Configure DAC line for playing sample buffer
+ *
+ * @note this requires the `periph_dac_play` feature
+ *
+ * @param[in]   line        DAC line to configure
+ * @param[in]   cb          Callback to be executed when the current sample buffer
+ *                          is done.
+ *                          If `DAC_PLAY_LOOPED` is set in `dac_play()`, the callback
+ *                          will not be executed, the current sample buffer will be
+ *                          played again.
+ *                          Will be executed in interrupt context.
+ *                          May be NULL.
+ * @param[in]   arg         Callback argument
+ *
+ * @retval      0           Success
+ * @retval      -EEXIST     Line has already been configured
+ * @retval      -ENOMEM     Can't allocate resources for playback
+ */
+int dac_play_setup(dac_t line, dma_cb_t cb, void *arg);
+
+/**
+ * @brief   Start playing sample buffer
+ *
+ * @note this requires the `periph_dac_play` feature
+ *
+ * @param[in]   line        DAC line to user for playing
+ * @param[in]   buf         Sample buffer to play
+ * @param[in]   len         Number of samples to play
+ * @param[in]   flags       Playback options
+ */
+void dac_play(dac_t line, const uint16_t *buf, size_t len, uint8_t flags);
+
+/**
+ * @brief   Release DAC line
+ *
+ * @note this requires the `periph_dac_play` feature
+ *
+ * @param[in]   line        DAC line to release
+ */
+void dac_play_teardown(dac_t line);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERIPH_DAC_H */
 /** @} */

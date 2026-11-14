@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -18,9 +15,11 @@
  * @}
  */
 
+#include <assert.h>
 #include <errno.h>
 
 #include "thread.h"
+#include "ztimer.h"
 #include "can/device.h"
 #include "can/common.h"
 #include "can/pkt.h"
@@ -30,8 +29,18 @@
 #include "can/can_trx.h"
 #endif
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
+
+#ifdef MODULE_FDCAN
+/**
+ * The loop delay in CAN, especially in CAN FD with bitrate switching, affects synchronization due to increased data rates.
+ * The unit is nanoseconds.
+ */
+#ifndef CONFIG_FDCAN_DEVICE_TRANSCEIVER_LOOP_DELAY
+#error "CONFIG_FDCAN_DEVICE_TRANSCEIVER_LOOP_DELAY must be defined. This property can be found in the datasheet of the CAN transceiver in use. The unit is nanoseconds."
+#endif /* CONFIG_FDCAN_DEVICE_TRANSCEIVER_LOOP_DELAY */
+#endif /* MODULE_FDCAN */
 
 #ifndef CAN_DEVICE_MSG_QUEUE_SIZE
 #define CAN_DEVICE_MSG_QUEUE_SIZE 64
@@ -40,19 +49,17 @@
 #ifdef MODULE_CAN_PM
 #define CAN_DEVICE_PM_DEFAULT_RX_TIMEOUT (10 * US_PER_SEC)
 #define CAN_DEVICE_PM_DEFAULT_TX_TIMEOUT (2 * US_PER_SEC)
-#endif
-
-static int power_up(candev_dev_t *candev_dev);
-static int power_down(candev_dev_t *candev_dev);
-#ifdef MODULE_CAN_PM
 static void pm_cb(void *arg);
 static void pm_reset(candev_dev_t *candev_dev, uint32_t value);
 #endif
 
+static int power_up(candev_dev_t *candev_dev);
+static int power_down(candev_dev_t *candev_dev);
+
 static void _can_event(candev_t *dev, candev_event_t event, void *arg)
 {
     msg_t msg;
-    struct can_frame *frame;
+    can_frame_t *frame;
     can_pkt_t *pkt;
     candev_dev_t *candev_dev = dev->isr_arg;
 
@@ -78,13 +85,13 @@ static void _can_event(candev_t *dev, candev_event_t event, void *arg)
     case CANDEV_EVENT_TX_CONFIRMATION:
         DEBUG("_can_event: CANDEV_EVENT_TX_CONFIRMATION\n");
         /* frame pointer in arg */
-        pkt = container_of((struct can_frame *)arg, can_pkt_t, frame);
+        pkt = container_of((can_frame_t *)arg, can_pkt_t, frame);
         can_dll_dispatch_tx_conf(pkt);
         break;
     case CANDEV_EVENT_TX_ERROR:
         DEBUG("_can_event: CANDEV_EVENT_TX_ERROR\n");
         /* frame pointer in arg */
-        pkt = container_of((struct can_frame *)arg, can_pkt_t, frame);
+        pkt = container_of((can_frame_t *)arg, can_pkt_t, frame);
         can_dll_dispatch_tx_error(pkt);
         break;
     case CANDEV_EVENT_RX_INDICATION:
@@ -93,7 +100,7 @@ static void _can_event(candev_t *dev, candev_event_t event, void *arg)
         pm_reset(candev_dev, candev_dev->rx_inactivity_timeout);
 #endif
         /* received frame in arg */
-        frame = (struct can_frame *) arg;
+        frame = (can_frame_t *) arg;
         can_dll_dispatch_rx_frame(frame, candev_dev->pid);
         break;
     case CANDEV_EVENT_RX_ERROR:
@@ -147,7 +154,7 @@ static int power_down(candev_dev_t *candev_dev)
     }
 
 #ifdef MODULE_CAN_PM
-    xtimer_remove(&candev_dev->pm_timer);
+    ztimer_remove(ZTIMER_USEC, &candev_dev->pm_timer);
     candev_dev->last_pm_update = 0;
 #endif
 
@@ -157,11 +164,11 @@ static int power_down(candev_dev_t *candev_dev)
 #ifdef MODULE_CAN_PM
 static void pm_cb(void *arg)
 {
-    candev_dev_t *dev = arg;
+    candev_dev_t *candev_dev = (candev_dev_t *)arg;
     msg_t msg;
     msg.type = CAN_MSG_PM;
 
-    msg_send(&msg, dev->pid);
+    msg_send(&msg, candev_dev->pid);
 }
 
 static void pm_reset(candev_dev_t *candev_dev, uint32_t value)
@@ -172,15 +179,15 @@ static void pm_reset(candev_dev_t *candev_dev, uint32_t value)
 
     if (value == 0) {
         candev_dev->last_pm_value = 0;
-        xtimer_remove(&candev_dev->pm_timer);
+        ztimer_remove(ZTIMER_USEC, &candev_dev->pm_timer);
         return;
     }
 
     if (candev_dev->last_pm_update == 0 ||
-            value > (candev_dev->last_pm_value - (xtimer_now_usec() - candev_dev->last_pm_update))) {
+            value > (candev_dev->last_pm_value - (ztimer_now(ZTIMER_USEC) - candev_dev->last_pm_update))) {
         candev_dev->last_pm_value = value;
-        candev_dev->last_pm_update = xtimer_now_usec();
-        xtimer_set(&candev_dev->pm_timer, value);
+        candev_dev->last_pm_update = ztimer_now(ZTIMER_USEC);
+        ztimer_set(ZTIMER_USEC, &candev_dev->pm_timer, value);
     }
 }
 #endif
@@ -235,6 +242,13 @@ static void *_can_device_thread(void *args)
     dev->isr_arg = candev_dev;
 
     candev_dev->ifnum = can_dll_register_candev(candev_dev);
+
+#if defined(MODULE_FDCAN)
+    if (candev_dev->loop_delay == 0) {
+        candev_dev->loop_delay = CONFIG_FDCAN_DEVICE_TRANSCEIVER_LOOP_DELAY;
+    }
+    dev->loop_delay = candev_dev->loop_delay;
+#endif
 
     dev->driver->init(dev);
     power_up(candev_dev);
@@ -307,7 +321,7 @@ static void *_can_device_thread(void *args)
             DEBUG("can device: CAN_MSG_POWER_UP received\n");
             res = power_up(candev_dev);
 #ifdef MODULE_CAN_PM
-            pm_reset(candev_dev, 0);
+            pm_reset(candev_dev, candev_dev->tx_wakeup_timeout);
 #endif
             /* send reply to calling thread */
             reply.type = CAN_MSG_ACK;
@@ -317,6 +331,9 @@ static void *_can_device_thread(void *args)
         case CAN_MSG_POWER_DOWN:
             DEBUG("can device: CAN_MSG_POWER_DOWN received\n");
             res = power_down(candev_dev);
+#ifdef MODULE_CAN_PM
+            pm_reset(candev_dev, 0);
+#endif
             /* send reply to calling thread */
             reply.type = CAN_MSG_ACK;
             reply.content.value = (uint32_t)res;
@@ -361,7 +378,7 @@ kernel_pid_t can_device_init(char *stack, int stacksize, char priority,
     }
 
     /* create new can device thread */
-    res = thread_create(stack, stacksize, priority, THREAD_CREATE_STACKTEST,
+    res = thread_create(stack, stacksize, priority, 0,
                          _can_device_thread, (void *)params, name);
     if (res <= 0) {
         return -EINVAL;
@@ -369,7 +386,6 @@ kernel_pid_t can_device_init(char *stack, int stacksize, char priority,
 
     return res;
 }
-
 
 #define SJW 2
 #define CAN_SYNC_SEG 1
@@ -502,7 +518,7 @@ int can_device_calc_bittiming(uint32_t clock, const struct can_bittiming_const *
          tseg >= timing_const->tseg1_min + timing_const->tseg2_min; tseg--) {
         uint32_t nbt = tseg + CAN_SYNC_SEG;
 
-        /* theoritical brp */
+        /* theoretical brp */
         uint32_t brp = clock / (timing->bitrate * nbt);
         /* brp according to brp_inc */
         brp = (brp / timing_const->brp_inc) * timing_const->brp_inc;
@@ -562,25 +578,33 @@ int can_device_calc_bittiming(uint32_t clock, const struct can_bittiming_const *
     timing->phase_seg1 = tseg1 - timing->prop_seg;
     timing->phase_seg2 = tseg2;
 
-    if (!timing->sjw || !timing_const->sjw_max) {
-        timing->sjw = SJW;
-    }
-    else {
-        if (timing->sjw > timing_const->sjw_max) {
+    /* this paper http://www.oertel-halle.de/files/cia99paper.pdf might help to understand SJW */
+    if (!timing->sjw) {
+        if (!timing_const->sjw_max) {
+            /* fallback if no device max value is known */
+            timing->sjw = SJW;
+        }
+        else {
+            /* try to find the max_value start at max */
             timing->sjw = timing_const->sjw_max;
         }
-        if (timing->sjw > tseg2) {
-            timing->sjw = tseg2;
-        }
     }
-
+    if (timing->sjw > timing->phase_seg2) {
+        /* SJW shall not be bigger than phase segment 2 */
+        timing->sjw = timing->phase_seg2;
+    }
+    if (timing->sjw > timing->phase_seg1) {
+        /* SJW shall not be bigger than phase segment 1 */
+        timing->sjw = timing->phase_seg1;
+    }
     timing->brp = best_brp;
 
     timing->bitrate = clock / (timing->brp * (CAN_SYNC_SEG + tseg1 + tseg2));
 
-    DEBUG("bitrate=%" PRIu32 ", sample_point=%" PRIu32 ", brp=%" PRIu32 ", prop_seg=%" PRIu32
-          ", phase_seg1=%" PRIu32 ", phase_seg2=%" PRIu32 "\n", timing->bitrate, timing->sample_point,
-          timing->brp, timing->prop_seg, timing->phase_seg1, timing->phase_seg2);
+    DEBUG("clock=%" PRIu32 ", bitrate=%" PRIu32 ", sample_point=%" PRIu32 ", brp=%" PRIu32
+          ", prop_seg=%" PRIu32", phase_seg1=%" PRIu32 ", phase_seg2=%" PRIu32", sjw=%" PRIu32 "\n",
+          clock, timing->bitrate, timing->sample_point, timing->brp,
+          timing->prop_seg, timing->phase_seg1, timing->phase_seg2, timing->sjw);
 
     return 0;
 }

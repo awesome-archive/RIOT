@@ -1,10 +1,8 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
 /**
  * @ingroup  pkg_lua
  * @{
@@ -23,6 +21,7 @@
 #include <setjmp.h>
 
 #include "kernel_defines.h"
+#include "macros/utils.h"
 #include "tlsf.h"
 
 #include "lua.h"
@@ -154,7 +153,7 @@ NORETURN static int _jump_back(lua_State *L)
 {
     jmp_buf *jump_buffer = *(jmp_buf **)lua_getextraspace(L);
 
-    /* FIXME: I dont think it's OK to print a message */
+    /* FIXME: I don't think it's OK to print a message */
     lua_writestringerror("PANIC: unprotected error in call to Lua API (%s)\n",
                          lua_tostring(L, -1));
 
@@ -257,7 +256,6 @@ lua_riot_do_error:
     return status;
 }
 
-
 LUALIB_API int lua_riot_do_module(const char *modname, void *memory, size_t mem_size,
                                   uint16_t modmask, int *retval)
 {
@@ -272,8 +270,7 @@ LUALIB_API int lua_riot_do_buffer(const uint8_t *buf, size_t buflen, void *memor
                                      modmask, retval);
 }
 
-#define MAX_ERR_STRING ((sizeof(lua_riot_str_errors) / sizeof(*lua_riot_str_errors)) - 1)
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define MAX_ERR_STRING (ARRAY_SIZE(lua_riot_str_errors) - 1)
 
 LUALIB_API const char *lua_riot_strerror(int errn)
 {

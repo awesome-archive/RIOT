@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -14,6 +11,7 @@
  */
 
 #include <inttypes.h>
+#include <kernel_defines.h>
 
 #include "net/gnrc/ipv6/nib.h"
 #include "net/gnrc/ipv6/nib/nc.h"
@@ -35,7 +33,7 @@ static void set_up(void)
 }
 
 /*
- * Creates GNRC_IPV6_NIB_NUMOF neighbor cache entries with different addresses
+ * Creates CONFIG_GNRC_IPV6_NIB_NUMOF neighbor cache entries with different addresses
  * and then tries to create another one
  * Expected result: gnrc_ipv6_nib_nc_set() returns -ENOMEM
  */
@@ -45,7 +43,7 @@ static void test_nib_nc_set__ENOMEM_diff_addr(void)
                                   { .u64 = TEST_UINT64 } } };
     uint8_t l2addr[] = L2ADDR;
 
-    for (unsigned i = 0; i < GNRC_IPV6_NIB_NUMOF; i++) {
+    for (unsigned i = 0; i < CONFIG_GNRC_IPV6_NIB_NUMOF; i++) {
         TEST_ASSERT_EQUAL_INT(0, gnrc_ipv6_nib_nc_set(&addr, IFACE, l2addr,
                                                       sizeof(l2addr)));
         addr.u64[1].u64++;
@@ -56,7 +54,7 @@ static void test_nib_nc_set__ENOMEM_diff_addr(void)
 }
 
 /*
- * Creates GNRC_IPV6_NIB_NUMOF neighbor cache entries with different interfaces
+ * Creates CONFIG_GNRC_IPV6_NIB_NUMOF neighbor cache entries with different interfaces
  * and then tries to create another one
  * Expected result: gnrc_ipv6_nib_nc_set() returns -ENOMEM
  */
@@ -67,7 +65,7 @@ static void test_nib_nc_set__ENOMEM_diff_iface(void)
     static const uint8_t l2addr[] = L2ADDR;
     unsigned iface = IFACE;
 
-    for (unsigned i = 0; i < GNRC_IPV6_NIB_NUMOF; i++) {
+    for (unsigned i = 0; i < CONFIG_GNRC_IPV6_NIB_NUMOF; i++) {
         TEST_ASSERT_EQUAL_INT(0, gnrc_ipv6_nib_nc_set(&addr, iface, l2addr,
                                                       sizeof(l2addr)));
         iface++;
@@ -77,7 +75,7 @@ static void test_nib_nc_set__ENOMEM_diff_iface(void)
 }
 
 /*
- * Creates GNRC_IPV6_NIB_NUMOF neighbor cache entries with different addresses
+ * Creates CONFIG_GNRC_IPV6_NIB_NUMOF neighbor cache entries with different addresses
  * and interfaces and then tries to create another one
  * Expected result: gnrc_ipv6_nib_nc_set() returns -ENOMEM
  */
@@ -88,7 +86,7 @@ static void test_nib_nc_set__ENOMEM_diff_addr_iface(void)
     uint8_t l2addr[] = L2ADDR;
     unsigned iface = IFACE;
 
-    for (unsigned i = 0; i < GNRC_IPV6_NIB_NUMOF; i++) {
+    for (unsigned i = 0; i < CONFIG_GNRC_IPV6_NIB_NUMOF; i++) {
         TEST_ASSERT_EQUAL_INT(0, gnrc_ipv6_nib_nc_set(&addr, iface, l2addr,
                                                       sizeof(l2addr)));
         addr.u64[1].u64++;
@@ -127,7 +125,7 @@ static void test_nib_nc_set__success(void)
 }
 
 /*
- * Creates GNRC_IPV6_NIB_NUMOF neighbor cache entries with different IP
+ * Creates CONFIG_GNRC_IPV6_NIB_NUMOF neighbor cache entries with different IP
  * addresses and interface identifiers and then tries to add another that is
  * equal to the last.
  * Expected result: gnrc_ipv6_nib_nc_set() returns 0
@@ -139,7 +137,7 @@ static void test_nib_nc_set__success_duplicate(void)
     uint8_t l2addr[] = L2ADDR;
     unsigned iface = 0;
 
-    for (unsigned i = 0; i < GNRC_IPV6_NIB_NUMOF; i++) {
+    for (unsigned i = 0; i < CONFIG_GNRC_IPV6_NIB_NUMOF; i++) {
         addr.u64[1].u64++;
         iface++;
         l2addr[7]++;
@@ -151,10 +149,10 @@ static void test_nib_nc_set__success_duplicate(void)
 }
 
 /*
- * Creates GNRC_IPV6_NIB_NUMOF neighbor cache entries with different addresses
+ * Creates CONFIG_GNRC_IPV6_NIB_NUMOF neighbor cache entries with different addresses
  * and interfaces and then tries to delete one with yet another address.
- * Expected result: There should be still GNRC_IPV6_NIB_NUMOF entries in the
- * neigbor cache
+ * Expected result: There should be still CONFIG_GNRC_IPV6_NIB_NUMOF entries in the
+ * neighbor cache
  */
 static void test_nib_nc_del__unknown(void)
 {
@@ -165,7 +163,7 @@ static void test_nib_nc_del__unknown(void)
     gnrc_ipv6_nib_nc_t nce;
     unsigned iface = IFACE, count = 0;
 
-    for (unsigned i = 0; i < GNRC_IPV6_NIB_NUMOF; i++) {
+    for (unsigned i = 0; i < CONFIG_GNRC_IPV6_NIB_NUMOF; i++) {
         TEST_ASSERT_EQUAL_INT(0, gnrc_ipv6_nib_nc_set(&addr, iface, l2addr,
                                                       sizeof(l2addr)));
         addr.u64[1].u64++;
@@ -176,7 +174,7 @@ static void test_nib_nc_del__unknown(void)
     while (gnrc_ipv6_nib_nc_iter(0, &iter_state, &nce)) {
         count++;
     }
-    TEST_ASSERT_EQUAL_INT(GNRC_IPV6_NIB_NUMOF, count);
+    TEST_ASSERT_EQUAL_INT(CONFIG_GNRC_IPV6_NIB_NUMOF, count);
 }
 
 /*
@@ -294,7 +292,7 @@ static void test_nib_nc_mark_reachable__success(void)
 
     iter_state = NULL;
     TEST_ASSERT(gnrc_ipv6_nib_nc_iter(0, &iter_state, &nce));
-#if GNRC_IPV6_NIB_CONF_ARSM
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_ARSM)
     /* check if entry is reachable */
     TEST_ASSERT_EQUAL_INT(GNRC_IPV6_NIB_NC_INFO_NUD_STATE_REACHABLE,
                           gnrc_ipv6_nib_nc_get_nud_state(&nce));

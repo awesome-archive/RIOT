@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- * Copyright (C) 2015 Zolertia SL
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2015 Zolertia SL
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_remote-revb
@@ -18,9 +17,6 @@
  * @author      Antonio Lignan <alinan@zolertia.com>
  * @author      Sebastian Meiling <s@mlng.net>
  */
-
-#ifndef BOARD_H
-#define BOARD_H
 
 #include "cpu.h"
 #include "board_common.h"
@@ -114,21 +110,18 @@
  * @{
  */
 #define SDCARD_SPI_PARAM_SPI       SPI_DEV(1)
-#define SDCARD_SPI_PARAM_CS        GPIO_PIN(0,7)
-#define SDCARD_SPI_PARAM_CLK       GPIO_PIN(2,4)
-#define SDCARD_SPI_PARAM_MOSI      GPIO_PIN(2,5)
-#define SDCARD_SPI_PARAM_MISO      GPIO_PIN(2,6)
-#define SDCARD_SPI_PARAM_POWER     GPIO_PIN(0,6)
+#define SDCARD_SPI_PARAM_CS        GPIO_PIN(0, 7)
+#define SDCARD_SPI_PARAM_CLK       GPIO_PIN(2, 4)
+#define SDCARD_SPI_PARAM_MOSI      GPIO_PIN(2, 5)
+#define SDCARD_SPI_PARAM_MISO      GPIO_PIN(2, 6)
+#define SDCARD_SPI_PARAM_POWER     GPIO_PIN(0, 6)
 #define SDCARD_SPI_PARAM_POWER_AH  false
 /** @} */
 
-/**
- * @brief Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
+/** Default MTD device */
+#define MTD_0 mtd_dev_get(0)
 
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
-#endif /* BOARD_H */
 /** @} */

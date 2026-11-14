@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 Marc Poulhiès
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016 Marc Poulhiès
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -100,7 +97,7 @@ int adc_init(adc_t line)
     return 0;
 }
 
-int adc_sample(adc_t line, adc_res_t res)
+int32_t adc_sample(adc_t line, adc_res_t res)
 {
     int value[2];
 

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -20,20 +17,32 @@
  * @}
  */
 
-#include <assert.h>
 #include <string.h>
 
 #include "log.h"
+#ifdef MODULE_PCF857X
+#include "pcf857x.h"
+#include "pcf857x_params.h"
+#else
 #include "periph/gpio.h"
+#endif
 #include "xtimer.h"
 
 #include "hd44780.h"
 #include "hd44780_internal.h"
 
+#ifdef MODULE_PCF857X
+static pcf857x_t _pcf857x_dev;
+#endif
+
 static inline void _command(const hd44780_t *dev, uint8_t value);
 static void _pulse(const hd44780_t *dev);
 static void _send(const hd44780_t *dev, uint8_t value, hd44780_state_t state);
 static void _write_bits(const hd44780_t *dev, uint8_t bits, uint8_t value);
+
+static inline void _gpio_set(gpio_t pin);
+static inline void _gpio_clear(gpio_t pin);
+static inline int _gpio_init(gpio_t pin, gpio_mode_t mode);
 
 /**
  * @brief   Send a command to the display
@@ -53,11 +62,11 @@ static inline void _command(const hd44780_t *dev, uint8_t value)
  */
 static void _pulse(const hd44780_t *dev)
 {
-    gpio_clear(dev->p.enable);
+    _gpio_clear(dev->p.enable);
     xtimer_usleep(HD44780_PULSE_WAIT_SHORT);
-    gpio_set(dev->p.enable);
+    _gpio_set(dev->p.enable);
     xtimer_usleep(HD44780_PULSE_WAIT_SHORT);
-    gpio_clear(dev->p.enable);
+    _gpio_clear(dev->p.enable);
     xtimer_usleep(HD44780_PULSE_WAIT_LONG);
 }
 
@@ -70,10 +79,10 @@ static void _pulse(const hd44780_t *dev)
  */
 static void _send(const hd44780_t *dev, uint8_t value, hd44780_state_t state)
 {
-    (state == HD44780_ON) ? gpio_set(dev->p.rs) : gpio_clear(dev->p.rs);
+    (state == HD44780_ON) ? _gpio_set(dev->p.rs) : _gpio_clear(dev->p.rs);
     /* if RW pin is available, set it to LOW */
-    if (dev->p.rw != HD44780_RW_OFF) {
-        gpio_clear(dev->p.rw);
+    if (gpio_is_valid(dev->p.rw)) {
+        _gpio_clear(dev->p.rw);
     }
     /* write data in 8Bit or 4Bit mode */
     if (dev->flag & HD44780_8BITMODE) {
@@ -89,13 +98,40 @@ static void _write_bits(const hd44780_t *dev, uint8_t bits, uint8_t value)
 {
     for (unsigned i = 0; i < bits; ++i) {
         if ((value >> i) & 0x01) {
-            gpio_set(dev->p.data[i]);
+            _gpio_set(dev->p.data[i]);
         }
         else {
-            gpio_clear(dev->p.data[i]);
+            _gpio_clear(dev->p.data[i]);
         }
     }
     _pulse(dev);
+}
+
+static inline int _gpio_init(gpio_t pin, gpio_mode_t mode)
+{
+#ifdef MODULE_PCF857X
+    return pcf857x_gpio_init(&_pcf857x_dev, pin, mode);
+#else
+    return gpio_init(pin, mode);
+#endif
+}
+
+static inline void _gpio_set(gpio_t pin)
+{
+#ifdef MODULE_PCF857X
+    pcf857x_gpio_set(&_pcf857x_dev, pin);
+#else
+    gpio_set(pin);
+#endif
+}
+
+static inline void _gpio_clear(gpio_t pin)
+{
+#ifdef MODULE_PCF857X
+    pcf857x_gpio_clear(&_pcf857x_dev, pin);
+#else
+    gpio_clear(pin);
+#endif
 }
 
 int hd44780_init(hd44780_t *dev, const hd44780_params_t *params)
@@ -108,19 +144,13 @@ int hd44780_init(hd44780_t *dev, const hd44780_params_t *params)
         LOG_ERROR("hd44780_init: invalid LCD size!\n");
         return -1;
     }
-    uint8_t count_pins = 0;
-    /* check which pins are used */
-    for (unsigned i = 0; i < HD44780_MAX_PINS; ++i) {
-        if (dev->p.data[i] != HD44780_RW_OFF) {
-            ++count_pins;
-        }
-    }
+    dev->flag = 0;
     /* set mode depending on configured pins */
-    if (count_pins < HD44780_MAX_PINS) {
-        dev->flag |= HD44780_4BITMODE;
+    if (gpio_is_valid(dev->p.data[4])) {
+        dev->flag |= HD44780_8BITMODE;
     }
     else {
-        dev->flag |= HD44780_8BITMODE;
+        dev->flag |= HD44780_4BITMODE;
     }
     /* set flag for 1 or 2 row mode, 4 rows are 2 rows split half */
     if (dev->p.rows > 1) {
@@ -137,22 +167,30 @@ int hd44780_init(hd44780_t *dev, const hd44780_params_t *params)
     dev->roff[2] = 0x00 + dev->p.cols;
     dev->roff[3] = 0x40 + dev->p.cols;
 
-    gpio_init(dev->p.rs, GPIO_OUT);
-    /* RW (read/write) of LCD not required, set it to HD44780_RW_OFF (255) */
-    if (dev->p.rw != HD44780_RW_OFF) {
-        gpio_init(dev->p.rw, GPIO_OUT);
+#ifdef MODULE_PCF857X
+    /*
+     * TODO: We need an approach for defining and initializing the PCF8574.
+     * With this approach, only one PCF8574 could exist in the system
+     */
+    pcf857x_init(&_pcf857x_dev, &pcf857x_params[0]);
+#endif
+
+    _gpio_init(dev->p.rs, GPIO_OUT);
+    /* RW (read/write) of LCD not required, set it to GPIO_UNDEF */
+    if (gpio_is_valid(dev->p.rw)) {
+        _gpio_init(dev->p.rw, GPIO_OUT);
     }
-    gpio_init(dev->p.enable, GPIO_OUT);
+    _gpio_init(dev->p.enable, GPIO_OUT);
     /* configure all data pins as output */
     for (int i = 0; i < ((dev->flag & HD44780_8BITMODE) ? 8 : 4); ++i) {
-        gpio_init(dev->p.data[i], GPIO_OUT);
+        _gpio_init(dev->p.data[i], GPIO_OUT);
     }
     /* see hitachi HD44780 datasheet pages 45/46 for init specs */
     xtimer_usleep(HD44780_INIT_WAIT_XXL);
-    gpio_clear(dev->p.rs);
-    gpio_clear(dev->p.enable);
-    if (dev->p.rw != HD44780_RW_OFF) {
-        gpio_clear(dev->p.rw);
+    _gpio_clear(dev->p.rs);
+    _gpio_clear(dev->p.enable);
+    if (gpio_is_valid(dev->p.rw)) {
+        _gpio_clear(dev->p.rw);
     }
     /* put the LCD into 4 bit or 8 bit mode */
     if (!(dev->flag & HD44780_8BITMODE)) {

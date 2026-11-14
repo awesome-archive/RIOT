@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_sixlowpan    6LoWPAN
@@ -67,12 +66,13 @@
  *
  *  1.  If @ref net_gnrc_sixlowpan_frag is included and @ref sixlowpan_frag_is() is true for the
  *      packet, the fragmentation header will be removed and its remaining data will be added to
- *      the reassembly buffer (using @ref rbuf_add()) in accordance to the fragmentation header.
- *      The packet containing the fragment will be discarded. When the fragmented datagram is
- *      complete, its payload will be marked with @ref GNRC_NETTYPE_IPV6 and issued via a
- *      @ref GNRC_NETAPI_MSG_TYPE_RCV to all subscribers registered to @ref GNRC_NETTYPE_IPV6 with
- *      demultiplex context @ref GNRC_NETREG_DEMUX_CTX_ALL in the @ref net_gnrc_netreg. If
- *      reassembly times out or if fragments overlap the datagram will be silently discarded.
+ *      the reassembly buffer (using @ref gnrc_sixlowpan_frag_rb_add()) in accordance to the
+ *      fragmentation header. The packet containing the fragment will be discarded. When the
+ *      fragmented datagram is complete, its payload will be marked with @ref GNRC_NETTYPE_IPV6 and
+ *      issued via a @ref GNRC_NETAPI_MSG_TYPE_RCV to all subscribers registered to @ref
+ *      GNRC_NETTYPE_IPV6 with demultiplex context @ref GNRC_NETREG_DEMUX_CTX_ALL in the @ref
+ *      net_gnrc_netreg. If reassembly times out or if fragments overlap the datagram will be
+ *      silently discarded.
  *  2.  If @ref net_gnrc_sixlowpan_iphc is included the packet will not be send to the subscribers
  *      to @ref GNRC_NETTYPE_IPV6 with demultiplex context @ref GNRC_NETREG_DEMUX_CTX_ALL
  *      immediately, but it will be checked first if @ref sixlowpan_iphc_is() is true for its
@@ -131,13 +131,12 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_GNRC_SIXLOWPAN_H
-#define NET_GNRC_SIXLOWPAN_H
 
 #include <stdbool.h>
 
-#include "kernel_types.h"
+#include "sched.h"
 
+#include "net/gnrc/sixlowpan/config.h"
 #include "net/gnrc/sixlowpan/frag.h"
 #include "net/gnrc/sixlowpan/internal.h"
 #include "net/gnrc/sixlowpan/iphc.h"
@@ -148,25 +147,27 @@ extern "C" {
 #endif
 
 /**
- * @brief   Default stack size to use for the 6LoWPAN thread.
+ * @brief   Same as @ref sixlowpan_frag_is but operates on a @ref gnrc_pktsnip_t
+ *
+ * @param[in]   snip    Packet snip to check for a valid 6LoWPAN fragment
+ *                      header
+ *
+ * @retval  true    @p snip starts with a valid 6LoWPAN fragment header
+ * @retval  false   @p snip does **NOT** start with a valid 6LoWPAN fragment
+ *                  header
  */
-#ifndef GNRC_SIXLOWPAN_STACK_SIZE
-#define GNRC_SIXLOWPAN_STACK_SIZE       (THREAD_STACKSIZE_DEFAULT)
-#endif
+static inline bool sixlowpan_frag_is_snip(const gnrc_pktsnip_t *snip)
+{
+    if (snip->size < sizeof(sixlowpan_frag_t)) {
+        return false;
+    }
 
-/**
- * @brief   Default priority for the 6LoWPAN thread.
- */
-#ifndef GNRC_SIXLOWPAN_PRIO
-#define GNRC_SIXLOWPAN_PRIO             (THREAD_PRIORITY_MAIN - 4)
-#endif
+    if (sixlowpan_frag_n_is(snip->data)) {
+        return snip->size >= sizeof(sixlowpan_frag_n_t);
+    }
 
-/**
- * @brief   Default message queue size to use for the 6LoWPAN thread.
- */
-#ifndef GNRC_SIXLOWPAN_MSG_QUEUE_SIZE
-#define GNRC_SIXLOWPAN_MSG_QUEUE_SIZE   (8U)
-#endif
+    return sixlowpan_frag_1_is(snip->data);
+}
 
 /**
  * @brief   Initialization of the 6LoWPAN thread.
@@ -185,5 +186,4 @@ kernel_pid_t gnrc_sixlowpan_init(void);
 }
 #endif
 
-#endif /* NET_GNRC_SIXLOWPAN_H */
 /** @} */

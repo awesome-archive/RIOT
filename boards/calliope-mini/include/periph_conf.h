@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016-2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016-2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_calliope-mini
@@ -17,60 +16,34 @@
  * @author      Semjon Kerner <semjon.kerner@fu-berlin.de>
  */
 
-#ifndef PERIPH_CONF_H
-#define PERIPH_CONF_H
-
 #include "periph_cpu.h"
 #include "cfg_clock_16_0.h"
+#include "cfg_timer_012.h"
+#include "cfg_rtt_default.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @name    Timer configuration
- * @{
- */
-static const timer_conf_t timer_config[] = {
-    {
-        .dev      = NRF_TIMER0,
-        .channels =  3,
-        .bitmode  = TIMER_BITMODE_BITMODE_24Bit,
-        .irqn     = TIMER0_IRQn
-    },
-    {
-        .dev      = NRF_TIMER1,
-        .channels = 3,
-        .bitmode  = TIMER_BITMODE_BITMODE_16Bit,
-        .irqn     = TIMER1_IRQn
-    }
-};
-
-#define TIMER_0_ISR         isr_timer0
-#define TIMER_1_ISR         isr_timer1
-
-#define TIMER_NUMOF         (sizeof(timer_config) / sizeof(timer_config[0]))
-/** @} */
-
-/**
- * @name    Real time counter configuration
- * @{
- */
-#define RTT_NUMOF           (1U)
-#define RTT_DEV             (1)             /* NRF_RTC1 */
-#define RTT_MAX_VALUE       (0x00ffffff)
-#define RTT_FREQUENCY       (1024)
-/** @} */
-
-/**
  * @name    UART configuration
  * @{
  */
-#define UART_NUMOF          (1U)
-/* UART pin configuration */
-#define UART_HWFLOWCTRL     0
-#define UART_PIN_RX         25
-#define UART_PIN_TX         24
+static const uart_conf_t uart_config[] = {
+    {
+        .dev        = NRF_UART0,
+        .rx_pin     = GPIO_PIN(0, 25),
+        .tx_pin     = GPIO_PIN(0, 24),
+#ifdef MODULE_PERIPH_UART_HW_FC
+        .rts_pin    = GPIO_UNDEF,
+        .cts_pin    = GPIO_UNDEF,
+#endif
+        .irqn       = UART0_IRQn,
+    },
+};
+
+#define UART_NUMOF          ARRAY_SIZE(uart_config)
+#define UART_0_ISR          isr_uart0
 /** @} */
 
 /**
@@ -87,7 +60,7 @@ static const i2c_conf_t i2c_config[] = {
     }
 };
 
-#define I2C_NUMOF           (sizeof(i2c_config) / sizeof(i2c_config[0]))
+#define I2C_NUMOF           ARRAY_SIZE(i2c_config)
 /** @} */
 
 /**
@@ -103,5 +76,4 @@ static const i2c_conf_t i2c_config[] = {
 }
 #endif
 
-#endif /* PERIPH_CONF_H */
 /** @} */

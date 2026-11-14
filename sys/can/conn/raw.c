@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -16,6 +13,7 @@
  * @}
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <string.h>
 
@@ -24,25 +22,29 @@
 #include "can/raw.h"
 #include "timex.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
-#include "xtimer.h"
+#include "ztimer.h"
 
 #define _TIMEOUT_TX_MSG_TYPE    (0x8000)
 #define _TIMEOUT_RX_MSG_TYPE    (0x8001)
 #define _CLOSE_CONN_MSG_TYPE    (0x8002)
 #define _TIMEOUT_MSG_VALUE      (0xABCDEFAB)
 
-#ifndef CONN_CAN_RAW_TIMEOUT_TX_CONF
-#define CONN_CAN_RAW_TIMEOUT_TX_CONF (1 * US_PER_SEC)
+#ifndef CONN_CAN_ISOTP_TIMEOUT_TX_CONF_US
+#define CONN_CAN_ISOTP_TIMEOUT_TX_CONF_US   (1 * US_PER_SEC)
 #endif
 
-int conn_can_raw_create(conn_can_raw_t *conn, struct can_filter *filter, size_t count,
+int conn_can_raw_create(conn_can_raw_t *conn, const struct can_filter *filter, size_t count,
                         int ifnum, int flags)
 {
     assert(conn != NULL);
-    assert(ifnum < CAN_DLL_NUMOF);
+    if (ifnum < 0 || ifnum >= CAN_DLL_NUMOF) {
+        memset(conn, 0, sizeof (*conn));
+        conn->ifnum = -1;
+        return -ENODEV;
+    }
 
     DEBUG("conn_can_raw_create: create conn=%p, ifnum=%d flags=%d\n", (void *)conn, ifnum, flags);
 
@@ -66,16 +68,15 @@ int conn_can_raw_create(conn_can_raw_t *conn, struct can_filter *filter, size_t 
     return conn_can_raw_set_filter(conn, filter, count);
 }
 
-
-int conn_can_raw_set_filter(conn_can_raw_t *conn, struct can_filter *filter, size_t count)
+int conn_can_raw_set_filter(conn_can_raw_t *conn, const struct can_filter *filter, size_t count)
 {
     assert(conn != NULL);
     assert(filter != NULL || count == 0);
 
-    DEBUG("conn_can_raw_set_filter: conn=%p, filter=%p, count=%u\n",
-          (void *)conn, (void *)filter, (unsigned)count);
-    DEBUG("conn_can_raw_set_filter: conn->filter=%p, conn->count=%u\n",
-          (void *)conn->filter, (unsigned)conn->count);
+    DEBUG("conn_can_raw_set_filter: conn=%p, filter=%p, count=%" PRIuSIZE "\n",
+          (void *)conn, (void *)filter, count);
+    DEBUG("conn_can_raw_set_filter: conn->filter=%p, conn->count=%" PRIuSIZE "\n",
+          (void *)conn->filter, conn->count);
 
     /* unset previous filters */
     if (conn->count) {
@@ -115,13 +116,17 @@ static void _tx_conf_timeout(void *arg)
     msg.type = _TIMEOUT_TX_MSG_TYPE;
     msg.content.value = _TIMEOUT_MSG_VALUE;
 
-    mbox_put(&conn->mbox, &msg);
+    mbox_try_put(&conn->mbox, &msg);
 }
 
-int conn_can_raw_send(conn_can_raw_t *conn, const struct can_frame *frame, int flags)
+int conn_can_raw_send(conn_can_raw_t *conn, const can_frame_t *frame, int flags)
 {
     assert(conn != NULL);
-    assert(conn->ifnum < CAN_DLL_NUMOF);
+
+    if (conn->ifnum < 0 || conn->ifnum >= CAN_DLL_NUMOF) {
+        return -ENODEV;
+    }
+
     assert((conn->flags & CONN_CAN_RECVONLY) == 0);
     assert(frame != NULL);
 
@@ -138,14 +143,14 @@ int conn_can_raw_send(conn_can_raw_t *conn, const struct can_frame *frame, int f
         }
     }
     else {
-        xtimer_t timer;
+        ztimer_t timer;
         timer.callback = _tx_conf_timeout;
         timer.arg = conn;
-        xtimer_set(&timer, CONN_CAN_RAW_TIMEOUT_TX_CONF);
+        ztimer_set(ZTIMER_USEC, &timer, CONN_CAN_ISOTP_TIMEOUT_TX_CONF_US);
 
         handle = raw_can_send_mbox(conn->ifnum, frame, &conn->mbox);
         if (handle < 0) {
-            xtimer_remove(&timer);
+            ztimer_remove(ZTIMER_USEC, &timer);
             return handle;
         }
 
@@ -153,7 +158,7 @@ int conn_can_raw_send(conn_can_raw_t *conn, const struct can_frame *frame, int f
         int timeout = 5;
         while (1) {
             mbox_get(&conn->mbox, &msg);
-            xtimer_remove(&timer);
+            ztimer_remove(ZTIMER_USEC, &timer);
             switch (msg.type) {
             case CAN_MSG_TX_ERROR:
                 return -EIO;
@@ -178,7 +183,7 @@ int conn_can_raw_send(conn_can_raw_t *conn, const struct can_frame *frame, int f
                 if (!timeout--) {
                     return -EINTR;
                 }
-                xtimer_set(&timer, CONN_CAN_RAW_TIMEOUT_TX_CONF);
+                ztimer_set(ZTIMER_USEC, &timer, CONN_CAN_ISOTP_TIMEOUT_TX_CONF_US);
                 break;
             }
         }
@@ -195,21 +200,25 @@ static void _rx_timeout(void *arg)
     msg.type = _TIMEOUT_RX_MSG_TYPE;
     msg.content.value = _TIMEOUT_MSG_VALUE;
 
-    mbox_put(&conn->mbox, &msg);
+    mbox_try_put(&conn->mbox, &msg);
 }
 
-int conn_can_raw_recv(conn_can_raw_t *conn, struct can_frame *frame, uint32_t timeout)
+int conn_can_raw_recv(conn_can_raw_t *conn, can_frame_t *frame, uint32_t timeout)
 {
     assert(conn != NULL);
-    assert(conn->ifnum < CAN_DLL_NUMOF);
+
+    if (conn->ifnum < 0 || conn->ifnum >= CAN_DLL_NUMOF) {
+        return -ENODEV;
+    }
+
     assert(frame != NULL);
 
-    xtimer_t timer;
+    ztimer_t timer;
 
     if (timeout != 0) {
         timer.callback = _rx_timeout;
         timer.arg = conn;
-        xtimer_set(&timer, timeout);
+        ztimer_set(ZTIMER_USEC, &timer, timeout);
     }
 
     int ret;
@@ -218,7 +227,7 @@ int conn_can_raw_recv(conn_can_raw_t *conn, struct can_frame *frame, uint32_t ti
 
     mbox_get(&conn->mbox, &msg);
     if (timeout != 0) {
-        xtimer_remove(&timer);
+        ztimer_remove(ZTIMER_USEC, &timer);
     }
     switch (msg.type) {
     case CAN_MSG_RX_INDICATION:
@@ -256,7 +265,10 @@ int conn_can_raw_recv(conn_can_raw_t *conn, struct can_frame *frame, uint32_t ti
 int conn_can_raw_close(conn_can_raw_t *conn)
 {
     assert(conn != NULL);
-    assert(conn->ifnum < CAN_DLL_NUMOF);
+
+    if (conn->ifnum < 0 || conn->ifnum >= CAN_DLL_NUMOF) {
+        return -ENODEV;
+    }
 
     DEBUG("conn_can_raw_close: conn=%p\n", (void *)conn);
 

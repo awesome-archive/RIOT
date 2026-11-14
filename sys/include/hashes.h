@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2013 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2013 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     sys_hashes_non_crypto
@@ -16,9 +15,6 @@
  * @author      Jason Linehan <patientulysses@gmail.com>
  * @author      Christian Mehlis <mehlis@inf.fu-berlin.de>
  */
-
-#ifndef HASHES_H
-#define HASHES_H
 
 #include <stddef.h>
 #include <inttypes.h>
@@ -142,7 +138,6 @@ uint32_t dek_hash(const uint8_t *buf, size_t len);
  */
 uint32_t fnv_hash(const uint8_t *buf, size_t len);
 
-
 /**
  * @defgroup sys_hashes_rotating Rotating
  * @ingroup sys_hashes_non_crypto
@@ -176,4 +171,3 @@ uint32_t one_at_a_time_hash(const uint8_t *buf, size_t len);
 #endif
 
 /** @} */
-#endif /* HASHES_H */

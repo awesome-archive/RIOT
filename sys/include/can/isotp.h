@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_can_isotp ISO transport protocol over CAN
@@ -18,19 +17,37 @@
  * @author      Vincent Dupont <vincent@otakeys.com>
  */
 
-#ifndef CAN_ISOTP_H
-#define CAN_ISOTP_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "can/can.h"
 #include "can/common.h"
-#include "thread.h"
-#include "xtimer.h"
+#include "compiler_hints.h"
 #include "net/gnrc/pktbuf.h"
+#include "thread.h"
+#include "ztimer.h"
 
+#ifndef CAN_ISOTP_BS
+/**
+ * @brief   Default Block Size for RX Flow Control frames
+ */
+#  define CAN_ISOTP_BS (10)
+#endif
+
+#ifndef CAN_ISOTP_STMIN
+/**
+ * @brief   Default STmin for RX Flow Control frames
+ */
+#  define CAN_ISOTP_STMIN (5)
+#endif
+
+#ifndef CAN_ISOTP_WFTMAX
+/**
+ * @brief   Default maximum WFT for TX Flow Control
+ */
+#  define CAN_ISOTP_WFTMAX (1)
+#endif
 
 /**
  * @brief The isotp_fc_options struct
@@ -90,8 +107,8 @@ struct isotp {
     struct isotp_fc_options txfc;  /**< tx flow control options (defined remotely) */
     struct tpcon tx;               /**< transmit state */
     struct tpcon rx;               /**< receive state */
-    xtimer_t tx_timer;             /**< timer for tx operations */
-    xtimer_t rx_timer;             /**< timer for rx operations */
+    ztimer_t tx_timer;             /**< timer for tx operations */
+    ztimer_t rx_timer;             /**< timer for rx operations */
     can_reg_entry_t entry;         /**< entry containing ifnum and upper layer msg system */
     uint32_t tx_gap;               /**< transmit gap from fc (in us) */
     uint8_t tx_wft;                /**< transmit wait counter */
@@ -147,8 +164,9 @@ kernel_pid_t isotp_init(char *stack, int stacksize, char priority, const char *n
  * @param flags           flags for sending
  *
  * @return the number of bytes sent
- * @return < 0 if an error occured  (-EBUSY, -ENOMEM)
+ * @return < 0 if an error occurred  (-EBUSY, -ENOMEM)
  */
+ACCESS(read_only, 2, 3)
 int isotp_send(struct isotp *isotp, const void *buf, int len, int flags);
 
 /**
@@ -160,11 +178,14 @@ int isotp_send(struct isotp *isotp, const void *buf, int len, int flags);
  * @param isotp           the channel to bind
  * @param entry           entry identifying the CAN ifnum and the upper layer
  *                        either by its pid or its mailbox
+ * @param fc_options      flow control parameters, bs and stmin for rx, wftmax for tx,
+ *                        if NULL, default values will be used
  * @param arg             upper layer private parameter
  *
  * @return 0 on success, < 0 on error
  */
-int isotp_bind(struct isotp *isotp, can_reg_entry_t *entry, void *arg);
+int isotp_bind(struct isotp *isotp, can_reg_entry_t *entry, void *arg,
+               struct isotp_fc_options *fc_options);
 
 /**
  * @brief Release a bound isotp channel
@@ -172,7 +193,7 @@ int isotp_bind(struct isotp *isotp, can_reg_entry_t *entry, void *arg);
  * Unset the filter on the DLL and remove the channel from the list
  * of bound channels
  *
- * @param isotp           the channel to relase
+ * @param isotp           the channel to release
  *
  * @return 0 on success, < 0 on error
  */
@@ -191,5 +212,4 @@ void isotp_free_rx(can_rx_data_t *rx);
 }
 #endif
 
-#endif /* CAN_ISOTP_H */
 /** @} */

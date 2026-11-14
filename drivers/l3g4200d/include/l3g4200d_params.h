@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_l3g4200d
@@ -15,9 +14,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef L3G4200D_PARAMS_H
-#define L3G4200D_PARAMS_H
 
 #include "board.h"
 #include "l3g4200d.h"
@@ -35,7 +31,7 @@ extern "C" {
 #define L3G4200D_PARAM_I2C          I2C_DEV(0)
 #endif
 #ifndef L3G4200D_PARAM_ADDR
-#define L3G4200D_PARAM_ADDR         (0x68)
+#define L3G4200D_PARAM_ADDR         (CONFIG_L3G4200D_DEFAULT_ADDRESS)
 #endif
 #ifndef L3G4200D_PARAM_INT1
 #define L3G4200D_PARAM_INT1         (GPIO_PIN(0, 0))
@@ -83,5 +79,4 @@ static const saul_reg_info_t l3g4200d_saul_info[] =
 }
 #endif
 
-#endif /* L3G4200D_PARAMS_H */
 /** @} */

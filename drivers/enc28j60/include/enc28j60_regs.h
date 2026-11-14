@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_enc28j60
@@ -15,9 +14,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef ENC28J60_REGS_H
-#define ENC28J60_REGS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -329,7 +325,6 @@ extern "C" {
 #define EFLOCON_FCEN_MASK   0x03
 /** @} */
 
-
 /**
  * @name    PHCON1 bitfields
  * @{
@@ -432,5 +427,4 @@ extern "C" {
 }
 #endif
 
-#endif /* ENC28J60_REGS_H */
 /** @} */

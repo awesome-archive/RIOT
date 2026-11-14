@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2018 Eistec AB
- *               2018 Otto-von-Guericke-Universität Magdeburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Eistec AB
+ * SPDX-FileCopyrightText: 2018 Otto-von-Guericke-Universität Magdeburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -20,6 +17,7 @@
  * @}
  */
 
+#include <assert.h>
 #include <stdint.h>
 #include "phydat.h"
 
@@ -56,11 +54,11 @@ static const uint32_t divisors[] = {
     10,
 };
 
-#define LOOKUP_LEN (sizeof(lookup_table_positive) / sizeof(int32_t))
+#define LOOKUP_LEN ARRAY_SIZE(lookup_table_positive)
 
 void phydat_fit(phydat_t *dat, const int32_t *values, unsigned int dim)
 {
-    assert(dim <= (sizeof(dat->val) / sizeof(dat->val[0])));
+    assert(dim <= ARRAY_SIZE(dat->val));
     uint32_t divisor = 0;
     uint32_t max = 0;
     const uint32_t *lookup = lookup_table_positive;

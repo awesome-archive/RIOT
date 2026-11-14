@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017   HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_mag3110
@@ -15,9 +14,6 @@
  *
  * @author      Sebastian Meiling <s@mlng.net>
  */
-
-#ifndef MAG3110_PARAMS_H
-#define MAG3110_PARAMS_H
 
 #include "board.h"
 #include "saul_reg.h"
@@ -36,7 +32,7 @@ extern "C" {
 #define MAG3110_PARAM_I2C       (I2C_DEV(0))
 #endif
 #ifndef MAG3110_PARAM_ADDR
-#define MAG3110_PARAM_ADDR      (MAG3110_I2C_ADDRESS)
+#define MAG3110_PARAM_ADDR      (CONFIG_MAG3110_I2C_ADDRESS)
 #endif
 #ifndef MAG3110_PARAM_OFFSET
 #define MAG3110_PARAM_OFFSET    { 0, 0, 0 }
@@ -73,5 +69,4 @@ static const saul_reg_info_t mag3110_saul_info[] =
 }
 #endif
 
-#endif /* MAG3110_PARAMS_H */
 /** @} */

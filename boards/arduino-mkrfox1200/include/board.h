@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_arduino-mkrfox1200
@@ -17,13 +16,11 @@
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include "cpu.h"
 #include "periph_conf.h"
 #include "board_common.h"
 #include "arduino_pinmap.h"
+#include "periph/gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,11 +38,6 @@ extern "C" {
 /** @} */
 
 /**
- * @brief   The on-board LED is connected to pin 6 on this board
- */
-#define ARDUINO_LED         (6U)
-
-/**
  * @name    LED pin definitions and handlers
  * @{
  */
@@ -57,11 +49,12 @@ extern "C" {
 #define LED0_ON             (LED_PORT.OUTSET.reg = LED0_MASK)
 #define LED0_OFF            (LED_PORT.OUTCLR.reg = LED0_MASK)
 #define LED0_TOGGLE         (LED_PORT.OUTTGL.reg = LED0_MASK)
+
+#define LED0_NAME           "LED(Green)"
 /** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

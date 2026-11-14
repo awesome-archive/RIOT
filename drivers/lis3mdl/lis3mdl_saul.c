@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -29,13 +26,13 @@ static int read_mag(const void *dev, phydat_t *res)
 
     lis3mdl_read_mag(d, (lis3mdl_3d_data_t *)res);
 
-    res->unit = UNIT_GS;
+    res->unit = UNIT_GAUSS;
     res->scale = -3;
     return 3;
 }
 
 const saul_driver_t lis3mdl_saul_mag_driver = {
     .read = read_mag,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_MAG,
 };

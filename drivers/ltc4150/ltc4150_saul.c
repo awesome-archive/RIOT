@@ -1,9 +1,6 @@
 /*
- * Copyright 2019 Otto-von-Guericke-Universität Magdeburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2019 Otto-von-Guericke-Universität Magdeburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -35,7 +32,7 @@ static int read_charge(const void *_dev, phydat_t *res)
         res->scale = -3;
         res->unit = UNIT_COULOMB;
         temp[0] = temp[2] - temp[1];
-        int dim = (dev->params.polarity != GPIO_UNDEF) ? 3 : 1;
+        int dim = (gpio_is_valid(dev->params.polarity)) ? 3 : 1;
         phydat_fit(res, temp, (unsigned)dim);
         return dim;
     }
@@ -56,12 +53,12 @@ static int read_current(const void *dev, phydat_t *res)
 
 const saul_driver_t ltc4150_saul_charge_driver = {
     .read = read_charge,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_CHARGE
 };
 
 const saul_driver_t ltc4150_saul_current_driver = {
     .read = read_current,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_CURRENT
 };

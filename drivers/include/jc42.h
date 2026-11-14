@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Koen Zandberg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Koen Zandberg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_jc42 JC42 compliant temperature sensor driver
@@ -30,12 +29,8 @@
  * @author      Koen Zandberg <koen@bergzand.net>
  */
 
-#ifndef JC42_H
-#define JC42_H
-
 #include "periph/i2c.h"
 #include "saul.h"
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,7 +44,6 @@ extern "C" {
 #define JC42_NOI2C                    (-1)
 #define JC42_NODEV                    (-2)
 /** @} */
-
 
 /**
   * @brief   Device descriptor for a jc42 device
@@ -107,7 +101,6 @@ int jc42_get_config(const jc42_t* dev, uint16_t* data);
  */
 int jc42_set_config(const jc42_t* dev, uint16_t data);
 
-
 /**
  * @brief   Get measured temperature
  *
@@ -123,5 +116,4 @@ int jc42_get_temperature(const jc42_t* dev, int16_t* temperature);
 }
 #endif
 
-#endif /* JC42_H */
 /** @} */

@@ -1,10 +1,6 @@
 /*
- * Copyright (C) 2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
- *
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -22,12 +18,10 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "assert.h"
 #include "hts221.h"
 #include "periph/i2c.h"
-#include "xtimer.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    0
 #include "debug.h"
 
 #define BUS             (dev->p.i2c)
@@ -41,7 +35,7 @@ static int _set_power(const hts221_t *dev, const bool active);
  * @note This function does not acquire or release the I2C bus, must be done
  *       in calling function!
  *
- * @param[in|out] dev   device descriptor of sensor
+ * @param[in,out] dev   device descriptor of sensor
  *
  * @returns             HTS221_OK on success, or error otherwise
  */
@@ -90,7 +84,7 @@ int _humidity_calibration(hts221_t *dev)
  * @note This function does not acquire or release the I2C bus, must be done
  *       in calling function!
  *
- * @param[in|out] dev   device descriptor of sensor
+ * @param[in,out] dev   device descriptor of sensor
  *
  * @returns             HTS221_OK on success, or error otherwise
  */

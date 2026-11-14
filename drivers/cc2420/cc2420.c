@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2015-2016 Freie Universität Berlin
- *               2016 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015-2016 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -20,7 +17,6 @@
  * @}
  */
 
-#include "luid.h"
 #include "byteorder.h"
 #include "net/ieee802154.h"
 #include "net/gnrc.h"
@@ -29,35 +25,33 @@
 #include "cc2420_netdev.h"
 #include "cc2420_registers.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
-
-void cc2420_setup(cc2420_t * dev, const cc2420_params_t *params)
+void cc2420_setup(cc2420_t * dev, const cc2420_params_t *params, uint8_t index)
 {
+    netdev_t *netdev = &dev->netdev.netdev;
+
     /* set pointer to the devices netdev functions */
-    dev->netdev.netdev.driver = &cc2420_driver;
+    netdev->driver = &cc2420_driver;
     /* pull in device configuration parameters */
     dev->params = *params;
     dev->state = CC2420_STATE_IDLE;
     /* reset device descriptor fields */
     dev->options = 0;
+
+    netdev_register(netdev, NETDEV_CC2420, index);
+    netdev_ieee802154_setup(&dev->netdev);
 }
 
 int cc2420_init(cc2420_t *dev)
 {
     uint16_t reg;
-    uint8_t addr[8];
 
     netdev_ieee802154_reset(&dev->netdev);
 
-    /* set default address, channel, PAN ID, and TX power */
-    luid_get(addr, sizeof(addr));
-    /* make sure we mark the address as non-multicast and not globally unique */
-    addr[0] &= ~(0x01);
-    addr[0] |= 0x02;
-    cc2420_set_addr_short(dev, &addr[6]);
-    cc2420_set_addr_long(dev, addr);
+    cc2420_set_addr_short(dev, dev->netdev.short_addr);
+    cc2420_set_addr_long(dev, dev->netdev.long_addr);
     cc2420_set_chan(dev, CC2420_CHAN_DEFAULT);
     cc2420_set_txpower(dev, CC2420_TXPOWER_DEFAULT);
 
@@ -87,11 +81,10 @@ int cc2420_init(cc2420_t *dev)
     cc2420_reg_write(dev, CC2420_REG_MDMCTRL0, reg);
 
     /* go into RX state */
-    cc2420_set_state(dev, CC2420_GOTO_RX);
+    cc2420_set_state(dev, NETOPT_STATE_IDLE);
 
     return 0;
 }
-
 
 bool cc2420_cca(cc2420_t *dev)
 {
@@ -131,11 +124,13 @@ size_t cc2420_tx_prepare(cc2420_t *dev, const iolist_t *iolist)
     cc2420_strobe(dev, CC2420_STROBE_FLUSHTX);
     /* push packet length to TX FIFO */
     cc2420_fifo_write(dev, (uint8_t *)&pkt_len, 1);
-    /* push packet to TX FIFO */
+    /* push packet to TX FIFO, only if iol->iol_len > 0 */
     for (const iolist_t *iol = iolist; iol; iol = iol->iol_next) {
-        cc2420_fifo_write(dev, iol->iol_base, iol->iol_len);
+        if (iol->iol_len > 0) {
+            cc2420_fifo_write(dev, iol->iol_base, iol->iol_len);
+        }
     }
-    DEBUG("cc2420: tx_prep: loaded %i byte into the TX FIFO\n", (int)pkt_len);
+    DEBUG("cc2420: tx_prep: loaded %" PRIuSIZE " byte into the TX FIFO\n", pkt_len);
 
     return pkt_len;
 }
@@ -143,7 +138,7 @@ size_t cc2420_tx_prepare(cc2420_t *dev, const iolist_t *iolist)
 void cc2420_tx_exec(cc2420_t *dev)
 {
     /* trigger the transmission */
-    if (dev->options & CC2420_OPT_TELL_TX_START) {
+    if (dev->netdev.netdev.event_callback) {
         dev->netdev.netdev.event_callback(&dev->netdev.netdev,
                                           NETDEV_EVENT_TX_STARTED);
     }

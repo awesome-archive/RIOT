@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_dht
@@ -15,9 +14,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef DHT_PARAMS_H
-#define DHT_PARAMS_H
 
 #include "board.h"
 #include "dht.h"
@@ -38,7 +34,7 @@ extern "C" {
 #define DHT_PARAM_TYPE              (DHT11)
 #endif
 #ifndef DHT_PARAM_PULL
-#define DHT_PARAM_PULL              (GPIO_IN_PU)
+#define DHT_PARAM_PULL              (GPIO_IN)
 #endif
 #ifndef DHT_PARAMS
 #define DHT_PARAMS                  { .pin     = DHT_PARAM_PIN,  \
@@ -70,5 +66,4 @@ static const saul_reg_info_t dht_saul_info[] =
 }
 #endif
 
-#endif /* DHT_PARAMS_H */
 /** @} */

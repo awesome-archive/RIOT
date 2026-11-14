@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2014-2017 Freie Universität Berlin
- *               2015 Jan Wagner <mail@jwagner.eu>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014-2017 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2015 Jan Wagner <mail@jwagner.eu>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -26,6 +23,23 @@
 #include "periph/rtt.h"
 
 /* get the IRQ configuration */
+#if defined(CPU_FAM_NRF53) || defined(CPU_FAM_NRF9160)
+#if (RTT_DEV == 0)
+#ifdef NRF_TRUSTZONE_NONSECURE
+#define DEV             NRF_RTC0_NS
+#else
+#define DEV             NRF_RTC0_S
+#endif
+#define ISR             isr_rtc0
+#define IRQn            RTC0_IRQn
+#elif (RTT_DEV == 1)
+#define DEV             NRF_RTC1_S
+#define ISR             isr_rtc1
+#define IRQn            RTC1_IRQn
+#else
+#error "RTT configuration: invalid or no RTC device specified (RTT_DEV)"
+#endif
+#else
 #if (RTT_DEV == 1)
 #define DEV             NRF_RTC1
 #define ISR             isr_rtc1
@@ -37,8 +51,7 @@
 #else
 #error "RTT configuration: invalid or no RTC device specified (RTT_DEV)"
 #endif
-
-#define LFCLK_FREQ      (32768U)
+#endif /* CPU_FAM_NRF53 || CPU_FAM_NRF9160 */
 
 /* allocate memory for callbacks and their args */
 static rtt_cb_t alarm_cb;
@@ -59,7 +72,7 @@ void rtt_init(void)
     /* configure interrupt */
     NVIC_EnableIRQ(IRQn);
     /* set prescaler */
-    DEV->PRESCALER = (LFCLK_FREQ / RTT_FREQUENCY) - 1;
+    DEV->PRESCALER = (RTT_CLOCK_FREQUENCY / RTT_FREQUENCY) - 1;
     /* start the actual RTT thing */
     DEV->TASKS_START = 1;
 }
@@ -79,12 +92,6 @@ void rtt_clear_overflow_cb(void)
 uint32_t rtt_get_counter(void)
 {
     return DEV->COUNTER;
-}
-
-void rtt_set_counter(uint32_t counter)
-{
-    (void) counter;
-    /* not supported by the nRF5x */
 }
 
 void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg)

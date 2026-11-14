@@ -1,18 +1,15 @@
 /*
- * Copyright (C) 2016 Kaspar Schleiser <kaspar@schleiser.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #include <arpa/inet.h>
-#include <stdio.h>
 
+#include "log.h"
 #include "net/af.h"
 #include "net/sock/udp.h"
 #include "net/uhcp.h"
-#include "xtimer.h"
+#include "ztimer.h"
 
 /**
  * @brief Request prefix from uhcp server
@@ -38,19 +35,23 @@ void uhcp_client(uhcp_iface_t iface)
 
     /* create listening socket */
     int res = sock_udp_create(&sock, &local, NULL, 0);
+    if (res < 0) {
+        LOG_ERROR("uhcp_client(): cannot create listening socket\n");
+        return;
+    }
 
     uint8_t buf[sizeof(uhcp_push_t) + 16];
 
-    while(1) {
-        puts("uhcp_client(): sending REQ...");
+    while (1) {
+        LOG_DEBUG("uhcp_client(): sending REQ...\n");
         sock_udp_send(&sock, &req, sizeof(uhcp_req_t), &req_target);
         res = sock_udp_recv(&sock, buf, sizeof(buf), 10U*US_PER_SEC, &remote);
         if (res > 0) {
             uhcp_handle_udp(buf, res, remote.addr.ipv6, remote.port, iface);
-            xtimer_sleep(60);
+            ztimer_sleep(ZTIMER_MSEC, 60 * MS_PER_SEC);
         }
         else {
-            puts("uhcp_client(): no reply received");
+            LOG_ERROR("uhcp_client(): no reply received\n");
         }
     }
 }

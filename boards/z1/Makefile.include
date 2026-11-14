@@ -1,13 +1,14 @@
-# CPU used by this board
-export CPU = msp430fxyz
-export CPU_MODEL = msp430f2617
-
-# set default port depending on operating system
-PORT_LINUX ?= /dev/ttyUSB0
-PORT_DARWIN ?= $(firstword $(sort $(wildcard /dev/tty.SLAB_USBtoUART*)))
-# setup serial terminal
-include $(RIOTMAKE)/tools/serial.inc.mk
-
 # setup flash tool
-export FLASHER = $(RIOTTOOLS)/goodfet/goodfet.bsl
-export FFLAGS = --z1 -I -c $(PORT) -r -e -p $(HEXFILE)
+PROGRAMMER ?= goodfet
+GOODFET_FLAGS ?= --z1
+
+PROGRAMMERS_SUPPORTED += goodfet
+
+include $(RIOTBOARD)/common/msp430/Makefile.include
+
+include $(RIOTBASE)/makefiles/color.inc.mk
+$(call echowarn,("The z1 board is deprecated and currently remains as a test"\
+                 "platform for 16-bit microcontrollers. The functionality is"\
+                 "not actively maintained anymore and it does not necessarily"\
+                 "work to the same standards as other boards in RIOT."\
+                 "It might be removed on short notice in the future."))

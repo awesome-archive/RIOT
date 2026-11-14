@@ -1,11 +1,8 @@
 /*
- * Copyright (C) 2016 Kaspar Schleiser <kaspar@schleiser.de>
- * Copyright (C) 2014 Freie Universität Berlin
- * Copyright (C) 2015 Saurabh Singh
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2015 Saurabh Singh
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -25,7 +22,7 @@
 
 #include "periph/pm.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 enum system_sleepmode {
@@ -56,25 +53,25 @@ void pm_set(unsigned mode)
     int deep = 0;
 
     switch (mode) {
-        case 0:
+        case SAMD21_PM_STANDBY:
             /* Standby Mode
              * Potential Wake Up sources: asynchronous
              */
             deep = 1;
             break;
-        case 1:
+        case SAMD21_PM_IDLE_2:
             /* Sleep mode Idle 2
              * Potential Wake Up sources: asynchronous
              */
             PM->SLEEP.reg = SYSTEM_SLEEPMODE_IDLE_2;
             break;
-        case 2:
+        case SAMD21_PM_IDLE_1:
             /* Sleep mode Idle 1
              * Potential Wake Up sources: Synchronous (APB), asynchronous
              */
             PM->SLEEP.reg = SYSTEM_SLEEPMODE_IDLE_1;
             break;
-        case 3:
+        case SAMD21_PM_IDLE_0:
             /* Sleep mode Idle 0
              * Potential Wake Up sources: Synchronous (APB, AHB), asynchronous
             */
@@ -82,5 +79,5 @@ void pm_set(unsigned mode)
             break;
     }
 
-    cortexm_sleep(deep);
+    sam0_cortexm_sleep(deep);
 }

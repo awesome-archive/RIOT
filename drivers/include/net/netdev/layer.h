@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Koen Zandberg <koen@bergzand.net>
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2017 Koen Zandberg <koen@bergzand.net>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_netdev_api
@@ -15,9 +14,6 @@
  *
  * @author      Koen Zandberg <koen@bergzand.net>
  */
-
-#ifndef NET_NETDEV_LAYER_H
-#define NET_NETDEV_LAYER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -140,5 +136,4 @@ void netdev_event_cb_pass(netdev_t *dev, netdev_event_t event);
 }
 #endif
 
-#endif /* NET_NETDEV_LAYER_H */
 /** @} */

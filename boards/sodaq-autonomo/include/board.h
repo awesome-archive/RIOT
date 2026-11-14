@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Kees Bakker, SODAQ
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Kees Bakker, SODAQ
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_sodaq-autonomo
@@ -16,24 +15,13 @@
  * @author      Kees Bakker <kees@sodaq.com>
  */
 
-#ifndef BOARD_H
-#define BOARD_H
-
 #include "cpu.h"
-#include "periph_conf.h"
-#include "periph_cpu.h"
+#include "board_common.h"
+#include "periph/gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @name    xtimer configuration
- * @{
- */
-#define XTIMER              TIMER_1
-#define XTIMER_CHAN         (0)
-/** @} */
 
 /**
  * @name    LED pin definitions and handlers
@@ -49,14 +37,8 @@ extern "C" {
 #define LED0_TOGGLE         (LED_PORT.OUTTGL.reg = LED0_MASK)
 /** @} */
 
-/**
- * @brief   Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

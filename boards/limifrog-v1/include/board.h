@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Hamburg University of Applied Sciences
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2015 Hamburg University of Applied Sciences
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_limifrog-v1
@@ -15,9 +14,6 @@
  *
  * @author      Katja Kirstein <katja.kirstein@haw-hamburg.de>
  */
-
-#ifndef BOARD_H
-#define BOARD_H
 
 #include <stdint.h>
 
@@ -32,14 +28,9 @@ extern "C" {
  * @name    LED pin definitions and handlers
  * @{
  */
-#define LED0_PIN            GPIO_PIN(PORT_C, 3)
-
-#define LED0_PORT           (GPIOC)
-#define LED0_MASK           (1 << 3)
-
-#define LED0_ON             (LED0_PORT->BSRR = LED0_MASK)
-#define LED0_OFF            (LED0_PORT->BSRR = (LED0_MASK << 16))
-#define LED0_TOGGLE         (LED0_PORT->ODR  ^= LED0_MASK)
+#define LED0_PIN_NUM        3
+#define LED0_PORT           GPIO_PORT_C /**< GPIO port of LED 0 */
+#define LED0_PORT_NUM       PORT_C
  /** @} */
 
  /**
@@ -57,14 +48,10 @@ extern "C" {
 #define LIS3MDL_PARAM_ADDR       (0x28)
 /** @} */
 
-/**
- * @brief   Initialize board specific hardware, including clock, LEDs and std-IO
- */
-void board_init(void);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
+#include "stm32_leds.h"
+
 /** @} */

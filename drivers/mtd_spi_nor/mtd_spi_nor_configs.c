@@ -1,10 +1,6 @@
 /*
- * Copyright (C) 2016 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
- *
+ * SPDX-FileCopyrightText: 2016 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -36,7 +32,7 @@ const mtd_spi_nor_opcode_t mtd_spi_nor_opcode_default = {
     .page_program    = 0x02,
     .sector_erase    = 0x20,
     .block_erase_32k = 0x52,
-    .block_erase     = 0xd8,
+    .block_erase_64k = 0xd8,
     .chip_erase      = 0xc7,
     .sleep           = 0xb9,
     .wake            = 0xab,
@@ -52,7 +48,7 @@ const mtd_spi_nor_opcode_t mtd_spi_nor_opcode_default_4bytes = {
     .page_program    = 0x12,
     .sector_erase    = 0x21,
     .block_erase_32k = 0x5c,
-    .block_erase     = 0xdc,
+    .block_erase_64k = 0xdc,
     .chip_erase      = 0xc7,
     .sleep           = 0xb9,
     .wake            = 0xab,

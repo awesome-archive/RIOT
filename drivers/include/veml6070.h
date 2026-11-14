@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_veml6070 VEML6070 UV sensor
@@ -20,9 +19,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef VEML6070_H
-#define VEML6070_H
 
 #include "saul.h"
 #include "periph/i2c.h"
@@ -88,5 +84,4 @@ uint16_t veml6070_read_uv(const veml6070_t *dev);
 }
 #endif
 
-#endif /* VEML6070_H */
 /** @} */

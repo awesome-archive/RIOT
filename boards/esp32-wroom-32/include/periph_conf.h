@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_esp32_wroom-32
@@ -18,18 +17,15 @@
  * number of clones.
  *
  * For detailed information about the configuration of ESP32 boards, see
- * section \ref esp32_comm_periph "Common Peripherals".
+ * section \ref esp32_peripherals "Common Peripherals".
  *
  * @note
- * Most definitions can be overridden by an \ref esp32_app_spec_conf
+ * Most definitions can be overridden by an \ref esp32_application_specific_configurations
  * "application-specific board configuration".
  *
  * @file
  * @author      Gunar Schorcht <gunar@schorcht.net>
  */
-
-#ifndef PERIPH_CONF_H
-#define PERIPH_CONF_H
 
 #include <stdint.h>
 
@@ -48,11 +44,11 @@ extern "C" {
  * channels.
  *
  * @note As long as the GPIOs listed in ADC_GPIOS are not initialized as ADC
- * channels with the ```adc_init``` function, they can be used for other
+ * channels with the `adc_init` function, they can be used for other
  * purposes.
  */
 #ifndef ADC_GPIOS
-#define ADC_GPIOS   { GPIO0 , GPIO2 , GPIO4 , GPIO12, GPIO13, GPIO14, \
+#define ADC_GPIOS   { GPIO0, GPIO2, GPIO4, GPIO12, GPIO13, GPIO14, \
                       GPIO15, GPIO25, GPIO26, GPIO27, GPIO32, GPIO33, \
                       GPIO34, GPIO35, GPIO36, GPIO39 }
 #endif
@@ -64,7 +60,7 @@ extern "C" {
  * DAC channels.
  *
  * @note As long as the GPIOs listed in DAC_GPIOS are not initialized as DAC
- * channels with the ```dac_init``` function, they can be used for other
+ * channels with the `dac_init` function, they can be used for other
  * purposes.
  */
 #ifndef DAC_GPIOS
@@ -78,7 +74,7 @@ extern "C" {
  * For generic boards, only one I2C interface I2C_DEV(0) is defined.
  *
  * The GPIOs listed in the configuration are only initialized as I2C signals
- * when module ```perpih_i2c``` is used. Otherwise they are not allocated and
+ * when module `periph_i2c` is used. Otherwise they are not allocated and
  * can be used for other purposes.
  *
  * @{
@@ -102,7 +98,7 @@ extern "C" {
  * Generally, all outputs pins could be used as PWM channels.
  *
  * @note As long as the according PWM device is not initialized with
- * the ```pwm_init```, the GPIOs declared for this device can be used
+ * the `pwm_init`, the GPIOs declared for this device can be used
  * for other purposes.
  *
  * @{
@@ -130,7 +126,7 @@ extern "C" {
  *
  * @note The GPIOs listed in the configuration are first initialized as SPI
  * signals when the corresponding SPI interface is used for the first time
- * by either calling the ```spi_init_cs``` function or the ```spi_acquire```
+ * by either calling the `spi_init_cs` function or the `spi_acquire`
  * function. That is, they are not allocated as SPI signals before and can
  * be used for other purposes as long as the SPI interface is not used.
  * @{
@@ -171,7 +167,7 @@ extern "C" {
 /**
  * @name   UART configuration
  *
- * ESP32 provides 3 UART interaces at maximum:
+ * ESP32 provides 3 UART interfaces at maximum:
  *
  * UART_DEV(0) uses fixed standard configuration.<br>
  * UART_DEV(1) is defined here.<br>
@@ -182,7 +178,7 @@ extern "C" {
 #define UART0_TXD   GPIO1  /**< direct I/O pin for UART_DEV(0) TxD, can't be changed */
 #define UART0_RXD   GPIO3  /**< direct I/O pin for UART_DEV(0) RxD, can't be changed */
 
-#if FLASH_MODE_DOUT || FLASH_MODE_DIO || DOXYGEN
+#if CONFIG_FLASHMODE_DOUT || CONFIG_FLASHMODE_DIO || DOXYGEN
 #ifndef UART1_TXD
 #define UART1_TXD   GPIO10  /**< direct I/O pin for UART_DEV(1) TxD */
 #endif
@@ -191,10 +187,9 @@ extern "C" {
 #endif
 #else
 #warning Configuration problem: Flash mode is qio or qout, \
-         GPIO9 and GPIO10 are not available for UART1 as configured
+         GPIO9 and GPIO10 are not available to UART1 as configured
 #endif
 /** @} */
-
 
 #ifdef __cplusplus
 } /* end extern "C" */
@@ -203,5 +198,4 @@ extern "C" {
 /* include common peripheral definitions as last step */
 #include "periph_conf_common.h"
 
-#endif /* PERIPH_CONF_H */
 /** @} */

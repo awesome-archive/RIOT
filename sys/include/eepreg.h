@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 Acutam Automation, LLC
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Acutam Automation, LLC
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_eepreg EEPROM registration
@@ -53,9 +52,6 @@
  *
  * @author      Matthew Blue <matthew.blue.neuro@gmail.com>
  */
-
-#ifndef EEPREG_H
-#define EEPREG_H
 
 #include <stdint.h>
 
@@ -267,5 +263,3 @@ int eepreg_free(uint32_t *len);
 #endif
 
 /** @} */
-
-#endif /* EEPREG_H */

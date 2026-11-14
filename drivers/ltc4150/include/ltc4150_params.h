@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2019 Otto-von-Guericke-Universität Magdeburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2019 Otto-von-Guericke-Universität Magdeburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_ltc4150
@@ -15,9 +14,6 @@
  *
  * @author      Marian Buschsieweke <marian.buschsieweke@ovgu.de>
  */
-
-#ifndef LTC4150_PARAMS_H
-#define LTC4150_PARAMS_H
 
 #include "board.h"
 #include "ltc4150.h"
@@ -92,5 +88,4 @@ static const saul_reg_info_t ltc4150_saul_info[] =
 }
 #endif
 
-#endif /* LTC4150_PARAMS_H */
 /** @} */

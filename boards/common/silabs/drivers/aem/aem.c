@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Bas Stottelaar <basstottelaar@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Bas Stottelaar <basstottelaar@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -35,9 +32,9 @@ void aem_init(void)
     CMU_ClockEnable(cmuClock_GPIO, true);
 
     /* enable debug peripheral via SWO */
-#ifdef _SILICON_LABS_32B_SERIES_0
+#if defined(_SILICON_LABS_32B_SERIES_0)
     DBG_SWOEnable(GPIO_ROUTE_SWLOCATION_LOC0);
-#else
+#elif defined(_SILICON_LABS_32B_SERIES_1)
     DBG_SWOEnable(GPIO_ROUTELOC0_SWVLOC_LOC0);
 #endif
 

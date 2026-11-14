@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2014-2016 Freie Universität Berlin
- * Copyright (C) 2014 PHYTEC Messtechnik GmbH
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2014-2016 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2014 PHYTEC Messtechnik GmbH
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_pba-d-01-kw2x
@@ -18,9 +17,6 @@
  * @author      Johann Fischer <j.fischer@phytec.de>
  * @author      Jonas Remmert <j.remmert@phytec.de>
  */
-
-#ifndef PERIPH_CONF_H
-#define PERIPH_CONF_H
 
 #include "periph_cpu.h"
 
@@ -88,7 +84,6 @@ static const clock_config_t clock_config = {
 #define PIT_BASECLOCK           (CLOCK_BUSCLOCK)
 #define PIT_ISR_0               isr_pit1
 #define PIT_ISR_1               isr_pit3
-#define LPTMR_ISR_0             isr_lptmr0
 /** @} */
 
 /**
@@ -127,7 +122,7 @@ static const uart_conf_t uart_config[] = {
 #define UART_0_ISR          (isr_uart2_rx_tx)
 #define UART_1_ISR          (isr_uart0_rx_tx)
 
-#define UART_NUMOF          (sizeof(uart_config) / sizeof(uart_config[0]))
+#define UART_NUMOF          ARRAY_SIZE(uart_config)
 /** @} */
 
 /**
@@ -143,7 +138,7 @@ static const adc_conf_t adc_config[] = {
     [ 5] = { .dev = ADC0, .pin = GPIO_PIN(PORT_E, 1), .chan = 11, .avg = ADC_AVG_MAX }
 };
 
-#define ADC_NUMOF           (sizeof(adc_config) / sizeof(adc_config[0]))
+#define ADC_NUMOF           ARRAY_SIZE(adc_config)
 /*
  * KW2xD ADC reference settings:
  * 0: VREFH/VREFL external pin pair
@@ -170,9 +165,8 @@ static const pwm_conf_t pwm_config[] = {
     }
 };
 
-#define PWM_NUMOF           (sizeof(pwm_config) / sizeof(pwm_config[0]))
+#define PWM_NUMOF           ARRAY_SIZE(pwm_config)
 /** @} */
-
 
 /**
  * @name    SPI device configuration
@@ -225,10 +219,10 @@ static const spi_conf_t spi_config[] = {
         .pin_clk  = GPIO_PIN(PORT_C, 5),
         .pin_cs   = {
             GPIO_PIN(PORT_C, 4),
-            GPIO_UNDEF,
-            GPIO_UNDEF,
-            GPIO_UNDEF,
-            GPIO_UNDEF
+            SPI_CS_UNDEF,
+            SPI_CS_UNDEF,
+            SPI_CS_UNDEF,
+            SPI_CS_UNDEF,
         },
         .pcr      = GPIO_AF_2,
         .simmask  = SIM_SCGC6_SPI0_MASK
@@ -240,19 +234,18 @@ static const spi_conf_t spi_config[] = {
         .pin_clk  = GPIO_PIN(PORT_B, 11),
         .pin_cs   = {
             GPIO_PIN(PORT_B, 10),
-            GPIO_UNDEF,
-            GPIO_UNDEF,
-            GPIO_UNDEF,
-            GPIO_UNDEF
+            SPI_CS_UNDEF,
+            SPI_CS_UNDEF,
+            SPI_CS_UNDEF,
+            SPI_CS_UNDEF,
         },
         .pcr      = GPIO_AF_2,
         .simmask  = SIM_SCGC6_SPI1_MASK
     }
 };
 
-#define SPI_NUMOF           (sizeof(spi_config) / sizeof(spi_config[0]))
+#define SPI_NUMOF           ARRAY_SIZE(spi_config)
 /** @} */
-
 
 /**
  * @name I2C configuration
@@ -270,7 +263,7 @@ static const i2c_conf_t i2c_config[] = {
         .sda_pcr = (PORT_PCR_MUX(6) | PORT_PCR_ODE_MASK),
     },
 };
-#define I2C_NUMOF           (sizeof(i2c_config) / sizeof(i2c_config[0]))
+#define I2C_NUMOF           ARRAY_SIZE(i2c_config)
 #define I2C_0_ISR           (isr_i2c1)
 /** @} */
 
@@ -278,5 +271,4 @@ static const i2c_conf_t i2c_config[] = {
 }
 #endif
 
-#endif /* PERIPH_CONF_H */
 /** @} */

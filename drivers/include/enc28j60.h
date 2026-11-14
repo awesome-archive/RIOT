@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_enc28j60 ENC28J60
@@ -14,12 +13,10 @@
  *
  * @file
  * @brief       Interface definition for the ENC28J60 driver
+ * @anchor      drivers_enc28j60
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef ENC28J60_H
-#define ENC28J60_H
 
 #include <stdint.h>
 
@@ -47,7 +44,7 @@ typedef struct {
  */
 typedef struct {
     netdev_t netdev;        /**< pull in the netdev fields */
-    enc28j60_params_t p;    /**< SPI and pin confiuration */
+    enc28j60_params_t p;    /**< SPI and pin configuration */
     mutex_t lock;           /**< lock the device on access */
     uint32_t tx_time;       /**< last transmission time for timeout handling */
 } enc28j60_t;
@@ -57,12 +54,13 @@ typedef struct {
  *
  * @param[in] dev           device descriptor
  * @param[in] params        peripheral configuration to use
+ * @param[in]   index       Index of @p params in a global parameter struct array.
+ *                          If initialized manually, pass a unique identifier instead.
  */
-void enc28j60_setup(enc28j60_t *dev, const enc28j60_params_t *params);
+void enc28j60_setup(enc28j60_t *dev, const enc28j60_params_t *params, uint8_t index);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ENC28J60_H */
 /** @} */

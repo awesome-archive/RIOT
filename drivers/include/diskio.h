@@ -1,11 +1,10 @@
 /*
- * Copyright 2010 ChaN
- * Copyright 2016 INRIA
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2010 ChaN
+ * SPDX-FileCopyrightText: 2016 INRIA
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_diskio Disk IO Driver
@@ -18,9 +17,6 @@
  *
  * @author      Oliver Hahm <oliver.hahm@inria.fr>
  */
-
-#ifndef DISKIO_H
-#define DISKIO_H
 
 #include <stdint.h>
 
@@ -48,7 +44,6 @@ void copy_al2un(unsigned char *dst, const unsigned long *src, int count);
  */
 void copy_un2al(unsigned long *dst, const unsigned char *src, int count);
 
-
 /** Results of Disk Functions */
 typedef enum {
     DISKIO_RES_OK = 0,     /**< 0: Successful */
@@ -68,7 +63,7 @@ typedef enum {
 } diskio_sta_t;
 
 /**
- * @name    Command code for disk_ioctrl fucntion
+ * @name    Command code for disk_ioctrl function
  * @{
  */
 
@@ -104,7 +99,6 @@ typedef enum {
 /** @} */
 
 /** @} */
-
 
 /**
  * @brief   Initialize media control interface (MCI)
@@ -160,5 +154,4 @@ diskio_result_t mci_ioctl(unsigned char ctrl, void *buff);
 }
 #endif
 
-#endif /* DISKIO_H */
 /** @} */

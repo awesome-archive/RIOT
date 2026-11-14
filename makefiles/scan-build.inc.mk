@@ -1,12 +1,12 @@
 SCANBUILD_ENV_VARS := \
   APPDIR \
   AR \
-  ARFLAGS \
   AS \
   ASFLAGS \
   BINDIR \
   BINDIRBASE \
   BOARD \
+  BOARDDIR \
   BUILD_DIR \
   BUILDRELPATH \
   CC \
@@ -17,6 +17,7 @@ SCANBUILD_ENV_VARS := \
   CXXUWFLAGS \
   ELFFILE \
   HEXFILE \
+  FLASHFILE \
   HOME \
   LINK \
   LINKFLAGPREFIX \
@@ -85,14 +86,14 @@ endif # BUILD_IN_DOCKER
 # ccc-analyzer needs to be told the proper -target setting for best results,
 # otherwise false error reports about unknown register names etc will be produced.
 # These kinds of errors can be safely ignored as long as they only come from LLVM
-	@if [ "$${TOOLCHAIN}" != "llvm" -a "$${BOARD}" != "native" ]; then \
+	@if [ "$${TOOLCHAIN}" != "llvm" -a "$${BOARD}" != "native32" -a "$${BOARD}" != "native64" ]; then \
 	  $(COLOR_ECHO) '$(COLOR_YELLOW)Recommend using TOOLCHAIN=llvm for best results.$(COLOR_RESET)'; \
 	  $(COLOR_ECHO) '$(COLOR_YELLOW)Ignore any "error: unknown register name '\''rX'\'' in asm" messages.$(COLOR_RESET)'; \
 	fi
 	$(Q)mkdir -p '$(SCANBUILD_OUTPUTDIR)'
 	$(Q)env -i $(ENVVARS) \
 	    scan-build -o '$(SCANBUILD_OUTPUTDIR)' $(SCANBUILD_ARGS) \
-	      make -C $(CURDIR) all $(strip $(CMDVARS)) FORCE_ASSERTS=1
+	      $(MAKE) -C $(CURDIR) all $(strip $(CMDVARS)) FORCE_ASSERTS=1
 
 ..scan-build-view: scan-build-analyze
 	@echo "Showing most recent report in your web browser..."

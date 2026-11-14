@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018 Eistec AB
- * Copyright (C) 2018 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2018 Eistec AB
+ * SPDX-FileCopyrightText: 2018 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_phynode-kw41z
@@ -17,9 +16,6 @@
  * @author      Joakim Nohlgård <joakim.nohlgard@eistec.se>
  * @author      José Alamos <jose.alamos@haw-hamburg.de>
  */
-
-#ifndef BOARD_H
-#define BOARD_H
 
 #include "cpu.h"
 #include "periph_conf.h"
@@ -43,7 +39,6 @@ extern "C"
 #define LED0_OFF            (GPIOB->PSOR = LED0_MASK)
 #define LED0_TOGGLE         (GPIOB->PTOR = LED0_MASK)
 
-
 #define LED1_PIN            GPIO_PIN(PORT_B,  1)
 #define LED1_MASK           (1 << 1)
 #define LED1_ON             (GPIOB->PCOR = LED1_MASK)
@@ -61,6 +56,7 @@ extern "C"
 #define LED3_ON             (GPIOB->PCOR = LED3_MASK)
 #define LED3_OFF            (GPIOB->PSOR = LED3_MASK)
 #define LED3_TOGGLE         (GPIOB->PTOR = LED3_MASK)
+/** @} */
 
 /**
  * @name    Button pin definitions
@@ -87,7 +83,7 @@ extern "C"
  * @name    xtimer configuration
  * @{
  */
-#if KINETIS_XTIMER_SOURCE_PIT
+#if IS_ACTIVE(KINETIS_XTIMER_SOURCE_PIT)
 /* PIT xtimer configuration */
 #define XTIMER_DEV                  (TIMER_PIT_DEV(0))
 #define XTIMER_CHAN                 (0)
@@ -100,9 +96,16 @@ extern "C"
 #define XTIMER_WIDTH                (16)
 #define XTIMER_BACKOFF              (5)
 #define XTIMER_ISR_BACKOFF          (5)
-#define XTIMER_OVERHEAD             (4)
 #define XTIMER_HZ                   (32768ul)
 #endif
+/** @} */
+
+/**
+ * @name    ztimer configuration
+ * @{
+ */
+#define CONFIG_ZTIMER_USEC_TYPE     ZTIMER_TYPE_PERIPH_TIMER
+#define CONFIG_ZTIMER_USEC_DEV      (TIMER_PIT_DEV(0))
 /** @} */
 
 /**
@@ -133,14 +136,8 @@ extern "C"
 #define MMA8X5X_PARAM_ADDR          (0x1D)
 /** @} */
 
-/**
- * @brief   Initialize board specific hardware, including clock, LEDs and standard I/O
- */
-void board_init(void);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BOARD_H */
 /** @} */

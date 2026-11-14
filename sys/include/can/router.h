@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016-2018 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup    sys_can_dll
@@ -17,17 +16,17 @@
  * @author      Vincent Dupont <vincent@otakeys.com>
  */
 
-#ifndef CAN_ROUTER_H
-#define CAN_ROUTER_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "kernel_types.h"
-
 #include "can/can.h"
 #include "can/pkt.h"
+
+/**
+ * @brief Initialize CAN router
+ */
+void can_router_init(void);
 
 /**
  * @brief Register a user @p entry to receive a frame @p can_id
@@ -70,7 +69,7 @@ int can_router_unregister(can_reg_entry_t *entry, canid_t can_id, canid_t mask, 
  * @return 0 on success
  * @return < 0 on error
  */
-int can_router_free_frame(struct can_frame *frame);
+int can_router_free_frame(can_frame_t *frame);
 
 /**
  * @brief Dispatch a RX indication to subscribers threads
@@ -110,5 +109,4 @@ int can_router_dispatch_tx_error(can_pkt_t *pkt);
 }
 #endif
 
-#endif /* CAN_ROUTER_H */
 /** @} */

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- * Copyright (C) 2016 Martin Landsmann <martin.landsmann@haw-hamburg.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-FileCopyrightText: 2016 Martin Landsmann <martin.landsmann@haw-hamburg.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    net_gnrc_ipv6_blacklist IPv6 address blacklist
@@ -19,8 +18,6 @@
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  * @author  Martin Landsmann <martin.landsmann@haw-hamburg.de>
  */
-#ifndef NET_GNRC_IPV6_BLACKLIST_H
-#define NET_GNRC_IPV6_BLACKLIST_H
 
 #include <stdbool.h>
 
@@ -33,14 +30,14 @@ extern "C" {
 /**
  * @defgroup    net_gnrc_ipv6_blacklist_conf GNRC IPv6 address blacklisting compile configurations
  * @ingroup     net_gnrc_ipv6_blacklist
- * @ingroup     config
+ * @ingroup     net_gnrc_conf
  * @{
  */
 /**
  * Maximum size of the blacklist.
  */
-#ifndef GNRC_IPV6_BLACKLIST_SIZE
-#define GNRC_IPV6_BLACKLIST_SIZE    (8)
+#ifndef CONFIG_GNRC_IPV6_BLACKLIST_SIZE
+#define CONFIG_GNRC_IPV6_BLACKLIST_SIZE    (8)
 #endif
 /** @} */
 
@@ -82,5 +79,4 @@ void gnrc_ipv6_blacklist_print(void);
 }
 #endif
 
-#endif /* NET_GNRC_IPV6_BLACKLIST_H */
 /** @} */

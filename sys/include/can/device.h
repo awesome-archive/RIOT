@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup    sys_can_dll
@@ -17,18 +16,15 @@
  * @author      Toon Stegen <toon.stegen@altran.com>
  */
 
-#ifndef CAN_DEVICE_H
-#define CAN_DEVICE_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "can/candev.h"
-#include "kernel_types.h"
+#include "sched.h"
 
 #ifdef MODULE_CAN_PM
-#include "xtimer.h"
+#include "ztimer.h"
 #endif
 #ifdef MODULE_CAN_TRX
 #include "can/can_trx.h"
@@ -57,6 +53,9 @@ typedef struct candev_params {
 #if defined(MODULE_CAN_TRX) || defined(DOXYGEN)
     can_trx_t *trx;                  /**< transceiver to set */
 #endif
+#if defined(MODULE_FDCAN)
+    uint16_t loop_delay;             /**< CAN FD transceiver loop delay */
+#endif
 #if defined(MODULE_CAN_PM) || defined(DOXYGEN)
     uint32_t rx_inactivity_timeout;  /**< power management rx timeout value */
     uint32_t tx_wakeup_timeout;      /**< power management tx wake up value */
@@ -74,12 +73,15 @@ typedef struct candev_dev {
 #if defined(MODULE_CAN_TRX) || defined(DOXYGEN)
     can_trx_t *trx;   /**< transceiver attached to the device */
 #endif
+#if defined(MODULE_FDCAN)
+    uint16_t loop_delay;    /**< CAN FD transceiver loop delay */
+#endif
 #if defined(MODULE_CAN_PM) || defined(DOXYGEN)
     uint32_t rx_inactivity_timeout; /**< Min timeout loaded when a frame is received */
     uint32_t tx_wakeup_timeout;     /**< Min timeout loaded when a frame is sent */
     uint32_t last_pm_update;   /**< time when the pm was updated */
     uint32_t last_pm_value;    /**< last pm timer value set */
-    xtimer_t pm_timer;         /**< timer for power management */
+    ztimer_t pm_timer;         /**< timer for power management */
 #endif
 } candev_dev_t;
 
@@ -115,7 +117,5 @@ int can_device_calc_bittiming(uint32_t clock, const struct can_bittiming_const *
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* CAN_DEVICE_H */
 
 /** @} */

@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -29,7 +26,7 @@ static int read_mag(const void *dev, phydat_t *res)
     if (bmx055_mag_read(mydev, res->val) != BMX055_OK) {
         return 0;
     }
-    res->unit = UNIT_GS;
+    res->unit = UNIT_GAUSS;
     res->scale = 0;
     return 3;
 }
@@ -41,7 +38,7 @@ static int read_acc(const void *dev, phydat_t *res)
     if (bmx055_acc_read(mydev, res->val) != BMX055_OK) {
         return 0;
     }
-    res->unit = UNIT_G;
+    res->unit = UNIT_G_FORCE;
     res->scale = -3;
     return 3;
 }
@@ -60,18 +57,18 @@ static int read_gyro(const void *dev, phydat_t *res)
 
 const saul_driver_t bmx055_magnetometer_saul_driver = {
     .read = read_mag,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_MAG,
 };
 
 const saul_driver_t bmx055_accelerometer_saul_driver = {
     .read = read_acc,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_ACCEL,
 };
 
 const saul_driver_t bmx055_gyroscope_saul_driver = {
     .read = read_gyro,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_GYRO,
 };

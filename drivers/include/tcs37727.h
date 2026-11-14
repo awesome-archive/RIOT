@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2015 PHYTEC Messtechnik GmbH
- *               2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 PHYTEC Messtechnik GmbH
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_tcs37727 TCS37727 RGB Light Sensor
@@ -24,9 +23,6 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef TCS37727_H
-#define TCS37727_H
-
 #include <stdint.h>
 
 #include "periph/i2c.h"
@@ -36,13 +32,27 @@ extern "C"
 {
 #endif
 
-#ifndef TCS37727_I2C_ADDRESS
-#define TCS37727_I2C_ADDRESS    0x29    /**< Default Device Address */
-#endif
+/**
+ * @brief   Default Device Address
+ */
+#define TCS37727_I2C_ADDRESS    0x29
 
-#ifndef TCS37727_ATIME_DEFAULT
-#define TCS37727_ATIME_DEFAULT  200000  /**< Default RGBC integration time */
+/**
+ * @defgroup drivers_tcs37727_config     TCS37727 RGB Light Sensor driver compile configuration
+ * @ingroup config_drivers_sensors
+ * @{
+ */
+/**
+ * @brief   Default RGBC integration time in microseconds.
+ *
+ * RGBC integration time impacts both the resolution and the sensitivity of the
+ * RGBC reading. Refer to the section "RGBC Time Register" in the datasheet for
+ * more information.
+ */
+#ifndef CONFIG_TCS37727_ATIME_DEFAULT
+#define CONFIG_TCS37727_ATIME_DEFAULT  200000
 #endif
+/** @} */
 
 /**
  * @brief   Struct for storing TCS37727 sensor data
@@ -134,5 +144,4 @@ void tcs37727_read(const tcs37727_t *dev, tcs37727_data_t *data);
 }
 #endif
 
-#endif /* TCS37727_H */
 /** @} */

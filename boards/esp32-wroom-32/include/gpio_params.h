@@ -1,13 +1,9 @@
 /*
- * Copyright (C) 2018 Gunar Schorcht
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Gunar Schorcht
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-#ifndef GPIO_PARAMS_H
-#define GPIO_PARAMS_H
+#pragma once
 
 /**
  * @ingroup     boards_esp32_wroom-32
@@ -31,8 +27,8 @@ static const  saul_gpio_params_t saul_gpio_params[] =
 {
     {
         .name = "BOOT",
-        .pin = BUTTON0_PIN,
-        .mode = GPIO_IN,
+        .pin = BTN0_PIN,
+        .mode = BTN0_MODE,
         .flags = SAUL_GPIO_INVERTED
     },
 };
@@ -41,5 +37,4 @@ static const  saul_gpio_params_t saul_gpio_params[] =
 }
 #endif
 
-#endif /* GPIO_PARAMS_H */
 /** @} */

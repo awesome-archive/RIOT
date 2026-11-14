@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Hamburg University of Applied Sciences
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Hamburg University of Applied Sciences
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_soft_spi
@@ -15,9 +14,6 @@
  *
  * @author      Markus Blechschmidt <Markus.Blechschmidt@haw-hamburg.de>
  */
-
-#ifndef SOFT_SPI_PARAMS_H
-#define SOFT_SPI_PARAMS_H
 
 #include "soft_spi.h"
 
@@ -42,15 +38,19 @@ extern "C" {
 #endif
 
 /**
- * @brief   Sotware SPI port descriptor array
+ * @brief   Software SPI port descriptor array
  */
 static soft_spi_conf_t soft_spi_config[] = {
     SOFT_SPI_PARAMS,
 };
 
+/**
+ * @brief   Number of software SPI buses
+ */
+#define SOFT_SPI_NUMOF             ARRAY_SIZE(soft_spi_config)
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SOFT_SPI_PARAMS_H */
 /** @} */

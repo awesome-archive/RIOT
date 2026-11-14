@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Bas Stottelaar <basstottelaar@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Bas Stottelaar <basstottelaar@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_si70xx
@@ -15,9 +14,6 @@
  *
  * @author      Bas Stottelaar <basstottelaar@gmail.com>
  */
-
-#ifndef SI70XX_INTERNALS_H
-#define SI70XX_INTERNALS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,15 +51,25 @@ extern "C" {
  * @{
  */
 #if defined(MODULE_SI7006)
-#define SI70XX_ID                   (0x06)
+#define SI70XX_ID                   (6)
 #elif defined(MODULE_SI7013)
-#define SI70XX_ID                   (0x0D)
+#define SI70XX_ID                   (13)
 #elif defined(MODULE_SI7020)
-#define SI70XX_ID                   (0x14)
+#define SI70XX_ID                   (20)
 #elif defined(MODULE_SI7021)
-#define SI70XX_ID                   (0x15)
+#define SI70XX_ID                   (21)
+#elif defined(MODULE_SI7050)
+#define SI70XX_ID                   (50)
+#elif defined(MODULE_SI7051)
+#define SI70XX_ID                   (51)
+#elif defined(MODULE_SI7053)
+#define SI70XX_ID                   (53)
+#elif defined(MODULE_SI7054)
+#define SI70XX_ID                   (54)
+#elif defined(MODULE_SI7055)
+#define SI70XX_ID                   (55)
 #else
-#error "Please provide a valid Si70xx variant (Si7006/13/20/21)"
+#error "Please provide a valid Si70xx variant (Si7006/13/20/21/5X)"
 #endif
 
 #define SI70XX_REVISION_1           (0xFF)
@@ -74,5 +80,4 @@ extern "C" {
 }
 #endif
 
-#endif /* SI70XX_INTERNALS_H */
 /** @} */

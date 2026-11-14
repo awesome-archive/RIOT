@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2015 Daniel Amkaer Sorensen
- *               2016 Freie Universität Berlin
- *               2017 Hamburg University of Applied Sciences
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Daniel Amkaer Sorensen
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2017 Hamburg University of Applied Sciences
+ * SPDX-FileCopyrightText: 2017 Thomas Perrot <thomas.perrot@tupi.fr>
+ * SPDX-FileCopyrightText: 2023 Hugues Larrive
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -19,14 +18,17 @@
  * @author      Daniel Amkaer Sorensen <daniel.amkaer@gmail.com>
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @author      Dimitri Nahm <dimitri.nahm@haw-hamburg.de>
+ * @author      Thomas Perrot <thomas.perrot@tupi.fr>
+ * @author      Hugues Larrive <hugues.larrive@pm.me>
  *
  * @}
  */
+#include <assert.h>
 
 #include "cpu.h"
 #include "mutex.h"
-#include "assert.h"
 #include "periph/spi.h"
+#include "periph/pm.h"
 
 /**
  * @brief   Extract BR0, BR1 and SPI2X bits from speed value
@@ -41,8 +43,10 @@ static mutex_t lock = MUTEX_INIT;
 void spi_init(spi_t bus)
 {
     assert(bus == 0);
+#ifdef PRSPI
     /* power off the SPI peripheral */
     power_spi_disable();
+#endif
     /* trigger the pin configuration */
     spi_init_pins(bus);
 }
@@ -51,16 +55,16 @@ void spi_init_pins(spi_t bus)
 {
     (void)bus;
     /* set SPI pins as output */
-#if defined (CPU_ATMEGA2560) || defined (CPU_ATMEGA1281)
+#if defined(CPU_ATMEGA2560) || defined(CPU_ATMEGA1281)
     DDRB |= ((1 << DDB2) | (1 << DDB1) | (1 << DDB0));
 #endif
-#if defined (CPU_ATMEGA328P)
+#if defined(CPU_ATMEGA328P) || defined(CPU_ATMEGA8)
     DDRB |= ((1 << DDB2) | (1 << DDB3) | (1 << DDB5));
 #endif
-#if defined (CPU_ATMEGA1284P)
+#if defined(CPU_ATMEGA1284P)
     DDRB |= ((1 << DDB4) | (1 << DDB5) | (1 << DDB7));
 #endif
-#if defined (CPU_ATMEGA256RFR2)
+#if defined(CPU_ATMEGA128RFA1) || defined(CPU_ATMEGA256RFR2)
     /* Master: PB3 MISO set to out
      *         PB2 MOSI set to input by hardware
      *         PB1 SCK  set to out
@@ -71,16 +75,23 @@ void spi_init_pins(spi_t bus)
      * */
     DDRB |= ((1 << DDB2) | (1 << DDB1));
 #endif
+#ifdef CPU_ATMEGA32U4
+    DDRB |= ((1 << DDB0) | (1 << DDB1) | (1 << DDB2));
+#endif
 }
 
-int spi_acquire(spi_t bus, spi_cs_t cs, spi_mode_t mode, spi_clk_t clk)
+void spi_acquire(spi_t bus, spi_cs_t cs, spi_mode_t mode, spi_clk_t clk)
 {
     (void)bus;
     (void)cs;
+    assert(bus == SPI_DEV(0));
 
     /* lock the bus and power on the SPI peripheral */
+    pm_block(4); /* Require clkIO */
     mutex_lock(&lock);
+#ifdef PRSPI
     power_spi_enable();
+#endif
 
     /* configure as master, with given mode and clock */
     SPSR = (clk >> S2X_SHIFT);
@@ -89,8 +100,6 @@ int spi_acquire(spi_t bus, spi_cs_t cs, spi_mode_t mode, spi_clk_t clk)
     /* clear interrupt flag by reading SPSR and data register by reading SPDR */
     (void)SPSR;
     (void)SPDR;
-
-    return SPI_OK;
 }
 
 void spi_release(spi_t bus)
@@ -98,8 +107,11 @@ void spi_release(spi_t bus)
     (void)bus;
     /* power off and release the bus */
     SPCR &= ~(1 << SPE);
+#ifdef PRSPI
     power_spi_disable();
+#endif
     mutex_unlock(&lock);
+    pm_unblock(4);
 }
 
 void spi_transfer_bytes(spi_t bus, spi_cs_t cs, bool cont,

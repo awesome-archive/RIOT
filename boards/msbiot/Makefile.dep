@@ -1,7 +1,8 @@
-# add driver for CC1101 sub-gigahertz transceiver as default netdev
-ifneq (,$(filter netdev_default gnrc_netdev_default,$(USEMODULE)))
-  USEMODULE += cc110x
+ifneq (,$(filter netdev_default,$(USEMODULE)))
+  USEMODULE += cc1101
+  USEMODULE += cc110x_868mhz
 endif
+
 # add support for LEDs and buttons as default saul devices
 ifneq (,$(filter saul_default,$(USEMODULE)))
   USEMODULE += saul_gpio
@@ -9,4 +10,9 @@ endif
 # add support for the MPU-9150 as default saul device
 ifneq (,$(filter saul_default,$(USEMODULE)))
   USEMODULE += mpu9150
+endif
+
+# Use Segger's RTT unless another stdio_% is already used
+ifneq (,$(filter stdio_default,$(USEMODULE)))
+  USEMODULE += stdio_rtt
 endif

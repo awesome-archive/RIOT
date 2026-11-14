@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_lis3mdl
@@ -15,9 +14,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef LIS3MDL_PARAMS_H
-#define LIS3MDL_PARAMS_H
 
 #include "board.h"
 #include "lis3mdl.h"
@@ -87,5 +83,4 @@ static const saul_reg_info_t lis3mdl_saul_info[] =
 }
 #endif
 
-#endif /* LIS3MDL_PARAMS_H */
 /** @} */

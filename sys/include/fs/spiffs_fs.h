@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_spiffs  SPIFFS integration
@@ -40,9 +39,6 @@
  *
  * @author      Vincent Dupont <vincent@otakeys.com>
  */
-
-#ifndef FS_SPIFFS_FS_H
-#define FS_SPIFFS_FS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -149,7 +145,5 @@ void spiffs_unlock(struct spiffs_t *fs);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* FS_SPIFFS_FS_H */
 
 /** @} */

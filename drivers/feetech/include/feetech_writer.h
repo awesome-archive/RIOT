@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     drivers_feetech
@@ -16,9 +15,6 @@
  *
  * @author      Loïc Dauphin <loic.dauphin@inria.fr>
  */
-
-#ifndef FEETECH_WRITER_H
-#define FEETECH_WRITER_H
 
 #include "feetech_protocol.h"
 
@@ -53,7 +49,7 @@ void feetech_writer_init(feetech_writer_t *writer, uint8_t *buffer, size_t buffe
  *
  * @param[out] writer    the packet writer
  *
- * @return the begining address of the buffer
+ * @return the beginning address of the buffer
  */
 const uint8_t *feetech_writer_get_data(const feetech_writer_t *writer);
 
@@ -181,5 +177,4 @@ void feetech_writer_sync_write_add_16bits(feetech_writer_t *writer, uint8_t id, 
 }
 #endif
 
-#endif /* FEETECH_WRITER_H */
 /** @} */

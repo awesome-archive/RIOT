@@ -1,10 +1,9 @@
 /*
- * Copyright (C) Inria 2016
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: Inria 2016
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     boards_common_nucleo
@@ -16,9 +15,6 @@
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  * @author      Sebastian Meiling <s@mlng.net>
  */
-
-#ifndef GPIO_PARAMS_H
-#define GPIO_PARAMS_H
 
 #include "board.h"
 #include "saul/periph.h"
@@ -32,7 +28,7 @@ extern "C" {
  */
 static const  saul_gpio_params_t saul_gpio_params[] =
 {
-#ifdef AUTO_INIT_LED0
+#ifdef MODULE_PERIPH_INIT_LED0
     {
         .name = "LED(green)",
         .pin = LED0_PIN,
@@ -43,7 +39,8 @@ static const  saul_gpio_params_t saul_gpio_params[] =
         .name = "Button(B1 User)",
         .pin  = BTN0_PIN,
         .mode = BTN0_MODE,
-#ifndef CPU_MODEL_STM32L433RC
+#if !defined(CPU_MODEL_STM32L433RC) && !defined(CPU_MODEL_STM32G431RB) && \
+    !defined(CPU_MODEL_STM32G474RE) && !defined(CPU_MODEL_STM32G491RE)
         .flags = SAUL_GPIO_INVERTED
 #endif
     },
@@ -53,5 +50,4 @@ static const  saul_gpio_params_t saul_gpio_params[] =
 }
 #endif
 
-#endif /* GPIO_PARAMS_H */
 /** @} */

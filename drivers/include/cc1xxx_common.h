@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *               2018 Otto-von-Guericke-Universität Magdeburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2018 Otto-von-Guericke-Universität Magdeburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_cc1xxx CC1100/CC1100e/CC1101/CC1200 common code
@@ -55,8 +54,6 @@
  * more users of this adaption layer are added, this behaviour might needs to be
  * more generalized.
  */
-#ifndef CC1XXX_COMMON_H
-#define CC1XXX_COMMON_H
 
 #include "net/gnrc/netif.h"
 
@@ -115,6 +112,7 @@ typedef struct netdev_radio_rx_info cc1xxx_rx_info_t;
 /**
  * @brief   Creates a CC110x/CC1200 network interface
  *
+ * @param[out] netif    The interface. May not be `NULL`.
  * @param[in] stack     The stack for the network interface's thread.
  * @param[in] stacksize Size of @p stack.
  * @param[in] priority  Priority for the network interface's thread.
@@ -123,15 +121,25 @@ typedef struct netdev_radio_rx_info cc1xxx_rx_info_t;
  *
  * @see @ref gnrc_netif_create()
  *
- * @return  The network interface on success.
+ * @return  0 on success
+ * @return  negative number on error
  */
-gnrc_netif_t *gnrc_netif_cc1xxx_create(char *stack, int stacksize,
-                                       char priority, char *name,
-                                       netdev_t *dev);
+int gnrc_netif_cc1xxx_create(gnrc_netif_t *netif, char *stack, int stacksize,
+                             char priority, char *name, netdev_t *dev);
+
+/**
+ * @brief   Retrieve a unique layer-2 address for a cc1xxx instance
+ *
+ * @note    This function has __attribute__((weak)) so you can override this, e.g.
+ *          to construct an address. By default @ref luid_get is used.
+ *
+ * @param[in]   dev     The device descriptor of the transceiver
+ * @param[out]  eui     Destination to write the address to
+ */
+void cc1xxx_eui_get(const netdev_t *dev, uint8_t *eui);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CC1XXX_COMMON_H */
 /** @} */

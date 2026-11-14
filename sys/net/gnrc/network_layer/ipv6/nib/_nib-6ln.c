@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -13,6 +10,9 @@
  * @author  Martine Lenders <m.lenders@fu-berlin.de>
  */
 
+#include <assert.h>
+#include <kernel_defines.h>
+
 #include "net/gnrc/netif/internal.h"
 #include "net/gnrc/ipv6/nib.h"
 #include "net/gnrc/ndp.h"
@@ -20,10 +20,19 @@
 #include "_nib-6ln.h"
 #include "_nib-6lr.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
-#if GNRC_IPV6_NIB_CONF_6LN
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_6LN) && !IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_6LR) && \
+    !IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_6LBR) && !IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_ARSM)
+#  pragma message \
+    "\nWarning: You are using pure RFC6775-compatible Neighbor Discovery.\n" \
+    "Some other network stacks (Linux, lwip) do not implement RFC6775 and\n" \
+    "might encounter problems reaching this node.\n" \
+    "You can enable compatibility with such stacks with CONFIG_GNRC_IPV6_NIB_ARSM."
+#endif
+
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_6LN)
 
 static char addr_str[IPV6_ADDR_MAX_STR_LEN];
 
@@ -70,6 +79,33 @@ bool _resolve_addr_from_ipv6(const ipv6_addr_t *dst, gnrc_netif_t *netif,
     return res;
 }
 
+int _build_ll_ipv6_from_addr(gnrc_netif_t *netif, const uint8_t *l2addr, uint8_t l2addr_len,
+                             ipv6_addr_t *ipv6addr)
+{
+    /* Reverse of _resolve_addr_from_ipv6. */
+
+    if (netif == NULL) {
+        return -ENOENT;
+    }
+
+    /* Only supported for 6LN nodes. */
+    if (!gnrc_netif_is_6ln(netif)) {
+        return -ENOTSUP;
+    }
+
+    /* Set IPv6 link-local prefix. */
+    *ipv6addr = ipv6_addr_link_local_prefix;
+
+    /* Build interface identifier based on l2 address. */
+    int res = gnrc_netif_ipv6_iid_from_addr(netif, l2addr, l2addr_len,
+                                            (eui64_t *)&ipv6addr->u64[1]);
+    if (res < 0) {
+        return res;
+    }
+
+    return sizeof(ipv6_addr_t);
+}
+
 uint8_t _handle_aro(gnrc_netif_t *netif, const ipv6_hdr_t *ipv6,
                     const icmpv6_hdr_t *icmpv6,
                     const sixlowpan_nd_opt_ar_t *aro, const ndp_opt_t *sl2ao,
@@ -95,6 +131,14 @@ uint8_t _handle_aro(gnrc_netif_t *netif, const ipv6_hdr_t *ipv6,
                     uint16_t ltime = byteorder_ntohs(aro->ltime);
                     uint32_t rereg_time;
                     int idx = gnrc_netif_ipv6_addr_idx(netif, &ipv6->dst);
+
+                    if (idx < 0) {
+                        DEBUG("nib: Address %s is not assigned to interface "
+                              "%d ignoring ARO\n",
+                              ipv6_addr_to_str(addr_str, &ipv6->dst,
+                                               sizeof(addr_str)), netif->pid);
+                        return _ADDR_REG_STATUS_IGNORE;
+                    }
                     /* if ltime 1min, reschedule NS in 30sec, otherwise 1min
                      * before timeout */
                     rereg_time = (ltime == 1U) ? (30 * MS_PER_SEC) :
@@ -109,6 +153,8 @@ uint8_t _handle_aro(gnrc_netif_t *netif, const ipv6_hdr_t *ipv6,
                                  GNRC_IPV6_NIB_REREG_ADDRESS,
                                  &netif->ipv6.addrs_timers[idx],
                                  rereg_time);
+                    gnrc_netif_ipv6_bus_post(netif, GNRC_IPV6_EVENT_ADDR_VALID,
+                                  &netif->ipv6.addrs[idx]);
                     break;
                 }
                 case SIXLOWPAN_ND_STATUS_DUP:
@@ -140,21 +186,19 @@ uint8_t _handle_aro(gnrc_netif_t *netif, const ipv6_hdr_t *ipv6,
             }
             return aro->status;
         }
-#if GNRC_IPV6_NIB_CONF_6LR
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_6LR)
         else if (gnrc_netif_is_6lr(netif) &&
                  (icmpv6->type == ICMPV6_NBR_SOL)) {
             return _reg_addr_upstream(netif, ipv6, icmpv6, aro, sl2ao, nce);
         }
-#else   /* GNRC_IPV6_NIB_CONF_6LR */
+#else   /* CONFIG_GNRC_IPV6_NIB_6LR */
         (void)sl2ao;
         (void)nce;
-#endif  /* GNRC_IPV6_NIB_CONF_6LR */
+#endif  /* CONFIG_GNRC_IPV6_NIB_6LR */
     }
-#if ENABLE_DEBUG
     else if (aro->len != SIXLOWPAN_ND_OPT_AR_LEN) {
         DEBUG("nib: ARO of unexpected length %u, ignoring ARO\n", aro->len);
     }
-#endif  /* ENABLE_DEBUG */
     return _ADDR_REG_STATUS_IGNORE;
 }
 
@@ -173,11 +217,19 @@ static inline bool _is_valid(const gnrc_netif_t *netif, int idx)
 void _handle_rereg_address(const ipv6_addr_t *addr)
 {
     gnrc_netif_t *netif = gnrc_netif_get_by_ipv6_addr(addr);
-    _nib_dr_entry_t *router = _nib_drl_get_dr();
+
+    if (netif == NULL) {
+        DEBUG("nib: Couldn't re-register %s, address wasn't assigned to any "
+              "interface anymore.\n",
+              ipv6_addr_to_str(addr_str, addr, sizeof(addr_str)));
+        return;
+    }
+
+    gnrc_netif_acquire(netif);
+    _nib_dr_entry_t *router = _nib_drl_get(NULL, netif->pid);
     const bool router_reachable = (router != NULL) &&
                                   _is_reachable(router->next_hop);
-
-    if (router_reachable && (netif != NULL)) {
+    if (router_reachable) {
         assert((unsigned)netif->pid == _nib_onl_get_if(router->next_hop));
         DEBUG("nib: Re-registering %s",
               ipv6_addr_to_str(addr_str, addr, sizeof(addr_str)));
@@ -187,38 +239,36 @@ void _handle_rereg_address(const ipv6_addr_t *addr)
         _snd_ns(&router->next_hop->ipv6, netif, addr, &router->next_hop->ipv6);
     }
     else {
-        DEBUG("nib: Couldn't re-register %s, no current router found or address "
-              "wasn't assigned to any interface anymore.\n",
+        DEBUG("nib: Couldn't re-register %s, no current router found.\n",
               ipv6_addr_to_str(addr_str, addr, sizeof(addr_str)));
+        netif->ipv6.rs_sent = 0;
+        _handle_search_rtr(netif);
+        goto out;
     }
-    if (netif != NULL) {
-        int idx = gnrc_netif_ipv6_addr_idx(netif, addr);
 
-        if (router_reachable &&
-            (_is_valid(netif, idx) || (_is_tentative(netif, idx) &&
-             (gnrc_netif_ipv6_addr_dad_trans(netif, idx) <
-              SIXLOWPAN_ND_REG_TRANSMIT_NUMOF)))) {
-            uint32_t retrans_time;
+    int idx = gnrc_netif_ipv6_addr_idx(netif, addr);
+    assert(idx >= 0);
 
-            if (_is_valid(netif, idx)) {
-                retrans_time = SIXLOWPAN_ND_MAX_RS_SEC_INTERVAL * MS_PER_SEC;
-            }
-            else {
-                retrans_time = netif->ipv6.retrans_time;
-                /* increment encoded retransmission count */
-                netif->ipv6.addrs_flags[idx]++;
-            }
-            _evtimer_add(&netif->ipv6.addrs[idx], GNRC_IPV6_NIB_REREG_ADDRESS,
-                         &netif->ipv6.addrs_timers[idx], retrans_time);
+    if (_is_valid(netif, idx) || (_is_tentative(netif, idx) &&
+        (gnrc_netif_ipv6_addr_dad_trans(netif, idx) < SIXLOWPAN_ND_REG_TRANSMIT_NUMOF))) {
+        uint32_t retrans_time;
+
+        if (_is_valid(netif, idx)) {
+            retrans_time = SIXLOWPAN_ND_MAX_RS_SEC_INTERVAL * MS_PER_SEC;
         }
         else {
-            netif->ipv6.rs_sent = 0;
-            _handle_search_rtr(netif);
+            retrans_time = netif->ipv6.retrans_time;
+            /* increment encoded retransmission count */
+            netif->ipv6.addrs_flags[idx]++;
         }
+        _evtimer_add(&netif->ipv6.addrs[idx], GNRC_IPV6_NIB_REREG_ADDRESS,
+                     &netif->ipv6.addrs_timers[idx], retrans_time);
     }
+out:
+    gnrc_netif_release(netif);
 }
 
-#if GNRC_IPV6_NIB_CONF_MULTIHOP_P6C
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C)
 _nib_abr_entry_t *_handle_abro(const sixlowpan_nd_opt_abr_t *abro)
 {
     _nib_abr_entry_t *abr = NULL;
@@ -230,44 +280,39 @@ _nib_abr_entry_t *_handle_abro(const sixlowpan_nd_opt_abr_t *abro)
     abr = _nib_abr_add(&abro->braddr);
     if (abr != NULL) {
         uint32_t abro_version = sixlowpan_nd_opt_abr_get_version(abro);
-        uint16_t ltime = byteorder_ntohs(abro->ltime);
+        /* correct for default value */
+        uint32_t ltime_ms = MS_PER_SEC * SEC_PER_MIN *
+                            gnrc_sixlowpan_nd_opt_get_ltime(abro);
 
         if (abr->version >= abro_version) {
             abr->version = abro_version;
-            abr->valid_until = _now_min() + ltime;
+            abr->valid_until_ms = evtimer_now_msec() + ltime_ms;
         }
-        /* correct for default value */
-        ltime = (ltime == 0) ? SIXLOWPAN_ND_OPT_ABR_LTIME_DEFAULT : ltime;
         _evtimer_add(abr, GNRC_IPV6_NIB_ABR_TIMEOUT, &abr->timeout,
-                     /* UINT16_MAX min < UINT32_MAX ms so no risk of overflow */
-                     MS_PER_SEC * SEC_PER_MIN * ltime);
+                     ltime_ms);
     }
     return abr;
 }
-#endif /* GNRC_IPV6_NIB_CONF_MULTIHOP_P6C */
+#endif /* CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C */
 
-#if GNRC_IPV6_NIB_CONF_MULTIHOP_P6C
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C)
 uint32_t _handle_6co(const icmpv6_hdr_t *icmpv6,
                      const sixlowpan_nd_opt_6ctx_t *sixco,
                      _nib_abr_entry_t *abr)
-#else   /* GNRC_IPV6_NIB_CONF_MULTIHOP_P6C */
+#else   /* CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C */
 uint32_t _handle_6co(const icmpv6_hdr_t *icmpv6,
                      const sixlowpan_nd_opt_6ctx_t *sixco)
-#endif  /* GNRC_IPV6_NIB_CONF_MULTIHOP_P6C */
+#endif  /* CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C */
 {
     uint16_t ltime;
 
 #ifdef MODULE_GNRC_SIXLOWPAN_CTX
     uint8_t cid;
 #endif  /* MODULE_GNRC_SIXLOWPAN_CTX */
-
-    if ((sixco->len != SIXLOWPAN_ND_OPT_6CTX_LEN_MIN) ||
-        ((sixco->len != SIXLOWPAN_ND_OPT_6CTX_LEN_MAX) &&
-         (sixco->ctx_len > 64U)) ||
-        (icmpv6->type != ICMPV6_RTR_ADV)) {
-        DEBUG("nib: received 6CO of invalid length (%u), must be %u "
-              "or wasn't delivered by RA."
-              "\n",
+    (void)icmpv6;
+    if (sixco->len != (sixco->ctx_len > 64U
+        ? SIXLOWPAN_ND_OPT_6CTX_LEN_MAX : SIXLOWPAN_ND_OPT_6CTX_LEN_MIN)) {
+        DEBUG("nib: received 6CO of invalid length (%u), must be %u\n",
               sixco->len,
               (sixco->ctx_len > 64U) ? SIXLOWPAN_ND_OPT_6CTX_LEN_MAX :
                                        SIXLOWPAN_ND_OPT_6CTX_LEN_MIN);
@@ -278,7 +323,7 @@ uint32_t _handle_6co(const icmpv6_hdr_t *icmpv6,
     cid = sixlowpan_nd_opt_6ctx_get_cid(sixco);
     gnrc_sixlowpan_ctx_update(cid, (ipv6_addr_t *)(sixco + 1), sixco->ctx_len,
                               ltime, sixlowpan_nd_opt_6ctx_is_comp(sixco));
-#if GNRC_IPV6_NIB_CONF_MULTIHOP_P6C
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C)
     assert(abr != NULL);    /* should have been set in _handle_abro() */
     if (ltime == 0) {
         bf_unset(abr->ctxs, cid);
@@ -286,15 +331,16 @@ uint32_t _handle_6co(const icmpv6_hdr_t *icmpv6,
     else {
         bf_set(abr->ctxs, cid);
     }
-#endif  /* GNRC_IPV6_NIB_CONF_MULTIHOP_P6C */
+#endif  /* CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C */
 #else   /* MODULE_GNRC_SIXLOWPAN_CTX */
+#if IS_ACTIVE(CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C)
     (void)abr;
+#endif  /* CONFIG_GNRC_IPV6_NIB_MULTIHOP_P6C */
 #endif  /* MODULE_GNRC_SIXLOWPAN_CTX */
     return ltime * SEC_PER_MIN * MS_PER_SEC;
 }
-#else  /* GNRC_IPV6_NIB_CONF_6LN */
+#else  /* CONFIG_GNRC_IPV6_NIB_6LN */
 typedef int dont_be_pedantic;
-#endif /* GNRC_IPV6_NIB_CONF_6LN */
-
+#endif /* CONFIG_GNRC_IPV6_NIB_6LN */
 
 /** @} */

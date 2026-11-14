@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Mesotic SAS <dylan.laduranty@mesotic.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2018 Mesotic SAS <dylan.laduranty@mesotic.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -22,8 +19,7 @@
 #include "board.h"
 #include "cpu.h"
 #include "periph/i2c.h"
-
-#ifdef I2C_NUMOF
+#include "byteorder.h"
 
 #ifdef PERIPH_I2C_NEED_READ_REG
 int i2c_read_reg(i2c_t dev, uint16_t addr, uint16_t reg,
@@ -37,11 +33,19 @@ int i2c_read_reg(i2c_t dev, uint16_t addr, uint16_t reg,
 int i2c_read_regs(i2c_t dev, uint16_t addr, uint16_t reg,
                   void *data, size_t len, uint8_t flags)
 {
+    uint16_t reg_end = reg;
+
     if (flags & (I2C_NOSTOP | I2C_NOSTART)) {
         return -EOPNOTSUPP;
     }
+
+    /* Handle endianness of register if 16 bit */
+    if (flags & I2C_REG16) {
+        reg_end = htons(reg); /* Make sure register is in big-endian on I2C bus */
+    }
+
     /* First set ADDR and register with no stop */
-    int ret = i2c_write_bytes(dev, addr, &reg, (flags & I2C_REG16) ? 2 : 1,
+    int ret = i2c_write_bytes(dev, addr, &reg_end, (flags & I2C_REG16) ? 2 : 1,
                               flags | I2C_NOSTOP);
     if (ret < 0) {
         return ret;
@@ -73,11 +77,19 @@ int i2c_write_reg(i2c_t dev, uint16_t addr, uint16_t reg,
 int i2c_write_regs(i2c_t dev, uint16_t addr, uint16_t reg,
                    const void *data, size_t len, uint8_t flags)
 {
+    uint16_t reg_end = reg;
+
     if (flags & (I2C_NOSTOP | I2C_NOSTART)) {
         return -EOPNOTSUPP;
     }
+
+    /* Handle endianness of register if 16 bit */
+    if (flags & I2C_REG16) {
+        reg_end = htons(reg); /* Make sure register is in big-endian on I2C bus */
+    }
+
     /* First set ADDR and register with no stop */
-    int ret = i2c_write_bytes(dev, addr, &reg, (flags & I2C_REG16) ? 2 : 1,
+    int ret = i2c_write_bytes(dev, addr, &reg_end, (flags & I2C_REG16) ? 2 : 1,
                               flags | I2C_NOSTOP);
     if (ret < 0) {
         return ret;
@@ -86,5 +98,3 @@ int i2c_write_regs(i2c_t dev, uint16_t addr, uint16_t reg,
     return i2c_write_bytes(dev, addr, data, len, flags | I2C_NOSTART);
 }
 #endif /* PERIPH_I2C_NEED_WRITE_REGS */
-
-#endif /* I2C_NUMOF */

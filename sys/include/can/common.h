@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 OTA keys S.A.
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016 OTA keys S.A.
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup   sys_can_common  Common definitions
@@ -23,9 +22,6 @@
  * @author      Vincent Dupont <vincent@otakeys.com>
  */
 
-#ifndef CAN_COMMON_H
-#define CAN_COMMON_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -38,7 +34,15 @@ extern "C" {
 #ifdef MODULE_CAN_MBOX
 #include "mbox.h"
 #endif
-#include "net/gnrc/pktbuf.h"
+
+/**
+ * @brief Default CAN maximum data length
+ */
+#ifdef MODULE_FDCAN
+#define DEFAULT_CAN_MAX_DLEN CANFD_MAX_DLEN
+#else
+#define DEFAULT_CAN_MAX_DLEN CAN_MAX_DLEN
+#endif
 
 /**
  * @brief CAN options
@@ -52,6 +56,10 @@ typedef enum {
     CANOPT_CLOCK,           /**< controller main clock */
     CANOPT_BITTIMING_CONST, /**< controller bittiming parameters */
     CANOPT_STATE,           /**< set controller state @ref canopt_state_t */
+#ifdef MODULE_FDCAN
+    CANOPT_FD_BITTIMING,    /**< bit timing parameter for FDCAN data payload */
+    CANOPT_FD_BITTIMING_CONST, /**< controller bit timing parameter for FDCAN data payload */
+#endif
 } canopt_t;
 
 /**
@@ -64,8 +72,8 @@ typedef enum {
     CANOPT_STATE_SLEEP,           /**< sleep mode */
     CANOPT_STATE_LISTEN_ONLY,     /**< listen only mode */
     CANOPT_STATE_ON,              /**< power on, rx / tx mode */
+    CANOPT_STATE_LOOPBACK,        /**< loopback mode */
 } canopt_state_t;
-
 
 /**
  * @brief Structure to pass a CAN option
@@ -123,9 +131,7 @@ enum can_msg {
 typedef struct can_rx_data {
     struct iovec data;    /**< iovec containing received data */
     void *arg;            /**< upper layer private param */
-    gnrc_pktsnip_t *snip; /**< pointer to the allocated snip */
 } can_rx_data_t;
-
 
 /**
  * @brief registry entry types
@@ -161,5 +167,4 @@ typedef struct can_reg_entry {
 }
 #endif
 
-#endif /* CAN_COMMON_H */
 /** @} */

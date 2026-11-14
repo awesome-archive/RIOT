@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -28,7 +25,7 @@
 #include "bmx055.h"
 #include "bmx055_internal.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    0
 #include "debug.h"
 
 #define BUS             (dev->p.i2c)
@@ -117,7 +114,7 @@ int bmx055_init(bmx055_t *dev, const bmx055_params_t *params)
      * softreset to bring module to normal mode
      */
     if (i2c_write_reg(BUS, ADDR_ACC, 0x14, 0xB6, 0x0) < 0) {
-        DEBUG("[bmx055] erro: setting accelerometer opmode\n");
+        DEBUG("[bmx055] error: setting accelerometer opmode\n");
         i2c_release(BUS);
         return BMX055_NOWRITE;
     }
@@ -138,7 +135,7 @@ int bmx055_init(bmx055_t *dev, const bmx055_params_t *params)
 
     /* Init Gyroscope
      *
-     * The prefered way to bring the module to normal mode is using softreset.
+     * The preferred way to bring the module to normal mode is using softreset.
      * However, a softreset brings the module into an unknown state and
      * deadlocks it. Hence it is not the way to go and normal mode is entered
      * by writing into power mode control register.
@@ -234,7 +231,7 @@ int bmx055_gyro_read(const bmx055_t *dev, int16_t *data)
     uint16_t scale;
 
     /* converting scale info into real scaling values */
-    scale = (GYRO_2000_DPS / pow(2, dev->p.gyro_scale));
+    scale = GYRO_2000_DPS >> dev->p.gyro_scale;
 
     /* reading gyroscope data */
     i2c_acquire(BUS);

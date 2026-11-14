@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2015-2016 Freie Universität Berlin
- *               2017 HAW Hamburg
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015-2016 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2017 HAW Hamburg
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     cpu_cc2538
@@ -18,9 +17,6 @@
  * @author      Sebastian Meiling <s@mlng.net>
  */
 
-#ifndef PERIPH_CPU_H
-#define PERIPH_CPU_H
-
 #include <stdint.h>
 #include <stdio.h>
 
@@ -28,6 +24,7 @@
 
 #include "cpu.h"
 #include "vendor/hw_ssi.h"
+#include "vendor/hw_uart.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,14 +49,14 @@ typedef uint32_t gpio_t;
 /** @} */
 
 /**
- * @name    Power management configuration
+ * @name    Power mode configuration
  * @{
  */
-#define PROVIDES_PM_SET_LOWEST_CORTEXM
+#define PM_NUM_MODES        (5)
 /** @} */
 
 /**
- * @brief Define custom value to speficy undefined or unused GPIOs
+ * @brief Define custom value to specify undefined or unused GPIOs
  */
 #define GPIO_UNDEF          (0xffffffff)
 
@@ -105,6 +102,7 @@ void gpio_init_mux(gpio_t pin, uint8_t over, uint8_t sel, uint8_t func);
 #define PERIPH_I2C_NEED_WRITE_REGS
 /** @} */
 
+#ifndef DOXYGEN
 /**
  * @name   Override I2C clock speed values
  * @{
@@ -118,6 +116,8 @@ typedef enum {
     I2C_SPEED_HIGH      = 0x03,     /**< not supported */
 } i2c_speed_t;
 /** @} */
+#endif /* ndef DOXYGEN */
+
 /**
  * @brief   I2C configuration options
  */
@@ -137,6 +137,7 @@ typedef struct {
 #define PERIPH_SPI_NEEDS_TRANSFER_REGS
 /** @} */
 
+#ifndef DOXYGEN
 /**
  * @name   Override the default GPIO mode settings
  * @{
@@ -148,11 +149,11 @@ typedef enum {
     GPIO_IN_PD      = ((uint8_t)OVERRIDE_PULLDOWN),     /**< input, pull-down */
     GPIO_IN_PU      = ((uint8_t)OVERRIDE_PULLUP),       /**< input, pull-up */
     GPIO_OUT        = ((uint8_t)OVERRIDE_ENABLE),       /**< output */
-    GPIO_OD         = (0xff),                           /**< not supported */
+    GPIO_OD         = (0xfe),                           /**< not supported */
     GPIO_OD_PU      = (0xff)                            /**< not supported */
 } gpio_mode_t;
 /** @} */
-
+#endif /* ndef DOXYGEN */
 
 /**
  * @name   UART device configuration
@@ -162,10 +163,73 @@ typedef struct {
     cc2538_uart_t *dev;       /**< pointer to the used UART device */
     gpio_t rx_pin;            /**< pin used for RX */
     gpio_t tx_pin;            /**< pin used for TX */
+#ifdef MODULE_PERIPH_UART_HW_FC
     gpio_t cts_pin;           /**< CTS pin - set to GPIO_UNDEF when not using */
     gpio_t rts_pin;           /**< RTS pin - set to GPIO_UNDEF when not using */
+#endif
 } uart_conf_t;
 /** @} */
+
+#ifndef DOXYGEN
+/**
+ * @brief   Override parity values
+ * @{
+ */
+#define HAVE_UART_PARITY_T
+typedef enum {
+   UART_PARITY_NONE = 0,                                                /**< no parity */
+   UART_PARITY_EVEN = (UART_LCRH_PEN | UART_LCRH_EPS),                  /**< even parity */
+   UART_PARITY_ODD = UART_LCRH_PEN,                                     /**< odd parity */
+   UART_PARITY_MARK = (UART_LCRH_PEN | UART_LCRH_SPS),                  /**< mark */
+   UART_PARITY_SPACE = (UART_LCRH_PEN | UART_LCRH_EPS | UART_LCRH_SPS)  /**< space */
+} uart_parity_t;
+/** @} */
+
+ /**
+ * @brief   Override data bits length values
+ * @{
+ */
+#define HAVE_UART_DATA_BITS_T
+typedef enum {
+    UART_DATA_BITS_5 = (0 << UART_LCRH_WLEN_S),     /**< 5 data bits */
+    UART_DATA_BITS_6 = (1 << UART_LCRH_WLEN_S),     /**< 6 data bits */
+    UART_DATA_BITS_7 = (2 << UART_LCRH_WLEN_S),     /**< 7 data bits */
+    UART_DATA_BITS_8 = (3 << UART_LCRH_WLEN_S),     /**< 8 data bits */
+} uart_data_bits_t;
+/** @} */
+
+/**
+ * @brief   Override stop bits length values
+ * @{
+ */
+#define HAVE_UART_STOP_BITS_T
+typedef enum {
+   UART_STOP_BITS_1 = 0,                  /**< 1 stop bit */
+   UART_STOP_BITS_2 = UART_LCRH_STP2,     /**< 2 stop bits */
+} uart_stop_bits_t;
+/** @} */
+
+/**
+ * @brief   Size of the UART TX buffer for non-blocking mode.
+ */
+#ifndef UART_TXBUF_SIZE
+#define UART_TXBUF_SIZE    (64)
+#endif
+
+/**
+ * @brief   Define value for unused CS line
+ */
+#define SPI_CS_UNDEF        (GPIO_UNDEF)
+
+#ifndef DOXYGEN
+/**
+ * @brief   Overwrite the default spi_cs_t type definition
+ * @{
+ */
+#define HAVE_SPI_CS_T
+typedef uint32_t spi_cs_t;
+/** @} */
+#endif
 
 /**
  * @name   Override SPI mode settings
@@ -193,6 +257,7 @@ typedef enum {
     SPI_CLK_10MHZ  = 4      /**< drive the SPI bus with 10MHz */
 } spi_clk_t;
 /** @} */
+#endif /* ndef DOXYGEN */
 
 /**
  * @brief   Datafields for static SPI clock configuration values
@@ -228,7 +293,7 @@ typedef struct {
     gpio_t mosi_pin;        /**< pin used for MOSI */
     gpio_t miso_pin;        /**< pin used for MISO */
     gpio_t sck_pin;         /**< pin used for SCK */
-    gpio_t cs_pin;          /**< pin used for CS */
+    spi_cs_t cs_pin;        /**< pin used for CS */
 } spi_conf_t;
 /** @} */
 
@@ -243,6 +308,7 @@ typedef struct {
     uint_fast8_t cfg;   /**< timer config word */
 } timer_conf_t;
 
+#ifndef DOXYGEN
 /**
  * @name   Override resolution options
  * @{
@@ -259,6 +325,7 @@ typedef enum {
     ADC_RES_16BIT =             (0xd00),    /**< not supported by hardware */
 } adc_res_t;
 /** @} */
+#endif /* ndef DOXYGEN */
 
 /**
  * @brief ADC configuration wrapper
@@ -285,9 +352,34 @@ typedef gpio_t adc_conf_t;
 #define SOCADC_12_BIT_RSHIFT    (4U) /**< Mask for getting data(12 bits ENOB) */
 /** @} */
 
+/**
+ * @name RTT configuration
+ * @{
+ */
+#define RTT_DEV             SMWDTHROSC
+#define RTT_IRQ             SM_TIMER_ALT_IRQn
+#define RTT_IRQ_PRIO        1
+#define RTT_ISR             isr_sleepmode
+#define RTT_MAX_VALUE       (0xffffffff)
+#define RTT_FREQUENCY       (CLOCK_OSC32K)
+/* When setting a new compare value, the value must be at least 5 more
+   than the current sleep timer value. Otherwise, the timer compare
+   event may be lost. */
+#define RTT_MIN_OFFSET      (5U)
+/** @} */
+
+/**
+ * @name    WDT upper and lower bound times in ms
+ * @{
+ */
+/* Limits are in clock cycles according to data sheet.
+   As the WDT is clocked by a 32 kHz clock and supports 4 intervals */
+#define NWDT_TIME_LOWER_LIMIT          (2U)
+#define NWDT_TIME_UPPER_LIMIT          (1000U)
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERIPH_CPU_H */
 /** @} */

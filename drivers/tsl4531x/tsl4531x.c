@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2016 Inria
- * Copyright (C) 2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Inria
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -23,6 +20,7 @@
  * @}
  */
 
+#include <assert.h>
 #include <errno.h>
 
 #include "log.h"
@@ -30,7 +28,7 @@
 #include "tsl4531x_internals.h"
 #include "xtimer.h"
 
-#define ENABLE_DEBUG        (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #define _DATALOW 0
@@ -42,11 +40,7 @@ int tsl4531x_init(tsl4531x_t *dev, const tsl4531x_params_t *params)
     uint8_t id;
 
     /* Initialise I2C bus */
-    if ((r = i2c_acquire(params->i2c_dev)) < 0) {
-        DEBUG("I2C_dev is: %d.", params->i2c_dev);
-        DEBUG("[Error] Cannot acquire device. I2C error: %d\n", r);
-        return -ENODEV;
-    }
+    i2c_acquire(params->i2c_dev);
 
     /* Test for connectivity - verify ID and compare against stored value */
     if ((r = i2c_read_reg(params->i2c_dev,
@@ -106,10 +100,7 @@ int tsl4531x_set_low_power_mode(tsl4531x_t *dev, uint8_t low_power_mode)
 
     dev->low_power_mode = low_power_mode;
 
-    if ((r = i2c_acquire(dev->i2c_dev)) < 0) {
-        DEBUG("[Error] Cannot acquire device. I2C error: %d\n", r);
-        return -ENODEV;
-    }
+    i2c_acquire(dev->i2c_dev);
 
     if ((r = i2c_write_reg(dev->i2c_dev,
                            dev->i2c_addr,
@@ -141,10 +132,7 @@ int tsl4531x_start_sample(tsl4531x_t *dev)
 
         int r;
 
-        if ((r = i2c_acquire(dev->i2c_dev)) < 0) {
-            DEBUG("[Error] Cannot acquire device. I2C error: %d\n", r);
-            return -ENODEV;
-        }
+        i2c_acquire(dev->i2c_dev);
 
         if ((r = i2c_write_reg(dev->i2c_dev,
                                dev->i2c_addr,
@@ -194,10 +182,7 @@ int tsl4531x_get_sample(const tsl4531x_t *dev)
     int r;
     uint8_t als_data[2]; /* = {[DATALOW], [DATAHIGH]} */
 
-    if ((r = i2c_acquire(dev->i2c_dev)) < 0) {
-        DEBUG("[Error] Cannot acquire device. I2C error: %d\n", r);
-        return -ENODEV;
-    }
+    i2c_acquire(dev->i2c_dev);
 
     if ((r = i2c_read_regs(dev->i2c_dev,
                            dev->i2c_addr,

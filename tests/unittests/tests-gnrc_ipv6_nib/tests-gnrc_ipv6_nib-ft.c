@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -212,14 +209,14 @@ static void test_nib_ft_add__EINVAL_iface0(void)
                                                         &next_hop, 0, 0));
 }
 
-#if GNRC_IPV6_NIB_NUMOF < GNRC_IPV6_NIB_OFFL_NUMOF
-#define MAX_NUMOF   (GNRC_IPV6_NIB_NUMOF)
-#else /* GNRC_IPV6_NIB_NUMOF < GNRC_IPV6_NIB_OFFL_NUMOF */
-#define MAX_NUMOF   (GNRC_IPV6_NIB_OFFL_NUMOF)
+#if CONFIG_GNRC_IPV6_NIB_NUMOF < CONFIG_GNRC_IPV6_NIB_OFFL_NUMOF
+#define MAX_NUMOF   (CONFIG_GNRC_IPV6_NIB_NUMOF)
+#else /* CONFIG_GNRC_IPV6_NIB_NUMOF < CONFIG_GNRC_IPV6_NIB_OFFL_NUMOF */
+#define MAX_NUMOF   (CONFIG_GNRC_IPV6_NIB_OFFL_NUMOF)
 #endif
 
 /*
- * Creates GNRC_IPV6_NIB_DEFAULT_ROUTER_NUMOF default route entries and then
+ * Creates CONFIG_GNRC_IPV6_NIB_DEFAULT_ROUTER_NUMOF default route entries and then
  * tries to create another one
  * Expected result: gnrc_ipv6_nib_ft_add() returns -ENOMEM
  */
@@ -228,7 +225,7 @@ static void test_nib_ft_add__ENOMEM_diff_def_router(void)
     ipv6_addr_t next_hop = { .u64 = { { .u8 = LINK_LOCAL_PREFIX },
                                     { .u64 = TEST_UINT64 } } };
 
-    for (unsigned i = 0; i < GNRC_IPV6_NIB_DEFAULT_ROUTER_NUMOF; i++) {
+    for (unsigned i = 0; i < CONFIG_GNRC_IPV6_NIB_DEFAULT_ROUTER_NUMOF; i++) {
         TEST_ASSERT_EQUAL_INT(0, gnrc_ipv6_nib_ft_add(NULL, 0, &next_hop,
                                                       IFACE, 0));
         next_hop.u64[1].u64++;
@@ -238,7 +235,7 @@ static void test_nib_ft_add__ENOMEM_diff_def_router(void)
 }
 
 /*
- * Creates GNRC_IPV6_NIB_OFFL_NUMOF routes with different destinations of same
+ * Creates CONFIG_GNRC_IPV6_NIB_OFFL_NUMOF routes with different destinations of same
  * prefix lengths to the same next hop and then tries to create another one
  * Expected result: gnrc_ipv6_nib_ft_add() returns -ENOMEM
  */
@@ -246,7 +243,7 @@ static void test_nib_ft_add__ENOMEM_diff_dst(void)
 {
     ipv6_addr_t dst = { .u64 = { { .u8 = GLOBAL_PREFIX } } };
 
-    for (unsigned i = 0; i < GNRC_IPV6_NIB_OFFL_NUMOF; i++) {
+    for (unsigned i = 0; i < CONFIG_GNRC_IPV6_NIB_OFFL_NUMOF; i++) {
         TEST_ASSERT_EQUAL_INT(0, gnrc_ipv6_nib_ft_add(&dst, GLOBAL_PREFIX_LEN,
                                                       NULL, IFACE, 0));
         dst.u16[0].u16--;
@@ -256,7 +253,7 @@ static void test_nib_ft_add__ENOMEM_diff_dst(void)
 }
 
 /*
- * Creates GNRC_IPV6_NIB_OFFL_NUMOF routes with destinations of different
+ * Creates CONFIG_GNRC_IPV6_NIB_OFFL_NUMOF routes with destinations of different
  * prefix lengths to the same next hop and then tries to create another one
  * Expected result: gnrc_ipv6_nib_ft_add() returns -ENOMEM
  */
@@ -265,7 +262,7 @@ static void test_nib_ft_add__ENOMEM_diff_dst_len(void)
     static const ipv6_addr_t dst = { .u64 = { { .u8 = GLOBAL_PREFIX } } };
     unsigned dst_len = GLOBAL_PREFIX_LEN;
 
-    for (unsigned i = 0; i < GNRC_IPV6_NIB_OFFL_NUMOF; i++) {
+    for (unsigned i = 0; i < CONFIG_GNRC_IPV6_NIB_OFFL_NUMOF; i++) {
         TEST_ASSERT_EQUAL_INT(0, gnrc_ipv6_nib_ft_add(&dst, dst_len,
                                                       NULL, IFACE, 0));
         dst_len--;
@@ -275,7 +272,7 @@ static void test_nib_ft_add__ENOMEM_diff_dst_len(void)
 }
 
 /*
- * Creates GNRC_IPV6_NIB_OFFL_NUMOF routes with different destination of
+ * Creates CONFIG_GNRC_IPV6_NIB_OFFL_NUMOF routes with different destination of
  * different prefix lengths to the same next hop and then tries to create
  * another one
  * Expected result: gnrc_ipv6_nib_ft_add() returns -ENOMEM
@@ -285,7 +282,7 @@ static void test_nib_ft_add__ENOMEM_diff_dst_dst_len(void)
     ipv6_addr_t dst = { .u64 = { { .u8 = GLOBAL_PREFIX } } };
     unsigned dst_len = GLOBAL_PREFIX_LEN;
 
-    for (unsigned i = 0; i < GNRC_IPV6_NIB_OFFL_NUMOF; i++) {
+    for (unsigned i = 0; i < CONFIG_GNRC_IPV6_NIB_OFFL_NUMOF; i++) {
         TEST_ASSERT_EQUAL_INT(0, gnrc_ipv6_nib_ft_add(&dst, dst_len,
                                                       NULL, IFACE, 0));
         dst.u16[0].u16--;
@@ -615,7 +612,7 @@ static void test_nib_ft_del__unknown(void)
         iface++;
     }
     gnrc_ipv6_nib_ft_del(&dst, dst_len);
-    while(gnrc_ipv6_nib_ft_iter(NULL, 0, &iter_state, &fte)) {
+    while (gnrc_ipv6_nib_ft_iter(NULL, 0, &iter_state, &fte)) {
         count++;
     }
     TEST_ASSERT_EQUAL_INT(MAX_NUMOF, count);
@@ -636,7 +633,7 @@ static void test_nib_ft_del__success(void)
     TEST_ASSERT_EQUAL_INT(0, gnrc_ipv6_nib_ft_add(&dst, GLOBAL_PREFIX_LEN,
                                                   &next_hop, IFACE, 0));
     gnrc_ipv6_nib_ft_del(&dst, GLOBAL_PREFIX_LEN);
-    TEST_ASSERT(!gnrc_ipv6_nib_ft_iter(NULL ,0, &iter_state, &fte));
+    TEST_ASSERT(!gnrc_ipv6_nib_ft_iter(NULL, 0, &iter_state, &fte));
 }
 
 /**

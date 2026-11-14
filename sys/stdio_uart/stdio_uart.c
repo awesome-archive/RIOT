@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2013 INRIA
- *               2015 Kaspar Schleiser <kaspar@schleiser.de>
- *               2016 Eistec AB
- *               2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2013 INRIA
+ * SPDX-FileCopyrightText: 2015 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2016 Eistec AB
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -27,51 +24,65 @@
  * @}
  */
 
-#include "stdio_uart.h"
+#include <errno.h>
+#include <string.h>
 
 #include "board.h"
+#include "kernel_defines.h"
 #include "periph/uart.h"
-#include "isrpipe.h"
-
-#ifdef USE_ETHOS_FOR_STDIO
-#include "ethos.h"
-extern ethos_t ethos;
-#endif
-
-#if MODULE_VFS
-#include "vfs.h"
-#endif
+#include "stdio_base.h"
+#include "stdio_uart.h"
 
 #define ENABLE_DEBUG 0
 #include "debug.h"
 
-
-static char _rx_buf_mem[STDIO_UART_RX_BUFSIZE];
-isrpipe_t stdio_uart_isrpipe = ISRPIPE_INIT(_rx_buf_mem);
-
-void stdio_init(void)
+static void _stdio_rx_write_one_wrapper(void *arg, uint8_t value)
 {
-#ifndef USE_ETHOS_FOR_STDIO
-    uart_init(STDIO_UART_DEV, STDIO_UART_BAUDRATE, (uart_rx_cb_t) isrpipe_write_one, &stdio_uart_isrpipe);
-#else
-    uart_init(ETHOS_UART, ETHOS_BAUDRATE, (uart_rx_cb_t) isrpipe_write_one, &stdio_uart_isrpipe);
-#endif
-#if MODULE_VFS
-    vfs_bind_stdio();
-#endif
+    (void)arg;
+    stdio_rx_write_one(value);
 }
 
-ssize_t stdio_read(void* buffer, size_t count)
+static void _init(void)
 {
-    return (ssize_t)isrpipe_read(&stdio_uart_isrpipe, (char *)buffer, count);
+    uart_rx_cb_t cb = NULL;
+
+    if (IS_USED(MODULE_STDIO_UART_RX)) {
+        cb = _stdio_rx_write_one_wrapper;
+    }
+
+    uart_init(STDIO_UART_DEV, STDIO_UART_BAUDRATE, cb, NULL);
 }
 
-ssize_t stdio_write(const void* buffer, size_t len)
+static ssize_t _write(const void *buffer, size_t len)
 {
-#ifndef USE_ETHOS_FOR_STDIO
-    uart_write(STDIO_UART_DEV, (const uint8_t *)buffer, len);
-#else
-    ethos_send_frame(&ethos, (const uint8_t *)buffer, len, ETHOS_FRAME_TYPE_TEXT);
-#endif
-    return len;
+    ssize_t result = len;
+    if (IS_USED(MODULE_STDIO_UART_ONLCR)) {
+        static const uint8_t crlf[2] = { (uint8_t)'\r', (uint8_t)'\n' };
+        const uint8_t *buf = buffer;
+        while (len) {
+            const uint8_t *pos = memchr(buf, '\n', len);
+            size_t chunk_len = (pos != NULL)
+                             ? (uintptr_t)pos - (uintptr_t)buf
+                             : len;
+            uart_write(STDIO_UART_DEV, buf, chunk_len);
+            buf += chunk_len;
+            len -= chunk_len;
+            if (len) {
+                uart_write(STDIO_UART_DEV, crlf, sizeof(crlf));
+                buf++;
+                len--;
+            }
+        }
+    }
+    else {
+        uart_write(STDIO_UART_DEV, (const uint8_t *)buffer, len);
+    }
+    return result;
 }
+
+static void _detach(void)
+{
+    uart_poweroff(STDIO_UART_DEV);
+}
+
+STDIO_PROVIDER(STDIO_UART, _init, _detach, _write)

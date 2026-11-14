@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2016 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2016 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @file
@@ -13,17 +12,16 @@
  * @author  Joakim Nohlgård <joakim.nohlgard@eistec.se>
  *
  * @see http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/fcntl.h.html
+ * @{
  */
 
 #ifndef DOXYGEN
-#if defined(CPU_NATIVE) || MODULE_NEWLIB
+#if defined(CPU_NATIVE) || MODULE_NEWLIB || MODULE_PICOLIBC
 /* If building on native or newlib we need to use the system header instead */
 #pragma GCC system_header
 /* without the GCC pragma above #include_next will trigger a pedantic error */
 #include_next <fcntl.h>
 #else
-#ifndef FCNTL_H_
-#define FCNTL_H_
 
 #include <sys/types.h> /* for mode_t, off_t */
 
@@ -67,9 +65,8 @@ int  posix_fallocate(int, off_t, off_t);
 }
 #endif
 
-#endif /* FCNTL_H_ */
-
 #endif /* CPU_NATIVE */
 
 #endif /* DOXYGEN */
+
 /** @} */

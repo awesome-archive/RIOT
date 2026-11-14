@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2018 UC Berkeley
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 UC Berkeley
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_fxos8700 FXOS8700 3-axis accelerometer/magnetometer
@@ -25,9 +24,6 @@
  * @author      Hyung-Sin Kim <hs.kim@cs.berkeley.edu>
  */
 
-#ifndef FXOS8700_H
-#define FXOS8700_H
-
 #include <stdint.h>
 #include "periph/i2c.h"
 #include "fxos8700_regs.h"
@@ -37,14 +33,20 @@ extern "C" {
 #endif
 
 /**
+ * @defgroup drivers_fxos8700_config     FXOS8700 accelerometer/magnetometer driver compile configuration
+ * @ingroup config_drivers_sensors
+ * @{
+ */
+/**
  * @brief   Default raw value mode for accelerator
  *
- * If set to 0, measurements will be converted to mg.
- * If set to 1, raw adc readings will be returned.
+ * Set this to 1 to return raw ADC readings. Otherwise measurements
+ * will be converted to mg.
  */
-#ifndef FXOS8700_USE_ACC_RAW_VALUES
-#define FXOS8700_USE_ACC_RAW_VALUES (0)
+#ifdef DOXYGEN
+#define CONFIG_FXOS8700_USE_ACC_RAW_VALUES
 #endif
+/** @} */
 
 /**
  * @brief   FXOS8700 specific return values
@@ -161,5 +163,4 @@ int fxos8700_read_cached(const void* dev, fxos8700_measurement_t* acc, fxos8700_
 }
 #endif
 
-#endif /* FXOS8700_H */
 /** @} */

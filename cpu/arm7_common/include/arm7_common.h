@@ -1,18 +1,13 @@
 /*
- * Copyright (C) 2008-2009, 2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for
- * more details.
+ * SPDX-FileCopyrightText: 2008-2009 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-#ifndef ARM7_COMMON_H
-#define ARM7_COMMON_H
+#pragma once
 
 /**
- * @defgroup    cpu_arm7_common ARM7 CPU common
- * @brief       Common implementations and headers for ARM based micro-controllers
- * @ingroup     cpu
+ * @ingroup     cpu_arm7_common
  * @{
  */
 
@@ -72,9 +67,10 @@ extern "C" {
 #define BORD        (BIT4)
 #define PM2         (BIT7)
 
-#define PM_IDLE         (PM0)
-#define PM_SLEEP        (PM2|PM0)
-#define PM_POWERDOWN    (PM1)
+#define PM_IDLE             (PM0)
+#define PM_SLEEP            (PM2|PM0)
+#define PM_POWERDOWN        (PM1)
+#define PM_DEEP_POWERDOWN   (PM2|PM1)
 /** @} */
 
 /**
@@ -100,4 +96,3 @@ extern "C" {
 #endif
 
 /** @} */
-#endif /* ARM7_COMMON_H */

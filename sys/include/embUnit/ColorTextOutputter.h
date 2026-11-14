@@ -1,18 +1,15 @@
 /*
- * Copyright (C) 2015 Janos Kutscherauer <noshky@gmail.com>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Janos Kutscherauer <noshky@gmail.com>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @{
  *
  * @file    ColorTextOutputter.h
  */
-#ifndef EMBUNIT_COLORTEXTOUTPUTTER_H
-#define EMBUNIT_COLORTEXTOUTPUTTER_H
 
 #include "Outputter.h"
 
@@ -26,5 +23,4 @@ OutputterRef ColorTextOutputter_outputter(void);
 }
 #endif
 
-#endif /* EMBUNIT_COLORTEXTOUTPUTTER_H */
 /** @} */

@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2017 Neo Nenaco <neo@nenaco.de>
- * Copyright (C) 2017 Koen Zandberg <koen@bergzand.net>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Neo Nenaco <neo@nenaco.de>
+ * SPDX-FileCopyrightText: 2017 Koen Zandberg <koen@bergzand.net>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -21,44 +18,106 @@
  */
 #include "periph/spi.h"
 #include "periph/gpio.h"
-#include "xtimer.h"
+#include "ztimer.h"
 #include "mrf24j40_internal.h"
 #include "mrf24j40_registers.h"
+#include "kernel_defines.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
-#define SPIDEV          (dev->params.spi)
-#define CSPIN           (dev->params.cs_pin)
+#define SPIDEV          (dev->params->spi)
+#define CSPIN           (dev->params->cs_pin)
 
 static inline void getbus(mrf24j40_t *dev)
 {
-    spi_acquire(SPIDEV, CSPIN, SPI_MODE_0, dev->params.spi_clk);
+    spi_acquire(SPIDEV, CSPIN, SPI_MODE_0, dev->params->spi_clk);
 }
 
-void mrf24j40_init(mrf24j40_t *dev)
+#if IS_ACTIVE(CONFIG_MRF24J40_USE_EXT_PA_LNA)
+static inline void mrf24j40_reg_and_short(mrf24j40_t *dev, const uint8_t addr, uint8_t value)
 {
+    value &= mrf24j40_reg_read_short(dev, addr);
+    mrf24j40_reg_write_short(dev, addr, value);
+}
 
-    mrf24j40_hardware_reset(dev);
+static inline void mrf24j40_reg_or_short(mrf24j40_t *dev, const uint8_t addr, uint8_t value)
+{
+    value |= mrf24j40_reg_read_short(dev, addr);
+    mrf24j40_reg_write_short(dev, addr, value);
+}
 
-#if ENABLE_DEBUG
-    /* Check if MRF24J40 is available */
-    uint8_t txmcr = mrf24j40_reg_read_short(dev, MRF24J40_REG_TXMCR);
-    if ((txmcr == 0xFF) || (txmcr == 0x00)) {
-        /* Write default value to TXMCR register */
-        mrf24j40_reg_write_short(dev, MRF24J40_REG_TXMCR, MRF24J40_TXMCR_MACMINBE1 |
-                                                          MRF24J40_TXMCR_MACMINBE0 |
-                                                          MRF24J40_TXMCR_CSMABF2);
-        txmcr = mrf24j40_reg_read_short(dev, MRF24J40_REG_TXMCR);
-        if (txmcr != (MRF24J40_TXMCR_MACMINBE1 |
-                      MRF24J40_TXMCR_MACMINBE0 |
-                      MRF24J40_TXMCR_CSMABF2)) {
-            DEBUG("[mrf24j40] Initialization failure, SPI interface communication failed\n");
-            /* Return to prevents hangup later in the initialization */
-            return;
+void mrf24j40_enable_auto_pa_lna(mrf24j40_t *dev)
+{
+    /* Configure enable pin of the Voltage Regulator for the PA (GPIO3) on MRF24J40MC */
+    mrf24j40_reg_or_short(dev, MRF24J40_REG_TRISGPIO, MRF24J40_GPIO_3);
+
+    /* Enable the volate regulator to power the Power Amplifier */
+    mrf24j40_reg_or_short(dev, MRF24J40_REG_GPIO, MRF24J40_GPIO_3);
+
+    mrf24j40_reg_write_long(dev, MRF24J40_REG_TESTMODE, (MRF24J40_TESTMODE_RSSIWAIT0 |
+                                                         MRF24J40_TESTMODE_TESTMODE2 |
+                                                         MRF24J40_TESTMODE_TESTMODE1 |
+                                                         MRF24J40_TESTMODE_TESTMODE0));
+}
+
+void mrf24j40_disable_auto_pa_lna(mrf24j40_t *dev)
+{
+    /* Disable automatic switch on PA/LNA */
+    mrf24j40_reg_write_long(dev, MRF24J40_REG_TESTMODE, MRF24J40_TESTMODE_RSSIWAIT0);
+
+    /* Configure all GPIOs as Output */
+    mrf24j40_reg_or_short(dev, MRF24J40_REG_TRISGPIO, (MRF24J40_GPIO_0 |
+                                                       MRF24J40_GPIO_1 |
+                                                       MRF24J40_GPIO_2 |
+                                                       MRF24J40_GPIO_3));
+
+    /* Disable all GPIO outputs */
+    mrf24j40_reg_and_short(dev, MRF24J40_REG_GPIO, ~(MRF24J40_GPIO_0 |
+                                                     MRF24J40_GPIO_1 |
+                                                     MRF24J40_GPIO_2 |
+                                                     MRF24J40_GPIO_3));
+}
+
+void mrf24j40_enable_lna(mrf24j40_t *dev)
+{
+    /* Disable automatic switch on PA/LNA */
+    mrf24j40_reg_write_long(dev, MRF24J40_REG_TESTMODE, MRF24J40_TESTMODE_RSSIWAIT0);
+
+    /* Configure all GPIOs as Output */
+    mrf24j40_reg_or_short(dev, MRF24J40_REG_TRISGPIO, (MRF24J40_GPIO_0 |
+                                                       MRF24J40_GPIO_1 |
+                                                       MRF24J40_GPIO_2 |
+                                                       MRF24J40_GPIO_3));
+
+    /* Enable LNA, keep PA voltage regulator on */
+    mrf24j40_reg_and_short(dev, MRF24J40_REG_GPIO, ~(MRF24J40_GPIO_0 | MRF24J40_GPIO_1));
+    mrf24j40_reg_or_short(dev, MRF24J40_REG_GPIO, MRF24J40_GPIO_2 | MRF24J40_GPIO_3);
+}
+#endif /* CONFIG_MRF24J40_USE_EXT_PA_LNA */
+
+int mrf24j40_init_hw(mrf24j40_t *dev)
+{
+    if (IS_ACTIVE(CONFIG_MRF24J40_TEST_SPI_CONNECTION)) {
+        /* Check if MRF24J40 is available */
+        uint8_t txmcr = mrf24j40_reg_read_short(dev, MRF24J40_REG_TXMCR);
+        if ((txmcr == 0xFF) || (txmcr == 0x00)) {
+            /* Write default value to TXMCR register */
+            mrf24j40_reg_write_short(dev, MRF24J40_REG_TXMCR, MRF24J40_TXMCR_MACMINBE1 |
+                                                            MRF24J40_TXMCR_MACMINBE0 |
+                                                            MRF24J40_TXMCR_CSMABF2);
+            txmcr = mrf24j40_reg_read_short(dev, MRF24J40_REG_TXMCR);
+            if (txmcr != (MRF24J40_TXMCR_MACMINBE1 |
+                        MRF24J40_TXMCR_MACMINBE0 |
+                        MRF24J40_TXMCR_CSMABF2)) {
+                DEBUG("[mrf24j40] Initialization failure, SPI interface communication failed\n");
+                /* Return to prevents hangup later in the initialization */
+                return -ENODEV;
+            }
         }
     }
-#endif
+
+    mrf24j40_hardware_reset(dev);
 
     /* do a soft reset */
     mrf24j40_reg_write_short(dev, MRF24J40_REG_SOFTRST, MRF24J40_SOFTRST_RSTPWR |
@@ -88,6 +147,8 @@ void mrf24j40_init(mrf24j40_t *dev)
     mrf24j40_reg_write_short(dev, MRF24J40_REG_CCAEDTH, 0x60);
     mrf24j40_reg_write_short(dev, MRF24J40_REG_BBREG6, MRF24J40_BBREG6_RSSIMODE2 );
 
+    mrf24j40_enable_auto_pa_lna(dev);
+
     /* Enable immediate sleep mode */
     mrf24j40_reg_write_short(dev, MRF24J40_REG_WAKECON, MRF24J40_WAKECON_IMMWAKE);
 
@@ -101,6 +162,8 @@ void mrf24j40_init(mrf24j40_t *dev)
 
     /* mrf24j40_set_interrupts */
     mrf24j40_reg_write_short(dev, MRF24J40_REG_INTCON, ~(MRF24J40_INTCON_RXIE | MRF24J40_INTCON_TXNIE));
+
+    return 0;
 }
 
 uint8_t mrf24j40_reg_read_short(mrf24j40_t *dev, const uint8_t addr)
@@ -197,37 +260,34 @@ void mrf24j40_reset_tasks(mrf24j40_t *dev)
 
 void mrf24j40_update_tasks(mrf24j40_t *dev)
 {
-    if (dev->irq_flag) {
-        uint8_t newpending = 0;
-        uint8_t instat = 0;
+    uint8_t newpending = 0;
+    uint8_t instat = 0;
 
-        dev->irq_flag = 0;
-        instat = mrf24j40_reg_read_short(dev, MRF24J40_REG_INTSTAT);
-        /* check if TX done */
-        if (instat & MRF24J40_INTSTAT_TXNIF) {
-            newpending |= MRF24J40_TASK_TX_DONE | MRF24J40_TASK_TX_READY;
-            /* transmit done, returning to configured idle state */
-            mrf24j40_assert_sleep(dev);
-        }
-        if (instat & MRF24J40_INTSTAT_RXIF) {
-            newpending |= MRF24J40_TASK_RX_READY;
-        }
-        /* check if RX pending */
-        dev->pending |= newpending;
+    instat = mrf24j40_reg_read_short(dev, MRF24J40_REG_INTSTAT);
+    /* check if TX done */
+    if (instat & MRF24J40_INTSTAT_TXNIF) {
+        newpending |= MRF24J40_TASK_TX_DONE | MRF24J40_TASK_TX_READY;
+        /* transmit done, returning to configured idle state */
     }
+    if (instat & MRF24J40_INTSTAT_RXIF) {
+        newpending |= MRF24J40_TASK_RX_READY;
+    }
+    /* check if RX pending */
+    dev->pending |= newpending;
 }
-
 
 void mrf24j40_hardware_reset(mrf24j40_t *dev)
 {
-    /* wake up from sleep in case radio is sleeping */
-    mrf24j40_assert_awake(dev);
-
     /* trigger hardware reset */
-    gpio_clear(dev->params.reset_pin);
+    gpio_clear(dev->params->reset_pin);
     /* Datasheet - Not specified */
-    xtimer_usleep(MRF24J40_RESET_PULSE_WIDTH);
-    gpio_set(dev->params.reset_pin);
+    ztimer_sleep(ZTIMER_USEC, MRF24J40_RESET_PULSE_WIDTH);
+    gpio_set(dev->params->reset_pin);
     /* Datasheet - MRF24J40 ~2ms */
-    xtimer_usleep(MRF24J40_RESET_DELAY);
+    ztimer_sleep(ZTIMER_USEC, MRF24J40_RESET_DELAY);
+}
+
+void mrf24j40_flush_rx(mrf24j40_t *dev)
+{
+    mrf24j40_reg_write_short(dev, MRF24J40_REG_RXFLUSH, MRF24J40_RXFLUSH_RXFLUSH);
 }

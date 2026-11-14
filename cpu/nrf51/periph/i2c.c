@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -28,6 +25,7 @@
  *
  * @}
  */
+#include <assert.h>
 #include <errno.h>
 #include "cpu.h"
 #include "mutex.h"
@@ -35,7 +33,7 @@
 #include "periph/i2c.h"
 #include "periph_conf.h"
 
-#define ENABLE_DEBUG        (0)
+#define ENABLE_DEBUG        0
 #include "debug.h"
 
 /**
@@ -102,7 +100,7 @@ static int write(i2c_t dev, uint16_t addr, const void *data, int len,
         }
     }
 
-    return len;
+    return 0;
 }
 
 void i2c_init(i2c_t dev)
@@ -117,7 +115,7 @@ void i2c_init(i2c_t dev)
 
     /* pin configuration */
     NRF_GPIO->PIN_CNF[i2c_config[dev].pin_scl] = (GPIO_PIN_CNF_DRIVE_S0D1 << GPIO_PIN_CNF_DRIVE_Pos);
-    NRF_GPIO->PIN_CNF[i2c_config[dev].pin_scl] = (GPIO_PIN_CNF_DRIVE_S0D1 << GPIO_PIN_CNF_DRIVE_Pos);
+    NRF_GPIO->PIN_CNF[i2c_config[dev].pin_sda] = (GPIO_PIN_CNF_DRIVE_S0D1 << GPIO_PIN_CNF_DRIVE_Pos);
 
     i2c(dev)->PSELSCL = i2c_config[dev].pin_scl;
     i2c(dev)->PSELSDA = i2c_config[dev].pin_sda;
@@ -131,20 +129,18 @@ void i2c_init(i2c_t dev)
     i2c(dev)->ENABLE = TWI_ENABLE_ENABLE_Enabled;
 }
 
-int i2c_acquire(i2c_t dev)
+void i2c_acquire(i2c_t dev)
 {
     assert(dev < I2C_NUMOF);
 
     mutex_lock(&locks[dev]);
-    return 0;
 }
 
-int i2c_release(i2c_t dev)
+void i2c_release(i2c_t dev)
 {
     assert(dev < I2C_NUMOF);
 
     mutex_unlock(&locks[dev]);
-    return 0;
 }
 
 int i2c_read_bytes(i2c_t dev, uint16_t address, void *data, size_t length,
@@ -199,7 +195,7 @@ int i2c_read_bytes(i2c_t dev, uint16_t address, void *data, size_t length,
     while (i2c(dev)->EVENTS_STOPPED == 0) {}
     NRF_PPI->CHENCLR = (1 << i2c_config[dev].ppi);
 
-    return length;
+    return 0;
 }
 
 int i2c_read_regs(i2c_t dev, uint16_t address, uint16_t reg,

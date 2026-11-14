@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    drivers_dsp0401 DSP0401
- * @ingroup     drivers_actuators
+ * @ingroup     drivers_display
  * @brief       Device driver interface for the DSP0401 alphanumeric display
  * @{
  *
@@ -17,9 +16,6 @@
  *
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
-
-#ifndef DSP0401_H
-#define DSP0401_H
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -68,10 +64,10 @@ typedef struct {
  * @param[in]  params       Device parameters to use
  *
  * @return                  DSP0401_OK if everything is good
- * @return                  -DSP0401_ERR_CLK_GPIO if an error occured during CLK GPIO initialization
- * @return                  -DSP0401_ERR_SDI_GPIO if an error occured during SDI GPIO initialization
- * @return                  -DSP0401_ERR_LAT_GPIO if an error occured during LAT GPIO initialization
- * @return                  -DSP0401_ERR_PWM if an error occured during PWM initialization
+ * @return                  -DSP0401_ERR_CLK_GPIO if an error occurred during CLK GPIO initialization
+ * @return                  -DSP0401_ERR_SDI_GPIO if an error occurred during SDI GPIO initialization
+ * @return                  -DSP0401_ERR_LAT_GPIO if an error occurred during LAT GPIO initialization
+ * @return                  -DSP0401_ERR_PWM if an error occurred during PWM initialization
  */
 int dsp0401_init(dsp0401_t *dev, const dsp0401_params_t *params);
 
@@ -103,5 +99,4 @@ void dsp0401_scroll_text(const dsp0401_t *dev, char *text, uint16_t delay);
 }
 #endif
 
-#endif /* DSP0401_H */
 /** @} */

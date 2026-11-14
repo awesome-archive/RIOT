@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -18,7 +15,7 @@
 #include "net/gnrc/pktbuf.h"
 #include "net/protnum.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #if defined(MODULE_IPV6_ADDR)
@@ -26,7 +23,7 @@ static char addr_str[IPV6_ADDR_MAX_STR_LEN];
 #endif
 
 /* For independent testing */
-#ifdef MODULE_GNRC_IPV6
+#ifdef MODULE_GNRC_NETTYPE_IPV6
 #define HDR_NETTYPE (GNRC_NETTYPE_IPV6)
 #else
 #define HDR_NETTYPE (GNRC_NETTYPE_UNDEF)

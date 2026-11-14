@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017 Inria
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017 Inria
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -22,7 +19,6 @@
 
 #include "saul.h"
 #include "veml6070.h"
-#include "xtimer.h"
 
 static int read_uv(const void *dev, phydat_t *res)
 {
@@ -34,6 +30,6 @@ static int read_uv(const void *dev, phydat_t *res)
 
 const saul_driver_t veml6070_uv_saul_driver = {
     .read = read_uv,
-    .write = saul_notsup,
+    .write = saul_write_notsup,
     .type = SAUL_SENSE_UV
 };

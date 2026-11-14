@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2014 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup pthread
@@ -13,9 +12,6 @@
  * @brief   Mutual exclusion.
  * @note    Do not include this header file directly, but pthread.h.
  */
-
-#ifndef PTHREAD_MUTEX_H
-#define PTHREAD_MUTEX_H
 
 #include <time.h>
 
@@ -111,8 +107,6 @@ int pthread_mutex_setprioceiling(pthread_mutex_t *mutex, int prioceiling, int *o
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* PTHREAD_MUTEX_H */
 
 /**
  * @}

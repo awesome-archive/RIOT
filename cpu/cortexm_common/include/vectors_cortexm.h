@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup     cpu_cortexm_common
@@ -15,9 +14,6 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
-
-#ifndef VECTORS_CORTEXM_H
-#define VECTORS_CORTEXM_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,7 +76,7 @@ void reset_handler_default(void);
  * and can not be masked (surprise surprise...). They can be triggered by
  * software and some peripherals. So far, they are not used in RIOT.
  */
-void nmi_default(void);
+void nmi_handler(void);
 
 /**
  * @brief   Hard fault exception handler
@@ -92,8 +88,17 @@ void nmi_default(void);
 void hard_fault_default(void);
 
 /* The following four exceptions are only present for Cortex-M3 and -M4 CPUs */
-#if defined(CPU_ARCH_CORTEX_M3) || defined(CPU_ARCH_CORTEX_M4) || \
-    defined(CPU_ARCH_CORTEX_M4F) || defined(CPU_ARCH_CORTEX_M7)
+#if defined(CPU_CORE_CORTEX_M3) || defined(CPU_CORE_CORTEX_M4) || \
+    defined(CPU_CORE_CORTEX_M4F) || defined(CPU_CORE_CORTEX_M7)
+
+/**
+ * @brief Default memory manager behavior callback (weak function)
+ *
+ * @retval >=0 when the memory fault has been handled,
+ * @retval < 0 otherwise.
+ */
+int mem_manage_handler(void);
+
 /**
  * @brief   Memory management exception handler
  *
@@ -141,5 +146,4 @@ void dummy_handler_default(void);
 }
 #endif
 
-#endif /* VECTORS_CORTEXM_H */
 /** @} */

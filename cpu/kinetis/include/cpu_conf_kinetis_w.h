@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017 Eistec AB
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2017 Eistec AB
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @ingroup         cpu_kinetis
@@ -17,9 +16,6 @@
  *
  * @author          Joakim Nohlgård <joakim.nohlgard@eistec.se>
  */
-
-#ifndef CPU_CONF_KINETIS_W_H
-#define CPU_CONF_KINETIS_W_H
 
 #if defined(KINETIS_CORE_D)
 /* Kinetis KW2xD */
@@ -77,6 +73,23 @@
 #endif
 #endif /* KINETIS_CORE_x */
 
+/**
+ * @name   Flashpage configuration
+ * @{
+ */
+#define FLASHPAGE_SIZE      (2048U)
+#define FLASHPAGE_NUMOF     ((KINETIS_ROMSIZE * 1024) / FLASHPAGE_SIZE)
+
+/* The minimum block size which can be written is 4B. However, the erase
+ * block is always FLASHPAGE_SIZE.
+ */
+#define FLASHPAGE_WRITE_BLOCK_SIZE          (4U)
+/* Writing should be always 4 bytes aligned */
+#define FLASHPAGE_WRITE_BLOCK_ALIGNMENT     (4U)
+/* Section erase and programming must be 8 bytes aligned */
+#define FLASHPAGE_BLOCK_SECTION_ALIGNMENT   (8U)
+/** @} */
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -86,5 +99,4 @@ extern "C"
 }
 #endif
 
-#endif /* CPU_CONF_KINETIS_W_H */
 /** @} */

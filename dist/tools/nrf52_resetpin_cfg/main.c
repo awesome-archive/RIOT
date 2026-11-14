@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -73,7 +70,6 @@ static void _restore_uicr(void)
     NRF_UICR->APPROTECT = _buf.APPROTECT;
     NRF_UICR->NFCPINS = _buf.NFCPINS;
 #ifdef CPU_MODEL_NRF52840XXAA
-    NRF_UICR->EXTSUPPLY = _buf.EXTSUPPLY;
     NRF_UICR->REGOUT0 = _buf.REGOUT0;
 #endif
 
@@ -98,7 +94,7 @@ int main(void)
         puts("\n\nPress any key (meaning send any char) to continue");
         getchar();
 
-        puts("Progamming the pin now...");
+        puts("Programming the pin now...");
         if ((NRF_UICR->PSELRESET[0] != RESET_VAL) ||
             (NRF_UICR->PSELRESET[1] != RESET_VAL)) {
             /* we can only erase all UICR registers at once, so we need to save

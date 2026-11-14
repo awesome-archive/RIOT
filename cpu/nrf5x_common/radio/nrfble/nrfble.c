@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017-2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017-2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -25,11 +22,12 @@
 
 #include "cpu.h"
 #include "assert.h"
+#include "nrf_clock.h"
 
 #include "nrfble.h"
 #include "net/netdev/ble.h"
 
-#define ENABLE_DEBUG            (0)
+#define ENABLE_DEBUG            0
 #include "debug.h"
 
 /* driver specific device configuration */
@@ -120,6 +118,16 @@ static const uint8_t _ble_chan_map[40] = {
 };
 
 /**
+ * @brief   Enable the radio
+ */
+static void _enable(void)
+{
+    clock_hfxo_request();
+    NRF_RADIO->EVENTS_DISABLED = 0;
+    NRF_RADIO->INTENSET = INT_EN;
+}
+
+/**
  * @brief   Set radio into idle (DISABLED) state
  */
 static void _go_idle(void)
@@ -130,6 +138,7 @@ static void _go_idle(void)
         NRF_RADIO->EVENTS_DISABLED = 0;
         NRF_RADIO->TASKS_DISABLE = 1;
         while (NRF_RADIO->EVENTS_DISABLED == 0) {}
+        clock_hfxo_release();
         _state = STATE_IDLE;
     }
 }
@@ -230,9 +239,6 @@ netdev_t *nrfble_setup(void)
     _nrfble_dev.driver = &netdev_driver;
     _nrfble_dev.event_callback = NULL;
     _nrfble_dev.context = NULL;
-#ifdef MODULE_NETSTATS_L2
-    memset(&_nrfble_dev.stats, 0, sizeof(netstats_t));;
-#endif
     return &_nrfble_dev;
 }
 
@@ -241,7 +247,8 @@ static int _nrfble_init(netdev_t *dev)
     (void)dev;
     assert(_nrfble_dev.driver && _nrfble_dev.event_callback);
 
-    /* power on the NRFs radio */
+    /* power cycle the radio to reset it */
+    NRF_RADIO->POWER = 0;
     NRF_RADIO->POWER = 1;
     /* configure variable parameters to default values */
     NRF_RADIO->TXPOWER = NRFBLE_TXPOWER_DEFAULT;
@@ -250,7 +257,7 @@ static int _nrfble_init(netdev_t *dev)
     NRF_RADIO->RXADDRESSES = 0x01UL;
     /* load driver specific configuration */
     NRF_RADIO->MODE = CONF_MODE;
-    /* configure data fields and packet length whitening and endianess */
+    /* configure data fields and packet length whitening and endianness */
     NRF_RADIO->PCNF0 = ((CONF_S1 << RADIO_PCNF0_S1LEN_Pos) |
                         (CONF_S0 << RADIO_PCNF0_S0LEN_Pos) |
                         (CONF_LEN << RADIO_PCNF0_LFLEN_Pos));
@@ -269,6 +276,10 @@ static int _nrfble_init(netdev_t *dev)
     NVIC_EnableIRQ(RADIO_IRQn);
 
     DEBUG("[nrfble] initialization successful\n");
+
+    /* signal link UP */
+    dev->event_callback(dev, NETDEV_EVENT_LINK_UP);
+
     return 0;
 }
 
@@ -283,8 +294,7 @@ static int _nrfble_send(netdev_t *dev, const iolist_t *data)
     /* in case no trx sequence is active, we start a new one now */
     if (_state == STATE_IDLE) {
         _state = STATE_TX;
-        NRF_RADIO->EVENTS_DISABLED = 0;
-        NRF_RADIO->INTENSET = INT_EN;
+        _enable();
         NRF_RADIO->TASKS_TXEN = 1;
     }
 
@@ -304,8 +314,7 @@ static int _nrfble_recv(netdev_t *dev, void *buf, size_t len, void *info)
     /* in case no trx sequence is active, we start a new one now */
     if (_state == STATE_IDLE) {
         _state = STATE_RX;
-        NRF_RADIO->EVENTS_DISABLED = 0;
-        NRF_RADIO->INTENSET = INT_EN;
+        _enable();
         NRF_RADIO->TASKS_RXEN = 1;
     }
 

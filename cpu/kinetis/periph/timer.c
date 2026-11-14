@@ -1,11 +1,8 @@
 /*
- * Copyright (C) 2016 Eistec AB
- * Copyright (C) 2014 Freie Universität Berlin
- * Copyright (C) 2014-2015 PHYTEC Messtechnik GmbH
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2016 Eistec AB
+ * SPDX-FileCopyrightText: 2014 Freie Universität Berlin
+ * SPDX-FileCopyrightText: 2014-2015 PHYTEC Messtechnik GmbH
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -26,11 +23,13 @@
 
 #include <stdlib.h>
 
-#include "cpu.h"
 #include "bit.h"
+#include "bitarithm.h"
 #include "board.h"
-#include "periph_conf.h"
+#include "cpu.h"
+#include "macros/utils.h"
 #include "periph/timer.h"
+#include "periph_conf.h"
 
 #ifdef PIT_LTMR64H_LTH_MASK
 /* The KW41Z PIT module provides only one IRQ for all PIT channels combined. */
@@ -42,7 +41,7 @@
 #define KINETIS_PIT_COMBINED_IRQ 0
 #endif
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #define PIT_MAX_VALUE     (PIT_LDVAL_TSV_MASK >> PIT_LDVAL_TSV_SHIFT)
@@ -50,6 +49,10 @@
 
 #if TIMER_NUMOF != (PIT_NUMOF + LPTMR_NUMOF)
 #error TIMER_NUMOF should be the total of PIT and LPTMR timers in the system
+#endif
+
+#if defined(KINETIS_HAVE_LPTMR) && LPTMR_NUMOF > 0
+#define KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
 #endif
 
 /**
@@ -67,6 +70,7 @@ typedef struct {
     uint32_t ldval;
 } pit_t;
 
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
 /* LPTMR state */
 typedef struct {
     timer_isr_ctx_t isr_ctx;
@@ -74,21 +78,31 @@ typedef struct {
     uint32_t cmr;
     uint32_t running;
 } lptmr_t;
+#endif
 
 static const pit_conf_t pit_config[PIT_NUMOF] = PIT_CONFIG;
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
 static const lptmr_conf_t lptmr_config[LPTMR_NUMOF] = LPTMR_CONFIG;
+#endif
 
 static pit_t pit[PIT_NUMOF];
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
 static lptmr_t lptmr[LPTMR_NUMOF];
+#endif
 
 /**
  * @brief  Find out whether a given timer is a LPTMR or a PIT timer
  */
-static inline unsigned int _timer_variant(tim_t dev) {
+static inline unsigned int _timer_variant(tim_t dev)
+{
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
     if ((unsigned int) dev >= PIT_NUMOF) {
         return TIMER_LPTMR;
     }
-    else {
+    else
+#endif
+    {
+        (void) dev;
         return TIMER_PIT;
     }
 }
@@ -96,21 +110,25 @@ static inline unsigned int _timer_variant(tim_t dev) {
 /**
  * @brief  Find device index in the pit_config array
  */
-static inline unsigned int _pit_index(tim_t dev) {
+static inline unsigned int _pit_index(tim_t dev)
+{
     return ((unsigned int)dev) - TIMER_DEV(0);
 }
 
 /**
  * @brief  Get TIMER_x enum value from PIT device index
  */
-static inline tim_t _pit_tim_t(uint8_t dev) {
+static inline tim_t _pit_tim_t(uint8_t dev)
+{
     return (tim_t)(((unsigned int)TIMER_DEV(0)) + dev);
 }
 
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
 /**
  * @brief  Find device index in the lptmr_config array
  */
-static inline unsigned int _lptmr_index(tim_t dev) {
+static inline unsigned int _lptmr_index(tim_t dev)
+{
     return ((unsigned int)dev) - TIMER_DEV(0) - PIT_NUMOF;
 }
 
@@ -118,10 +136,12 @@ static inline unsigned int _lptmr_index(tim_t dev) {
 /**
  * @brief  Get TIMER_x enum value from LPTMR device index
  */
-static inline tim_t _lptmr_tim_t(uint8_t dev) {
+static inline tim_t _lptmr_tim_t(uint8_t dev)
+{
     return (tim_t)(((unsigned int)TIMER_DEV(0)) + PIT_NUMOF + dev);
 }
 #endif /* defined(LPTMR_ISR_0) || defined(LPTMR_ISR_1) */
+#endif /* KINETIS_BOARD_HAVE_CONFIGURED_LPTMR */
 
 /* ****** PIT module functions ****** */
 
@@ -209,6 +229,7 @@ static inline int pit_set_absolute(uint8_t dev, uint32_t target)
     unsigned int mask = irq_disable();
     uint32_t now = pit[dev].count - PIT->CHANNEL[ch].CVAL;
     uint32_t offset = target - now;
+
     /* Set new timeout */
     PIT->CHANNEL[ch].TCTRL = 0;
     PIT->CHANNEL[ch].LDVAL = offset;
@@ -228,6 +249,7 @@ static inline int pit_clear(uint8_t dev)
     uint8_t ch = pit_config[dev].count_ch;
     /* Disable IRQs to minimize the number of lost ticks */
     unsigned int mask = irq_disable();
+
     /* Subtract if there was anything left on the counter */
     pit[dev].count -= PIT->CHANNEL[ch].CVAL;
     /* No need to add PIT_MAX_VALUE + 1 to the counter because of modulo 2**32 */
@@ -247,18 +269,21 @@ static inline int pit_clear(uint8_t dev)
 static inline uint32_t pit_read(uint8_t dev)
 {
     uint8_t ch = pit_config[dev].count_ch;
+
     return pit[dev].count - PIT->CHANNEL[ch].CVAL;
 }
 
 static inline void pit_start(uint8_t dev)
 {
     uint8_t ch = pit_config[dev].prescaler_ch;
+
     PIT->CHANNEL[ch].TCTRL = PIT_TCTRL_TEN_MASK;
 }
 
 static inline void pit_stop(uint8_t dev)
 {
     uint8_t ch = pit_config[dev].prescaler_ch;
+
     PIT->CHANNEL[ch].TCTRL = 0;
 }
 
@@ -266,6 +291,7 @@ static inline void pit_irq_handler(tim_t dev)
 {
     uint8_t ch = pit_config[_pit_index(dev)].count_ch;
     pit_t *pit_ctx = &pit[_pit_index(dev)];
+
     if (!PIT->CHANNEL[ch].TFLG) {
         DEBUG("PIT%u!TFLG\n", (unsigned)dev);
         return;
@@ -286,6 +312,7 @@ static inline void pit_irq_handler(tim_t dev)
     cortexm_isr_end();
 }
 
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
 /* ****** LPTMR module functions ****** */
 
 /* Forward declarations */
@@ -310,13 +337,15 @@ static inline void _lptmr_set_cb_config(uint8_t dev, timer_cb_t cb, void *arg)
 /**
  * @brief  Compute the LPTMR prescaler setting, see reference manual for details
  */
-static inline int32_t _lptmr_compute_prescaler(uint8_t dev, uint32_t freq) {
+static inline int32_t _lptmr_compute_prescaler(uint8_t dev, uint32_t freq)
+{
     uint32_t prescale = 0;
+
     if ((freq > lptmr_config[dev].base_freq) || (freq == 0)) {
         /* Frequency out of range */
         return -1;
     }
-    while (freq < lptmr_config[dev].base_freq){
+    while (freq < lptmr_config[dev].base_freq) {
         ++prescale;
         freq <<= 1;
     }
@@ -336,6 +365,7 @@ static inline int32_t _lptmr_compute_prescaler(uint8_t dev, uint32_t freq) {
 static inline int lptmr_init(uint8_t dev, uint32_t freq, timer_cb_t cb, void *arg)
 {
     int32_t prescale = _lptmr_compute_prescaler(dev, freq);
+
     if (prescale < 0) {
         return -1;
     }
@@ -373,44 +403,34 @@ static inline int lptmr_init(uint8_t dev, uint32_t freq, timer_cb_t cb, void *ar
 static inline uint16_t lptmr_read(uint8_t dev)
 {
     LPTMR_Type *hw = lptmr_config[dev].dev;
+
     /* latch the current timer value into CNR */
     hw->CNR = 0;
     return lptmr[dev].cnr + hw->CNR;
 }
 
 /**
- * @brief Reload the timer with the given timeout, or spin if timeout is too small
+ * @brief Reload the timer with the given timeout
  *
  * @pre IRQs masked, timer running
  */
-static inline void lptmr_reload_or_spin(uint8_t dev, uint16_t timeout)
+static inline void lptmr_reload(uint8_t dev, uint16_t timeout)
 {
     LPTMR_Type *hw = lptmr_config[dev].dev;
+
     /* Disable timer and set target, 1 to 2 ticks will be dropped by the
      * hardware during the disable-enable cycle */
     /* Disable the timer interrupt first */
     hw->CSR = LPTMR_CSR_TEN_MASK | LPTMR_CSR_TFC_MASK;
-    if (timeout <= LPTMR_RELOAD_OVERHEAD) {
-        /* we spin if the timeout is too short to reload the timer */
-        hw->CNR = 0;
-        uint16_t cnr_begin = hw->CNR;
-        while ((hw->CNR - cnr_begin) <= timeout) {
-            hw->CNR = 0;
-        }
-        /* Emulate IRQ handler behaviour */
-        lptmr[dev].running = 0;
-        if (lptmr[dev].isr_ctx.cb != NULL) {
-            lptmr[dev].isr_ctx.cb(lptmr[dev].isr_ctx.arg, 0);
-        }
-        thread_yield_higher();
-        return;
+    if (timeout >= LPTMR_RELOAD_OVERHEAD) {
+        timeout -= LPTMR_RELOAD_OVERHEAD;
     }
     /* Update reference */
     hw->CNR = 0;
     lptmr[dev].cnr += hw->CNR + LPTMR_RELOAD_OVERHEAD;
     /* Disable timer */
     hw->CSR = 0;
-    hw->CMR = timeout - LPTMR_RELOAD_OVERHEAD;
+    hw->CMR = timeout;
     /* Enable timer and IRQ */
     hw->CSR = LPTMR_CSR_TEN_MASK | LPTMR_CSR_TFC_MASK | LPTMR_CSR_TIE_MASK;
 }
@@ -420,6 +440,7 @@ static inline int lptmr_set(uint8_t dev, uint16_t timeout)
     LPTMR_Type *hw = lptmr_config[dev].dev;
     /* Disable IRQs to minimize jitter */
     unsigned int mask = irq_disable();
+
     lptmr[dev].running = 1;
     if (!(hw->CSR & LPTMR_CSR_TEN_MASK)) {
         /* Timer is stopped, only update target */
@@ -431,7 +452,7 @@ static inline int lptmr_set(uint8_t dev, uint16_t timeout)
             lptmr[dev].cmr = 0;
         }
     }
-    else if (hw->CSR & LPTMR_CSR_TCF_MASK) {
+    else if ((timeout > 0) && (hw->CSR & LPTMR_CSR_TCF_MASK)) {
         /* TCF is set, safe to update CMR live */
         hw->CNR = 0;
         hw->CMR = timeout + hw->CNR;
@@ -442,10 +463,10 @@ static inline int lptmr_set(uint8_t dev, uint16_t timeout)
         hw->CSR = LPTMR_CSR_TEN_MASK | LPTMR_CSR_TFC_MASK | LPTMR_CSR_TIE_MASK;
     }
     else {
-        lptmr_reload_or_spin(dev, timeout);
+        lptmr_reload(dev, timeout);
     }
     irq_restore(mask);
-    return 1;
+    return 0;
 }
 
 static inline int lptmr_set_absolute(uint8_t dev, uint16_t target)
@@ -453,6 +474,7 @@ static inline int lptmr_set_absolute(uint8_t dev, uint16_t target)
     LPTMR_Type *hw = lptmr_config[dev].dev;
     /* Disable IRQs to minimize jitter */
     unsigned int mask = irq_disable();
+
     lptmr[dev].running = 1;
     if (!(hw->CSR & LPTMR_CSR_TEN_MASK)) {
         /* Timer is stopped, only update target */
@@ -476,10 +498,10 @@ static inline int lptmr_set_absolute(uint8_t dev, uint16_t target)
     }
     else {
         uint16_t timeout = target - lptmr_read(dev);
-        lptmr_reload_or_spin(dev, timeout);
+        lptmr_reload(dev, timeout);
     }
     irq_restore(mask);
-    return 1;
+    return 0;
 }
 
 static inline int lptmr_clear(uint8_t dev)
@@ -487,28 +509,30 @@ static inline int lptmr_clear(uint8_t dev)
     /* Disable IRQs to minimize jitter */
     LPTMR_Type *hw = lptmr_config[dev].dev;
     unsigned int mask = irq_disable();
+
     if (!lptmr[dev].running) {
         /* Already clear */
         irq_restore(mask);
-        return 1;
+        return 0;
     }
     lptmr[dev].running = 0;
     if (!(hw->CSR & LPTMR_CSR_TEN_MASK)) {
         /* Timer is stopped */
         irq_restore(mask);
-        return 1;
+        return 0;
     }
     /* Disable interrupt, enable timer */
     hw->CSR = LPTMR_CSR_TEN_MASK | LPTMR_CSR_TFC_MASK;
     /* Clear IRQ if it occurred during this function */
     NVIC_ClearPendingIRQ(lptmr_config[dev].irqn);
     irq_restore(mask);
-    return 1;
+    return 0;
 }
 
 static inline void lptmr_start(uint8_t dev)
 {
     LPTMR_Type *hw = lptmr_config[dev].dev;
+
     if (hw->CSR & LPTMR_CSR_TEN_MASK) {
         /* Timer is running */
         return;
@@ -539,6 +563,7 @@ static inline void lptmr_stop(uint8_t dev)
     /* Disable IRQs to avoid race with ISR */
     unsigned int mask = irq_disable();
     LPTMR_Type *hw = lptmr_config[dev].dev;
+
     if (!(hw->CSR & LPTMR_CSR_TEN_MASK)) {
         /* Timer is already stopped */
         return;
@@ -582,9 +607,58 @@ static inline void lptmr_irq_handler(tim_t tim)
 }
 #endif /* defined(LPTMR_ISR_0) || defined(LPTMR_ISR_1) */
 
+#endif
 /* ****** Common timer API functions ****** */
 
-int timer_init(tim_t dev, unsigned long freq, timer_cb_t cb, void *arg)
+uword_t timer_query_freqs_numof(tim_t dev)
+{
+    assert(dev < TIMER_NUMOF);
+
+    switch (_timer_variant(dev)) {
+    case TIMER_PIT:
+        return UINT32_MAX;
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
+    case TIMER_LPTMR:
+        /* 16 different pre-scaler values + bypassing the pre-scaler is
+         * supported, resulting in 17 possible frequencies. However, RIOT's
+         * timer API doesn't allow specifying frequencies below 1 Hz, so
+         * we possible have fewer options */
+        {
+            uword_t max_shifts = bitarithm_msb(lptmr_config[_lptmr_index(dev)].base_freq) + 1;
+            return MIN(max_shifts, 17);
+        }
+#endif
+    default:
+        assert(0);
+        return 0;
+    }
+}
+
+uint32_t timer_query_freqs(tim_t dev, uword_t index)
+{
+    assert(dev < TIMER_NUMOF);
+
+    switch (_timer_variant(dev)) {
+    case TIMER_PIT:
+        if (index == UINT32_MAX) {
+            return 0;
+        }
+        return PIT_BASECLOCK / (index + 1);
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
+    case TIMER_LPTMR:
+        if (index >= 17) {
+            return 0;
+        }
+
+        return lptmr_config[_lptmr_index(dev)].base_freq >> index;
+#endif
+    default:
+        assert(0);
+        return 0;
+    }
+}
+
+int timer_init(tim_t dev, uint32_t freq, timer_cb_t cb, void *arg)
 {
     if ((unsigned int)dev >= TIMER_NUMOF) {
         /* invalid timer */
@@ -594,8 +668,10 @@ int timer_init(tim_t dev, unsigned long freq, timer_cb_t cb, void *arg)
     switch (_timer_variant(dev)) {
         case TIMER_PIT:
             return pit_init(_pit_index(dev), freq, cb, arg);
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
         case TIMER_LPTMR:
             return lptmr_init(_lptmr_index(dev), freq, cb, arg);
+#endif
         default:
             return -1;
     }
@@ -615,8 +691,10 @@ int timer_set(tim_t dev, int channel, unsigned int timeout)
     switch (_timer_variant(dev)) {
         case TIMER_PIT:
             return pit_set(_pit_index(dev), timeout);
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
         case TIMER_LPTMR:
             return lptmr_set(_lptmr_index(dev), timeout);
+#endif
         default:
             return -1;
     }
@@ -636,8 +714,10 @@ int timer_set_absolute(tim_t dev, int channel, unsigned int target)
     switch (_timer_variant(dev)) {
         case TIMER_PIT:
             return pit_set_absolute(_pit_index(dev), target);
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
         case TIMER_LPTMR:
-            return lptmr_set_absolute(_lptmr_index(dev), target);;
+            return lptmr_set_absolute(_lptmr_index(dev), target);
+#endif
         default:
             return -1;
     }
@@ -659,8 +739,10 @@ int timer_clear(tim_t dev, int channel)
     switch (_timer_variant(dev)) {
         case TIMER_PIT:
             return pit_clear(_pit_index(dev));
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
         case TIMER_LPTMR:
             return lptmr_clear(_lptmr_index(dev));
+#endif
         default:
             return -1;
     }
@@ -678,8 +760,10 @@ unsigned int timer_read(tim_t dev)
     switch (_timer_variant(dev)) {
         case TIMER_PIT:
             return pit_read(_pit_index(dev));
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
         case TIMER_LPTMR:
             return lptmr_read(_lptmr_index(dev));
+#endif
         default:
             return 0;
     }
@@ -696,9 +780,11 @@ void timer_start(tim_t dev)
         case TIMER_PIT:
             pit_start(_pit_index(dev));
             return;
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
         case TIMER_LPTMR:
             lptmr_start(_lptmr_index(dev));
             return;
+#endif
         default:
             return;
     }
@@ -715,9 +801,11 @@ void timer_stop(tim_t dev)
         case TIMER_PIT:
             pit_stop(_pit_index(dev));
             return;
+#ifdef KINETIS_BOARD_HAVE_CONFIGURED_LPTMR
         case TIMER_LPTMR:
             lptmr_stop(_lptmr_index(dev));
             return;
+#endif
         default:
             return;
     }

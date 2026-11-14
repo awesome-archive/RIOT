@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018 Kaspar Schleiser <kaspar@schleiser.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2018 Kaspar Schleiser <kaspar@schleiser.de>
+ * SPDX-FileCopyrightText: 2018 Inria
+ * SPDX-FileCopyrightText: 2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
+
+#pragma once
 
 /**
  * @defgroup    sys_iolist iolist scatter / gather IO
@@ -18,9 +19,6 @@
  *
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
  */
-
-#ifndef IOLIST_H
-#define IOLIST_H
 
 #include <unistd.h>
 
@@ -52,7 +50,7 @@ unsigned iolist_count(const iolist_t *iolist);
 /**
  * @brief   Sum up number of bytes in iolist
  *
- * This function returns the summed ip lenght values of all entries in @p
+ * This function returns the summed ip length values of all entries in @p
  * iolist.
  *
  * @param[in]   iolist  iolist to sum up
@@ -80,8 +78,19 @@ struct iovec;
  */
 size_t iolist_to_iovec(const iolist_t *iolist, struct iovec *iov, unsigned *count);
 
+/**
+ * @brief   Copies the bytes of the iolist to a buffer
+ *
+ * @param[in]   iolist  iolist to read from
+ * @param[out]  dst     Destination buffer
+ * @param[in]   len     Size of the destination buffer
+ *
+ * @returns iolist_size(iolist) on success
+ *          -ENOBUFS if the buffer is too small
+ */
+ssize_t iolist_to_buffer(const iolist_t *iolist, void *dst, size_t len);
+
 #ifdef __cplusplus
 }
 #endif
-#endif /* IOLIST_H */
 /** @} */

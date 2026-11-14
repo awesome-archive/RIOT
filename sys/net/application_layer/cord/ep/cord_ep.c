@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017-2018 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2017-2018 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 /**
@@ -18,6 +15,7 @@
  * @}
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include "mutex.h"
@@ -28,14 +26,10 @@
 #include "net/ipv6/addr.h"
 #include "net/cord/ep.h"
 #include "net/cord/common.h"
-#include "net/cord/config.h"
 
 #ifdef MODULE_CORD_EP_STANDALONE
 #include "net/cord/ep_standalone.h"
 #endif
-
-#define ENABLE_DEBUG        (0)
-#include "debug.h"
 
 #define FLAG_SUCCESS        (0x0001)
 #define FLAG_TIMEOUT        (0x0002)
@@ -48,19 +42,19 @@
 static char *_regif_buf;
 static size_t _regif_buf_len;
 
-static char _rd_loc[NANOCOAP_URI_MAX];
-static char _rd_regif[NANOCOAP_URI_MAX];
+static char _rd_loc[CONFIG_NANOCOAP_URI_MAX];
+static char _rd_regif[CONFIG_NANOCOAP_URI_MAX];
 static sock_udp_ep_t _rd_remote;
 
 static mutex_t _mutex = MUTEX_INIT;
-static volatile thread_t *_waiter;
+static thread_t *_waiter;
 
 static uint8_t buf[BUFSIZE];
 
 static void _lock(void)
 {
     mutex_lock(&_mutex);
-    _waiter = sched_active_thread;
+    _waiter = thread_get_active();
 }
 
 static int _sync(void)
@@ -81,15 +75,15 @@ static int _sync(void)
     }
 }
 
-static void _on_register(unsigned req_state, coap_pkt_t* pdu,
-                        sock_udp_ep_t *remote)
+static void _on_register(const gcoap_request_memo_t *memo, coap_pkt_t* pdu,
+                         const sock_udp_ep_t *remote)
 {
     thread_flags_t flag = FLAG_ERR;
 
-    if ((req_state == GCOAP_MEMO_RESP) &&
-        (pdu->hdr->code == COAP_CODE_CREATED)) {
+    if ((memo->state == GCOAP_MEMO_RESP) &&
+        (coap_get_code_raw(pdu) == COAP_CODE_CREATED)) {
         /* read the location header and save the RD details on success */
-        if (coap_get_location_path(pdu, (uint8_t *)_rd_loc,
+        if (coap_get_location_path(pdu, _rd_loc,
                                    sizeof(_rd_loc)) > 0) {
             memcpy(&_rd_remote, remote, sizeof(_rd_remote));
             flag = FLAG_SUCCESS;
@@ -99,37 +93,39 @@ static void _on_register(unsigned req_state, coap_pkt_t* pdu,
             flag = FLAG_OVERFLOW;
         }
     }
-    else if (req_state == GCOAP_MEMO_TIMEOUT) {
+    else if (memo->state == GCOAP_MEMO_TIMEOUT) {
         flag = FLAG_TIMEOUT;
     }
 
-    thread_flags_set((thread_t *)_waiter, flag);
+    thread_flags_set(_waiter, flag);
 }
 
 static void _on_update_remove(unsigned req_state, coap_pkt_t *pdu, uint8_t code)
 {
     thread_flags_t flag = FLAG_ERR;
 
-    if ((req_state == GCOAP_MEMO_RESP) && (pdu->hdr->code == code)) {
+    if ((req_state == GCOAP_MEMO_RESP) && (coap_get_code_raw(pdu) == code)) {
         flag = FLAG_SUCCESS;
     }
     else if (req_state == GCOAP_MEMO_TIMEOUT) {
         flag = FLAG_TIMEOUT;
     }
 
-    thread_flags_set((thread_t *)_waiter, flag);
+    thread_flags_set(_waiter, flag);
 }
 
-static void _on_update(unsigned req_state, coap_pkt_t *pdu, sock_udp_ep_t *remote)
+static void _on_update(const gcoap_request_memo_t *memo, coap_pkt_t *pdu,
+                       const sock_udp_ep_t *remote)
 {
     (void)remote;
-    _on_update_remove(req_state, pdu, COAP_CODE_CHANGED);
+    _on_update_remove(memo->state, pdu, COAP_CODE_CHANGED);
 }
 
-static void _on_remove(unsigned req_state, coap_pkt_t *pdu, sock_udp_ep_t *remote)
+static void _on_remove(const gcoap_request_memo_t *memo, coap_pkt_t *pdu,
+                       const sock_udp_ep_t *remote)
 {
     (void)remote;
-    _on_update_remove(req_state, pdu, COAP_CODE_DELETED);
+    _on_update_remove(memo->state, pdu, COAP_CODE_DELETED);
 }
 
 static int _update_remove(unsigned code, gcoap_resp_handler_t handle)
@@ -145,23 +141,26 @@ static int _update_remove(unsigned code, gcoap_resp_handler_t handle)
     if (res < 0) {
         return CORD_EP_ERR;
     }
-    coap_hdr_set_type(pkt.hdr, COAP_TYPE_CON);
-    ssize_t pkt_len = gcoap_finish(&pkt, 0, COAP_FORMAT_NONE);
+    coap_pkt_set_type(&pkt, COAP_TYPE_CON);
+    ssize_t pkt_len = coap_opt_finish(&pkt, COAP_OPT_FINISH_NONE);
 
     /* send request */
-    gcoap_req_send2(buf, pkt_len, &_rd_remote, handle);
-
+    ssize_t send_len = gcoap_req_send(buf, pkt_len, &_rd_remote, NULL,
+                                      handle, NULL, GCOAP_SOCKET_TYPE_UNDEF);
+    if (send_len <= 0) {
+        return CORD_EP_ERR;
+    }
     /* synchronize response */
     return _sync();
 }
 
-static void _on_discover(unsigned req_state, coap_pkt_t *pdu,
-                         sock_udp_ep_t *remote)
+static void _on_discover(const gcoap_request_memo_t *memo, coap_pkt_t *pdu,
+                         const sock_udp_ep_t *remote)
 {
     thread_flags_t flag = CORD_EP_NORD;
     (void)remote;
 
-    if (req_state == GCOAP_MEMO_RESP) {
+    if (memo->state == GCOAP_MEMO_RESP) {
         unsigned ct = coap_get_content_type(pdu);
         if (ct != COAP_FORMAT_LINK) {
             goto end;
@@ -195,12 +194,12 @@ static void _on_discover(unsigned req_state, coap_pkt_t *pdu,
         memset((_regif_buf + uri_len), 0, (_regif_buf_len - uri_len));
         flag = FLAG_SUCCESS;
     }
-    else if (req_state == GCOAP_MEMO_TIMEOUT) {
+    else if (memo->state == GCOAP_MEMO_TIMEOUT) {
         flag = FLAG_TIMEOUT;
     }
 
 end:
-    thread_flags_set((thread_t *)_waiter, flag);
+    thread_flags_set(_waiter, flag);
 }
 
 static int _discover_internal(const sock_udp_ep_t *remote,
@@ -218,11 +217,11 @@ static int _discover_internal(const sock_udp_ep_t *remote,
     if (res < 0) {
         return CORD_EP_ERR;
     }
-    coap_hdr_set_type(pkt.hdr, COAP_TYPE_CON);
-    gcoap_add_qstring(&pkt, "rt", "core.rd");
-    size_t pkt_len = gcoap_finish(&pkt, 0, COAP_FORMAT_NONE);
-    res = gcoap_req_send2(buf, pkt_len, remote, _on_discover);
-    if (res < 0) {
+    coap_pkt_set_type(&pkt, COAP_TYPE_CON);
+    coap_opt_add_uri_query(&pkt, "rt", "core.rd");
+    size_t pkt_len = coap_opt_finish(&pkt, COAP_OPT_FINISH_NONE);
+    res = gcoap_req_send(buf, pkt_len, remote, NULL, _on_discover, NULL, GCOAP_SOCKET_TYPE_UNDEF);
+    if (res <= 0) {
         return CORD_EP_ERR;
     }
     return _sync();
@@ -258,11 +257,13 @@ int cord_ep_register(const sock_udp_ep_t *remote, const char *regif)
         }
     }
     else {
-        if (strlen(_rd_regif) >= sizeof(_rd_regif)) {
+        size_t regif_len = strlen(regif);
+        if (regif_len >= sizeof(_rd_regif)) {
             retval = CORD_EP_OVERFLOW;
             goto end;
         }
-        strncpy(_rd_regif, regif, sizeof(_rd_regif));
+
+        memcpy(_rd_regif, regif, regif_len + 1);
     }
 
     /* build and send CoAP POST request to the RD's registration interface */
@@ -272,15 +273,19 @@ int cord_ep_register(const sock_udp_ep_t *remote, const char *regif)
         goto end;
     }
     /* set some packet options and write query string */
-    coap_hdr_set_type(pkt.hdr, COAP_TYPE_CON);
+    coap_pkt_set_type(&pkt, COAP_TYPE_CON);
     coap_opt_add_uint(&pkt, COAP_OPT_CONTENT_FORMAT, COAP_FORMAT_LINK);
-    cord_common_add_qstring(&pkt);
+    res = cord_common_add_qstring(&pkt);
+    if (res < 0) {
+        retval = CORD_EP_ERR;
+        goto end;
+    }
 
     pkt_len = coap_opt_finish(&pkt, COAP_OPT_FINISH_PAYLOAD);
 
     /* add the resource description as payload */
     res = gcoap_get_resource_list(pkt.payload, pkt.payload_len,
-                                  COAP_FORMAT_LINK);
+                                  COAP_FORMAT_LINK, GCOAP_SOCKET_TYPE_UNDEF);
     if (res < 0) {
         retval = CORD_EP_ERR;
         goto end;
@@ -288,8 +293,8 @@ int cord_ep_register(const sock_udp_ep_t *remote, const char *regif)
     pkt_len += res;
 
     /* send out the request */
-    res = gcoap_req_send2(buf, pkt_len, remote, _on_register);
-    if (res < 0) {
+    res = gcoap_req_send(buf, pkt_len, remote, NULL, _on_register, NULL, GCOAP_SOCKET_TYPE_UNDEF);
+    if (res <= 0) {
         retval = CORD_EP_ERR;
         goto end;
     }
@@ -357,7 +362,7 @@ void cord_ep_dump_status(void)
 
         printf("RD address: coap://[%s]:%i\n", addr, (int)_rd_remote.port);
         printf("   ep name: %s\n", cord_common_get_ep());
-        printf("  lifetime: %is\n", (int)CORD_LT);
+        printf("  lifetime: %is\n", (int)CONFIG_CORD_LT);
         printf("    reg if: %s\n", _rd_regif);
         printf("  location: %s\n", _rd_loc);
     }

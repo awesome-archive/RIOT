@@ -1,10 +1,7 @@
 /*
- * Copyright (C) 2015 Eistec AB
- *               2016 Freie Universität Berlin
- *
- * This file is subject to the terms and conditions of the GNU Lesser General
- * Public License v2.1. See the file LICENSE in the top level directory for more
- * details.
+ * SPDX-FileCopyrightText: 2015 Eistec AB
+ * SPDX-FileCopyrightText: 2016 Freie Universität Berlin
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 #include <stdint.h>
@@ -14,7 +11,7 @@
 #include "byteorder.h"
 #include "periph/spi.h"
 #include "periph/gpio.h"
-#include "xtimer.h"
+#include "ztimer.h"
 
 /**
  * @ingroup     drivers_nvram
@@ -42,7 +39,7 @@ typedef enum {
 
 /** @brief Delay to wait between toggling CS pin, on most chips this can probably be
  * removed. */
-#define NVRAM_SPI_CS_TOGGLE_TICKS xtimer_ticks_from_usec(1)
+#define NVRAM_SPI_CS_TOGGLE_US      1
 
 /**
  * @brief Copy data from system memory to NVRAM.
@@ -140,7 +137,7 @@ static int nvram_spi_write(nvram_t *dev, const uint8_t *src, uint32_t dst, size_
     /* Enable writes */
     spi_transfer_byte(spi_dev->spi, spi_dev->cs, false, NVRAM_SPI_CMD_WREN);
     /* Make sure we have a minimum gap between transfers */
-    xtimer_spin(NVRAM_SPI_CS_TOGGLE_TICKS);
+    ztimer_spin(ZTIMER_USEC, NVRAM_SPI_CS_TOGGLE_US);
     /* Write command and address */
     spi_transfer_byte(spi_dev->spi, spi_dev->cs, true, NVRAM_SPI_CMD_WRITE);
     spi_transfer_bytes(spi_dev->spi, spi_dev->cs, true,
@@ -181,7 +178,6 @@ static int nvram_spi_read(nvram_t *dev, uint8_t *dst, uint32_t src, size_t len)
     return (int)len;
 }
 
-
 static int nvram_spi_write_9bit_addr(nvram_t *dev, const uint8_t *src, uint32_t dst, size_t len)
 {
     nvram_spi_params_t *spi_dev = (nvram_spi_params_t *) dev->extra;
@@ -201,7 +197,7 @@ static int nvram_spi_write_9bit_addr(nvram_t *dev, const uint8_t *src, uint32_t 
     /* Enable writes */
     spi_transfer_byte(spi_dev->spi, spi_dev->cs, false, NVRAM_SPI_CMD_WREN);
     /* Insert needed delay between transactions */
-    xtimer_spin(NVRAM_SPI_CS_TOGGLE_TICKS);
+    ztimer_spin(ZTIMER_USEC, NVRAM_SPI_CS_TOGGLE_US);
     /* Write command and address */
     spi_transfer_byte(spi_dev->spi, spi_dev->cs, true, cmd);
     spi_transfer_byte(spi_dev->spi, spi_dev->cs, true, addr);

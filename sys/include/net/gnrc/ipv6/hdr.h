@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
- *
- * This file is subject to the terms and conditions of the GNU Lesser
- * General Public License v2.1. See the file LICENSE in the top level
- * directory for more details.
+ * SPDX-FileCopyrightText: 2015 Martine Lenders <mlenders@inf.fu-berlin.de>
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
+#pragma once
+
 /**
- * @defgroup    net_gnrc_ipv6_hdr IPv6 header defintions
+ * @defgroup    net_gnrc_ipv6_hdr IPv6 header definitions
  * @ingroup     net_gnrc_ipv6
  * @{
  *
@@ -16,8 +15,6 @@
  *
  * @author  Martine Lenders <mlenders@inf.fu-berlin.de>
  */
-#ifndef NET_GNRC_IPV6_HDR_H
-#define NET_GNRC_IPV6_HDR_H
 
 #include <stdint.h>
 
@@ -50,5 +47,4 @@ gnrc_pktsnip_t *gnrc_ipv6_hdr_build(gnrc_pktsnip_t *payload, const ipv6_addr_t *
 }
 #endif
 
-#endif /* NET_GNRC_IPV6_HDR_H */
 /** @} */
